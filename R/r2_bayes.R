@@ -45,23 +45,35 @@
 #'
 #' @references Gelman, A., Goodrich, B., Gabry, J., & Vehtari, A. (2018). R-squared for Bayesian regression models. The American Statistician, 1–6. \doi{10.1080/00031305.2018.1549100}
 #'
-#' @importFrom insight find_algorithm
+#' @importFrom insight find_algorithm is_multivariate find_response
 #' @importFrom stats median mad sd
 #' @export
 r2_bayes <- function(model, robust = TRUE) {
-
   r2_bayesian <- .r2_posterior(model)
-  structure(
-    class = "r2_bayes",
-    lapply(r2_bayesian, ifelse(robust, stats::median, mean)),
-    "std.error" = lapply(r2_bayesian, ifelse(robust, stats::mad, stats::sd))
-  )
+
+  if (is.null(r2_bayesian))
+    return(NULL)
+
+  if (insight::is_multivariate(model)) {
+    structure(
+      class = "r2_bayes_mv",
+      rapply(r2_bayesian, ifelse(robust, stats::median, mean)),
+      "std.error" = rapply(r2_bayesian, ifelse(robust, stats::mad, stats::sd))
+    )
+  } else {
+    structure(
+      class = "r2_bayes",
+      lapply(r2_bayesian, ifelse(robust, stats::median, mean)),
+      "std.error" = lapply(r2_bayesian, ifelse(robust, stats::mad, stats::sd))
+    )
+  }
 }
+
 
 #' @keywords internal
 .r2_posterior <- function(model) {
   if (!requireNamespace("rstantools", quietly = TRUE)) {
-    stop("This function needs `rstantools` to be installed.")
+    stop("Package `rstantools` needed for this function to work. Please install it.")
   }
 
   algorithm <- insight::find_algorithm(model)
@@ -70,14 +82,51 @@ r2_bayes <- function(model, robust = TRUE) {
     return(NA)
   }
 
-  ## TODO check for multivariate response models
+  tryCatch({
+    mi <- insight::model_info(model)
 
-  if (insight::model_info(model)$is_mixed) {
-    list(
-      "R2_Bayes" = as.vector(rstantools::bayes_R2(model, re.form = NULL, re_formula = NULL, summary = FALSE)),
-      "R2_Bayes_marginal" = as.vector(rstantools::bayes_R2(model, re.form = NA, re_formula = NA, summary = FALSE))
-    )
-  } else {
-    list("R2_Bayes" = as.vector(rstantools::bayes_R2(model, summary = FALSE)))
-  }
+    if (insight::is_multivariate(model)) {
+      res <- insight::find_response(model)
+      if (mi[[1]]$is_mixed) {
+        br2_mv <- list(
+          "R2_Bayes" = rstantools::bayes_R2(model, re.form = NULL, re_formula = NULL, summary = FALSE),
+          "R2_Bayes_marginal" = rstantools::bayes_R2(model, re.form = NA, re_formula = NA, summary = FALSE)
+        )
+        br2 <- lapply(1:length(res), function(x) {
+          list(
+            "R2_Bayes" = unname(as.vector(br2_mv$R2_Bayes[, x])),
+            "R2_Bayes_marginal" = unname(as.vector(br2_mv$R2_Bayes_marginal[, x]))
+          )
+        })
+        names(br2) <- res
+      } else {
+        br2_mv <- list("R2_Bayes" = rstantools::bayes_R2(model, summary = FALSE))
+        br2 <- lapply(1:length(res), function(x) {
+          list("R2_Bayes" = unname(as.vector(br2_mv$R2_Bayes[, x])))
+        })
+        names(br2) <- res
+      }
+    } else {
+      if (mi$is_mixed) {
+        br2 <- list(
+          "R2_Bayes" = as.vector(rstantools::bayes_R2(model, re.form = NULL, re_formula = NULL, summary = FALSE)),
+          "R2_Bayes_marginal" = as.vector(rstantools::bayes_R2(model, re.form = NA, re_formula = NA, summary = FALSE))
+        )
+        names(br2$R2_Bayes) <- "Conditional R2"
+        names(br2$R2_Bayes_marginal) <- "Marginal R2"
+      } else {
+        br2 <- list("R2_Bayes" = as.vector(rstantools::bayes_R2(model, summary = FALSE)))
+        names(br2$R2_Bayes) <- "R2"
+      }
+    }
+
+    br2
+  },
+  error = function(e) {
+    if (inherits(e, c("simpleError", "error"))) {
+      insight::print_color(e$message, "red")
+      cat("\n")
+    }
+    NULL
+  })
 }

@@ -1,10 +1,12 @@
 #' @title Model Performance
 #' @name model_performance
 #'
-#' @description See the documentation for your object's class: \link[=model_performance.lm]{lm},
-#' \link[=model_performance.glm]{glm}, \link[=model_performance.merMod]{mixed models}
-#' and \link[=model_performance.stanreg]{Bayesian models}. \code{compare_performance()}
-#' computes indices of model performance for different models.
+#' @description See the documentation for your object's class:
+#' \link[=model_performance.merMod]{mixed models},
+#' \link[=model_performance.stanreg]{Bayesian models} and
+#' \link[=model_performance.lm]{all other models}.
+#' \code{compare_performance()} computes indices of model performance for
+#' different models at once and hence allows comparison of indices accros models.
 #'
 #' @param model Statistical model.
 #' @param metrics Can be \code{"all"} or a character vector of metrics to be computed.
@@ -17,6 +19,12 @@
 #'   column per "index" (see \code{metrics}). For \code{compare_performance()},
 #'   the same data frame with one row per model.
 #'
+#' @details If all models are of the same class, \code{compare_performance()}
+#'   returns an additional column named \code{BF}, which shows the Bayes factor
+#'   (see \code{\link[bayestestR]{bayesfactor_models}}) for each model against
+#'   the denominator model. The \emph{first} model is used as denominator model,
+#'   and its Bayes factor is set to \code{NA} to indicate the reference model.
+#'
 #' @examples
 #' library(lme4)
 #'
@@ -27,13 +35,20 @@
 #' m3 <- lmer(Petal.Length ~ Sepal.Length + (1 | Species), data = iris)
 #' compare_performance(m1, m2, m3)
 #'
+#' data(iris)
+#' lm1 <- lm(Sepal.Length ~ Species, data = iris)
+#' lm2 <- lm(Sepal.Length ~ Species + Petal.Length, data = iris)
+#' lm3 <- lm(Sepal.Length ~ Species * Petal.Length, data = iris)
+#' compare_performance(lm1, lm2, lm3)
+#'
 #' @export
 model_performance <- function(model, ...) {
   UseMethod("model_performance")
 }
 
 
-#' @importFrom insight is_model
+#' @importFrom insight is_model all_models_equal
+#' @importFrom bayestestR bayesfactor_models
 #' @rdname model_performance
 #' @export
 compare_performance <- function(..., metrics = "all") {
@@ -48,18 +63,27 @@ compare_performance <- function(..., metrics = "all") {
     object_names <- object_names[supported_models]
   }
 
-  m <- lapply(objects, function(.x) {
+  m <- mapply(function(.x, .y) {
     dat <- model_performance(.x, metrics = metrics)
-    cbind(data.frame(class = class(.x)[1], stringsAsFactors = FALSE), dat)
-  })
+    cbind(data.frame(Model = as.character(.y), Type = class(.x)[1], stringsAsFactors = FALSE), dat)
+  }, objects, object_names, SIMPLIFY = FALSE)
+
+
+  # check for identical model class, for bayesfactor
+  BFs <- NULL
+  if (insight::all_models_equal(...)) {
+    BFs <- tryCatch({
+      bayestestR::bayesfactor_models(..., denominator = 1, verbose = FALSE)
+    },
+    error = function(e) { NULL })
+  }
 
   dfs <- Reduce(function(x, y) merge(x, y, all = TRUE), m)
 
-  cbind(
-    data.frame(
-      name = unlist(lapply(object_names, as.character)),
-      stringsAsFactors = FALSE
-    ),
-    dfs
-  )
+  if (!is.null(BFs)) {
+    dfs$BF <- BFs$BF
+    dfs$BF[dfs$Model == object_names[1]] <- NA
+  }
+
+  dfs[order(sapply(object_names, as.character), dfs$Model), ]
 }

@@ -30,6 +30,7 @@ r2_nagelkerke <- function(model) {
     n <- insight::n_obs(model)
   } else {
     n <- attr(L.full, "nobs")
+    if (is.null(n)) n <- insight::n_obs(model)
   }
 
   r2_nagelkerke <- as.vector((1 - exp((D.full - D.base) / n)) / (1 - exp(-D.base / n)))
@@ -42,7 +43,15 @@ r2_nagelkerke <- function(model) {
 
 #' @export
 r2_nagelkerke.glm <- function(model) {
-  r2_nagelkerke <- r2_coxnell(model) / (1 - exp(-model$null / insight::n_obs(model)))
+  r2_nagelkerke <- r2_coxsnell(model) / (1 - exp(-model$null.deviance / insight::n_obs(model)))
+  names(r2_nagelkerke) <- "Nagelkerke's R2"
+  r2_nagelkerke
+}
+
+
+#' @export
+r2_nagelkerke.BBreg <- function(model) {
+  r2_nagelkerke <- r2_coxsnell(model) / (1 - exp(-model$null.deviance / insight::n_obs(model)))
   names(r2_nagelkerke) <- "Nagelkerke's R2"
   r2_nagelkerke
 }
@@ -67,6 +76,36 @@ r2_nagelkerke.vglm <- function(model) {
 #' @export
 r2_nagelkerke.clm <- function(model) {
   l_base <- stats::logLik(stats::update(model, ~1))
+  .r2_nagelkerke(model, l_base)
+}
+
+#' @export
+r2_nagelkerke.censReg <- function(model) {
+  l_base <- stats::logLik(stats::update(model, ~1))
+  .r2_nagelkerke(model, l_base)
+}
+
+#' @export
+r2_nagelkerke.truncreg <- function(model) {
+  l_base <- stats::logLik(stats::update(model, ~1))
+  .r2_nagelkerke(model, l_base)
+}
+
+#' @export
+r2_nagelkerke.coxph <- function(model) {
+  l_base <- model$loglik[1]
+  .r2_nagelkerke(model, l_base)
+}
+
+#' @export
+r2_nagelkerke.survreg <- function(model) {
+  l_base <- model$loglik[1]
+  .r2_nagelkerke(model, l_base)
+}
+
+#' @export
+r2_nagelkerke.crch <- function(model) {
+  l_base <- model$loglik[1]
   .r2_nagelkerke(model, l_base)
 }
 

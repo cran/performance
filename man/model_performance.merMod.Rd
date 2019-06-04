@@ -9,7 +9,7 @@
 \arguments{
 \item{model}{Object of class \code{merMod}, \code{glmmTMB}, \code{lme} or \code{MixMod}.}
 
-\item{metrics}{Can be \code{"all"} or a character vector of metrics to be computed (some of \code{c("AIC", "BIC", "R2", "ICC", "RMSE")}).}
+\item{metrics}{Can be \code{"all"} or a character vector of metrics to be computed (some of \code{c("AIC", "BIC", "R2", "ICC", "RMSE", "LOGLOSS", "SCORE")}).}
 
 \item{...}{Arguments passed to or from other methods.}
 }
@@ -18,6 +18,14 @@ A data frame (with one row) and one column per "index" (see \code{metrics}).
 }
 \description{
 Compute indices of model performance for mixed models.
+}
+\details{
+This method returns the \emph{adjusted ICC} only, as this is typically
+  of interest when judging the variance attributed to the random effects part
+  of the model (see also \code{\link{icc}}).
+  \cr \cr
+  Furthermore, see 'Details' in \code{\link{model_performance.lm}} for
+  more details on returned indices.
 }
 \examples{
 library(lme4)

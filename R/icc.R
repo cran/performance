@@ -1,13 +1,11 @@
-#' The Intraclass Correlation Coefficient (ICC) for mixed models
+#' Intraclass Correlation Coefficient (ICC)
 #'
-#' @description This function calculates the intraclass-correlation coefficient
-#'  (icc) - sometimes also called \emph{variance partition coefficient}
-#'  (vpc) - for mixed effects models. The ICC is calculated for \code{merMod}
+#' This function calculates the intraclass-correlation coefficient
+#'  (ICC) - sometimes also called \emph{variance partition coefficient}
+#'  (VPC) - for mixed effects models. The ICC is calculated for \code{merMod}
 #'  (\pkg{lme4}), \code{glmmTMB} (\pkg{glmmTMB}), \code{MixMod} (\pkg{GLMMadpative}),
 #'  \code{lme} (\pkg{nlme}), \code{mixed} (\pkg{afex}), and \code{stanreg}
-#'  (\pkg{rstanarm}) objects and can be interpreted as \dQuote{the proportion
-#'  of the variance explained by the grouping structure in the population}
-#'  \cite{(Hox 2010: 15)}. For models fitted with the \pkg{brms}-package,
+#'  (\pkg{rstanarm}) objects. For models fitted with the \pkg{brms}-package,
 #'  a variance decomposition based on the posterior predictive distribution
 #'  is calculated (see 'Details').
 #'
@@ -34,7 +32,18 @@
 #'  }
 #'
 #' @details
-#' \strong{Calculation of the ICC}
+#' \strong{Interpretation}
+#'  \cr \cr
+#'  The ICC can be interpreted as \dQuote{the proportion of the variance explained
+#'  by the grouping structure in the population}. This index goes from 0, if the
+#'  grouping conveys no information, to 1, if all observations in a group are
+#'  identical (Gelman \& Hill, 2007, p. 258). In other word, the ICC
+#'  \dQuote{can also be interpreted as the expected correlation between two
+#'  randomly drawn units that are in the same group} \cite{(Hox 2010: 15)},
+#'  altough this definition might not apply to mixed models with more complex
+#'  random effects structures.
+#'  \cr \cr
+#' \strong{Calculation}
 #'  \cr \cr
 #'  The ICC is calculated by dividing the random effect variance,
 #'  \ifelse{html}{\out{&sigma;<sup>2</sup><sub>i</sub>}}{\eqn{\sigma^2_i}}, by
@@ -43,9 +52,9 @@
 #'  \cr \cr
 #'  \strong{Adjusted and conditional ICC}
 #'  \cr \cr
-#'  \code{icc()} calculates an adjusted and conditional ICC, which take
+#'  \code{icc()} calculates an adjusted and conditional ICC, which both take
 #'  all sources of uncertainty (i.e. of \emph{all random effects}) into account. While
-#'  the adjusted ICC only relates to the random effects, the conditional ICC
+#'  the \emph{adjusted ICC} only relates to the random effects, the \emph{conditional ICC}
 #'  also takes the fixed effects variances into account (see \cite{Nakagawa et al. 2017}).
 #'  Typically, the \emph{adjusted} ICC is of interest when the analysis of random
 #'  effects is of interest. \code{icc()} returns a meaningful ICC also for more
@@ -63,7 +72,7 @@
 #'  much, e.g., a level-2 variable explains the portion of variation in the grouping
 #'  structure (random intercept).
 #'  \cr \cr
-#'  \strong{ICC for specific group-levels }
+#'  \strong{ICC for specific group-levels}
 #'  \cr \cr
 #'  The proportion of variance for specific levels related to  each other
 #'  (e.g., similarity of level-1-units within level-2-units or level-2-units
@@ -112,19 +121,13 @@ icc <- function(model, ...) {
 #' @export
 icc.default <- function(model, ...) {
   if (!insight::model_info(model)$is_mixed) {
-    stop("'model' has no random effects.", call. = FALSE)
+    warning("'model' has no random effects.", call. = FALSE)
+    return(NULL)
   }
 
   vars <- tryCatch(
     {
       insight::get_variance(model, name_fun = "icc()", name_full = "ICC")
-    },
-    warning = function(e) {
-      if (inherits(e, c("simpleWarning", "warning"))) {
-        insight::print_color(e$message, "red")
-        cat("\n")
-      }
-      NULL
     },
     error = function(e) {
       if (inherits(e, c("simpleError", "error"))) {
@@ -137,6 +140,16 @@ icc.default <- function(model, ...) {
 
 
   if (is.null(vars) || all(is.na(vars))) {
+    return(NA)
+  }
+
+
+  # check if we have successfully computed all variance components...
+
+  components <- c("var.fixed", "var.random", "var.residual")
+  check_elements <- sapply(components, function(.i) !is.null(vars[[.i]]))
+
+  if (!all(check_elements)) {
     return(NA)
   }
 
@@ -162,31 +175,24 @@ icc.default <- function(model, ...) {
 #' @rdname icc
 #' @export
 icc.brmsfit <- function(model, re.form = NULL, robust = TRUE, ci = .95, ...) {
-
-  ## TODO enable this once it is fixed in insight
+  mi <- insight::model_info(model)
 
   # for multivariate response models, we need a more complicated check...
-  # if (insight::is_multivariate(model)) {
-  #   resp <- insight::find_response(model)
-  #
-  #   is.mixed <- sapply(resp, function(i) {
-  #     insight::model_info(model)[[resp]]$is_mixed
-  #   }, simplify = TRUE)
-  #
-  #   if (!any(is.mixed)) {
-  #     stop("'model' has no random effects.", call. = FALSE)
-  #   }
-  # } else if (!insight::model_info(model)$is_mixed) {
-  #   stop("'model' has no random effects.", call. = FALSE)
-  # }
-
-
-  if (!insight::is_multivariate(model) && !insight::model_info(model)$is_mixed) {
-    stop("'model' has no random effects.", call. = FALSE)
+  if (insight::is_multivariate(model)) {
+    resp <- insight::find_response(model)
+    is.mixed <- sapply(resp, function(i) mi[[i]]$is_mixed, simplify = TRUE)
+    if (!any(is.mixed)) {
+      warning("'model' has no random effects.", call. = FALSE)
+      return(NULL)
+    }
+  } else if (!mi$is_mixed) {
+    warning("'model' has no random effects.", call. = FALSE)
+    return(NULL)
   }
 
+
   if (!requireNamespace("brms", quietly = TRUE)) {
-    stop("Please install and load package `brms` first.", call. = FALSE)
+    stop("Package `brms` needed for this function to work. Please install it.", call. = FALSE)
   }
 
   PPD <- brms::posterior_predict(model, re.form = re.form, summary = FALSE)
@@ -221,6 +227,11 @@ icc.brmsfit <- function(model, re.form = NULL, robust = TRUE, ci = .95, ...) {
   attr(result, "ci") <- ci
   attr(result, "re.form") <- re.form
   attr(result, "ranef") <- model$ranef$group[1]
+
+  # remove data
+  attr(attr(result, "ci.var_rand_intercept"), "data") <- NULL
+  attr(attr(result, "ci.var_residual"), "data") <- NULL
+  attr(attr(result, "ci.var_total"), "data") <- NULL
 
   result
 }

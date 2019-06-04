@@ -3,15 +3,26 @@
 #' Compute indices of model performance for (general) linear models.
 #'
 #' @param model Object of class \code{stanreg} or \code{brmsfit}.
-#' @param metrics Can be \code{"all"} or a character vector of metrics to be computed (some of \code{c("LOOIC", "R2", "R2_adj")}).
-#' @param ci The Credible Interval level for R2.
+#' @param metrics Can be \code{"all"} or a character vector of metrics to be computed (some of \code{c("LOOIC", "WAIC", "R2", "R2_adj", "RMSE", "LOGLOSS", "SCORE")}).
 #' @param ... Arguments passed to or from other methods.
 #'
 #' @return A data frame (with one row) and one column per "index" (see \code{metrics}).
 #'
+#' @details See 'Details' in \code{\link{model_performance.lm}} for more
+#' details on returned indices.
+#'
 #' @examples
 #' library(rstanarm)
+#'
 #' model <- stan_glm(mpg ~ wt + cyl, data = mtcars, chains = 1, iter = 500)
+#' model_performance(model)
+#'
+#' model <- stan_glmer(
+#'   mpg ~ wt + cyl + (1 | gear),
+#'   data = mtcars,
+#'   chains = 1,
+#'   iter = 500
+#' )
 #' model_performance(model)
 #'
 #' @seealso \link{r2_bayes}
@@ -21,9 +32,9 @@
 #' @importFrom bayestestR map_estimate hdi
 #' @importFrom stats AIC BIC mad median sd setNames
 #' @export
-model_performance.stanreg <- function(model, metrics = "all", ci = .90, ...) {
+model_performance.stanreg <- function(model, metrics = "all", ...) {
   if (all(metrics == "all")) {
-    metrics <- c("LOOIC", "R2", "R2_adjusted")
+    metrics <- c("LOOIC", "WAIC", "R2", "R2_adjusted", "RMSE", "LOGLOSS", "SCORE")
   }
 
   algorithm <- insight::find_algorithm(model)
@@ -32,22 +43,41 @@ model_performance.stanreg <- function(model, metrics = "all", ci = .90, ...) {
     return(NULL)
   }
 
+  if (!requireNamespace("loo", quietly = TRUE)) {
+    stop("Package `loo` required for this function to work. Please install it.")
+  }
+
+  mi <- insight::model_info(model)
+
   out <- list()
   if ("LOOIC" %in% c(metrics)) {
     out <- append(out, looic(model))
   }
+  if ("WAIC" %in% c(metrics)) {
+    out$WAIC <- suppressWarnings(loo::waic(model)$estimates["waic", "Estimate"])
+  }
   if ("R2" %in% c(metrics)) {
     r2 <- .r2_posterior(model)
-    out <- c(out, .summarize_r2_bayes(r2$R2_Bayes, ci = ci, name = "R2_"))
-
-    if ("R2_Bayes_marginal" %in% names(r2)) {
-      out <- c(out, .summarize_r2_bayes(r2$R2_Bayes_marginal, ci = ci, name = "R2_marginal_"))
+    if (!is.null(r2) && !all(is.na(r2))) {
+      out <- c(out, .summarize_r2_bayes(r2$R2_Bayes, name = "R2"))
+      if ("R2_Bayes_marginal" %in% names(r2)) {
+        out <- c(out, .summarize_r2_bayes(r2$R2_Bayes_marginal, name = "R2_marginal"))
+      }
     }
   }
-  if ("R2_adjusted" %in% c(metrics)) {
-    if (model_info(model)$is_linear) {
-      out$R2_LOO_adjusted <- r2_loo(model)
-    }
+  if ("R2_adjusted" %in% c(metrics) && mi$is_linear) {
+    out$R2_LOO_adjusted <- r2_loo(model)
+  }
+  if ("RMSE" %in% c(metrics) && !mi$is_ordinal && !mi$is_categorical) {
+    out$RMSE <- performance_rmse(model)
+  }
+  if (("LOGLOSS" %in% metrics) && mi$is_binomial) {
+    out$LOGLOSS <- performance_logloss(model)
+  }
+  if (("SCORE" %in% metrics) && (mi$is_binomial || mi$is_count)) {
+    .scoring_rules <- performance_score(model)
+    if (!is.na(.scoring_rules$logarithmic)) out$SCORE_LOG <- .scoring_rules$logarithmic
+    if (!is.na(.scoring_rules$spherical)) out$SCORE_SPHERICAL <- .scoring_rules$spherical
   }
 
   # TODO: What with sigma and deviance?
@@ -63,26 +93,8 @@ model_performance.brmsfit <- model_performance.stanreg
 
 
 #' @keywords internal
-.summarize_r2_bayes <- function(r2_posterior, ci = 0.9, name = "R2_") {
-  out <- list()
-  out$Median <- stats::median(r2_posterior)
-  out$MAD <- stats::mad(r2_posterior)
-  out$Mean <- mean(r2_posterior)
-  out$SD <- stats::sd(r2_posterior)
-  out$MAP <- bayestestR::map_estimate(r2_posterior)
-
-  r2_ci <- bayestestR::hdi(r2_posterior, ci = ci)
-  if (nrow(r2_ci) > 1) {
-    # TODO: as this transformation is also used in parameters, maybe it would be good to put a function in bayestestR
-    hdi_low <- stats::setNames(r2_ci$CI_low, sprintf("CI_%i_low", r2_ci$CI))
-    hdi_high <- stats::setNames(r2_ci$CI_high, sprintf("CI_%i_high", r2_ci$CI))
-    names(hdi_high) <- paste0("CI_", names(hdi_high), "_high")
-    out <- append(out, as.list(c(hdi_low, hdi_high)))
-  } else {
-    out$CI_low <- r2_ci$CI_low
-    out$CI_high <- r2_ci$CI_high
-  }
-
-  names(out) <- paste0(name, names(out))
+.summarize_r2_bayes <- function(r2_posterior, name = "R2_") {
+  out <- list(mean(r2_posterior), stats::sd(r2_posterior))
+  names(out) <- paste0(name, c("", "_SE"))
   out
 }

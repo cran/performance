@@ -3,7 +3,7 @@
 \name{icc}
 \alias{icc}
 \alias{icc.brmsfit}
-\title{The Intraclass Correlation Coefficient (ICC) for mixed models}
+\title{Intraclass Correlation Coefficient (ICC)}
 \usage{
 icc(model, ...)
 
@@ -33,18 +33,27 @@ A list with two values, the adjusted and conditional ICC. For models
 }
 \description{
 This function calculates the intraclass-correlation coefficient
- (icc) - sometimes also called \emph{variance partition coefficient}
- (vpc) - for mixed effects models. The ICC is calculated for \code{merMod}
+ (ICC) - sometimes also called \emph{variance partition coefficient}
+ (VPC) - for mixed effects models. The ICC is calculated for \code{merMod}
  (\pkg{lme4}), \code{glmmTMB} (\pkg{glmmTMB}), \code{MixMod} (\pkg{GLMMadpative}),
  \code{lme} (\pkg{nlme}), \code{mixed} (\pkg{afex}), and \code{stanreg}
- (\pkg{rstanarm}) objects and can be interpreted as \dQuote{the proportion
- of the variance explained by the grouping structure in the population}
- \cite{(Hox 2010: 15)}. For models fitted with the \pkg{brms}-package,
+ (\pkg{rstanarm}) objects. For models fitted with the \pkg{brms}-package,
  a variance decomposition based on the posterior predictive distribution
  is calculated (see 'Details').
 }
 \details{
-\strong{Calculation of the ICC}
+\strong{Interpretation}
+ \cr \cr
+ The ICC can be interpreted as \dQuote{the proportion of the variance explained
+ by the grouping structure in the population}. This index goes from 0, if the
+ grouping conveys no information, to 1, if all observations in a group are
+ identical (Gelman \& Hill, 2007, p. 258). In other word, the ICC
+ \dQuote{can also be interpreted as the expected correlation between two
+ randomly drawn units that are in the same group} \cite{(Hox 2010: 15)},
+ altough this definition might not apply to mixed models with more complex
+ random effects structures.
+ \cr \cr
+\strong{Calculation}
  \cr \cr
  The ICC is calculated by dividing the random effect variance,
  \ifelse{html}{\out{&sigma;<sup>2</sup><sub>i</sub>}}{\eqn{\sigma^2_i}}, by
@@ -53,9 +62,9 @@ This function calculates the intraclass-correlation coefficient
  \cr \cr
  \strong{Adjusted and conditional ICC}
  \cr \cr
- \code{icc()} calculates an adjusted and conditional ICC, which take
+ \code{icc()} calculates an adjusted and conditional ICC, which both take
  all sources of uncertainty (i.e. of \emph{all random effects}) into account. While
- the adjusted ICC only relates to the random effects, the conditional ICC
+ the \emph{adjusted ICC} only relates to the random effects, the \emph{conditional ICC}
  also takes the fixed effects variances into account (see \cite{Nakagawa et al. 2017}).
  Typically, the \emph{adjusted} ICC is of interest when the analysis of random
  effects is of interest. \code{icc()} returns a meaningful ICC also for more
@@ -73,7 +82,7 @@ This function calculates the intraclass-correlation coefficient
  much, e.g., a level-2 variable explains the portion of variation in the grouping
  structure (random intercept).
  \cr \cr
- \strong{ICC for specific group-levels }
+ \strong{ICC for specific group-levels}
  \cr \cr
  The proportion of variance for specific levels related to  each other
  (e.g., similarity of level-1-units within level-2-units or level-2-units

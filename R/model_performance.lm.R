@@ -1,12 +1,26 @@
-#' Performance of (Generalized) Linear Models
+#' Performance of Regression Models
 #'
-#' Compute indices of model performance for (generalized) linear models.
+#' Compute indices of model performance for regression models.
 #'
-#' @param model Object of class \code{lm} or \code{glm}.
-#' @param metrics Can be \code{"all"} or a character vector of metrics to be computed (some of \code{c("AIC", "BIC", "R2", "RMSE")}).
+#' @param model A model.
+#' @param metrics Can be \code{"all"} or a character vector of metrics to be computed (some of \code{c("AIC", "BIC", "R2", "RMSE", "LOGLOSS", "PCP", "SCORE")}).
+#' @param verbose Toggle off warnings.
 #' @param ... Arguments passed to or from other methods.
 #'
 #' @return A data frame (with one row) and one column per "index" (see \code{metrics}).
+#'
+#' @details Depending on \code{model}, following indices are computed:
+#' \itemize{
+#'   \item{\strong{AIC}} {Akaike's Information Criterion, see \code{\link[stats]{AIC}}}
+#'   \item{\strong{BIC}} {Bayesian Information Criterion, see \code{\link[stats]{BIC}}}
+#'   \item{\strong{R2}} {r-squared value, see \code{\link{r2}}}
+#'   \item{\strong{R2_adj}} {adjusted r-squared, see \code{\link{r2}}}
+#'   \item{\strong{RMSE}} {root mean squared error, see \code{\link{performance_rmse}}}
+#'   \item{\strong{LOGLOSS}} {Log-loss, see \code{\link{performance_logloss}}}
+#'   \item{\strong{SCORE_LOG}} {score of logarithmic proper scoring rule, see \code{\link{performance_score}}}
+#'   \item{\strong{SCORE_SPHERICAL}} {score of spherical proper scoring rule, see \code{\link{performance_score}}}
+#'   \item{\strong{PCP}} {percentage of correct predictions, see \code{\link{performance_pcp}}}
+#' }
 #'
 #' @examples
 #' model <- lm(mpg ~ wt + cyl, data = mtcars)
@@ -15,15 +29,15 @@
 #' model <- glm(vs ~ wt + mpg, data = mtcars, family = "binomial")
 #' model_performance(model)
 #'
-#' @importFrom stats AIC BIC
 #' @importFrom insight model_info
+#' @importFrom stats AIC BIC
 #' @export
-model_performance.lm <- function(model, metrics = "all", ...) {
+model_performance.lm <- function(model, metrics = "all", verbose = TRUE, ...) {
   if (all(metrics == "all")) {
-    metrics <- c("AIC", "BIC", "R2", "R2_adj", "RMSE")
+    metrics <- c("AIC", "BIC", "R2", "R2_adj", "RMSE", "LOGLOSS", "PCP", "SCORE")
   }
 
-  minfo <- insight::model_info(model)
+  mi <- insight::model_info(model)
 
   out <- list()
   if ("AIC" %in% metrics) {
@@ -35,8 +49,21 @@ model_performance.lm <- function(model, metrics = "all", ...) {
   if ("R2" %in% metrics) {
     out <- c(out, r2(model))
   }
-  if ("RMSE" %in% metrics && minfo$is_linear) {
-    out$RMSE <- rmse(model)
+  if ("RMSE" %in% metrics) {
+    out$RMSE <- performance_rmse(model, verbose = verbose)
+  }
+  if (("LOGLOSS" %in% metrics) && mi$is_binomial) {
+    .logloss <- performance_logloss(model, verbose = verbose)
+    if (!is.na(.logloss)) out$LOGLOSS <- .logloss
+  }
+  if (("SCORE" %in% metrics) && (mi$is_binomial || mi$is_count)) {
+    .scoring_rules <- performance_score(model, verbose = verbose)
+    if (!is.na(.scoring_rules$logarithmic)) out$SCORE_LOG <- .scoring_rules$logarithmic
+    if (!is.na(.scoring_rules$spherical)) out$SCORE_SPHERICAL <- .scoring_rules$spherical
+  }
+
+  if (("PCP" %in% metrics) && mi$is_binomial && !mi$is_ordinal) {
+    out$PCP <- performance_pcp(model)$pcp_model
   }
 
   # TODO: What with sigma and deviance?
@@ -49,3 +76,51 @@ model_performance.lm <- function(model, metrics = "all", ...) {
 #' @rdname model_performance.lm
 #' @export
 model_performance.glm <- model_performance.lm
+
+#' @export
+model_performance.betareg <- model_performance.lm
+
+#' @export
+model_performance.censReg <- model_performance.lm
+
+#' @export
+model_performance.clm <- model_performance.lm
+
+#' @export
+model_performance.clm2 <- model_performance.lm
+
+#' @export
+model_performance.coxph <- model_performance.lm
+
+#' @export
+model_performance.felm <- model_performance.lm
+
+#' @export
+model_performance.iv_robust <- model_performance.lm
+
+#' @export
+model_performance.ivreg <- model_performance.lm
+
+#' @export
+model_performance.mlogit <- model_performance.lm
+
+#' @export
+model_performance.multinom <- model_performance.lm
+
+#' @export
+model_performance.plm <- model_performance.lm
+
+#' @export
+model_performance.polr <- model_performance.lm
+
+#' @export
+model_performance.survreg <- model_performance.lm
+
+#' @export
+model_performance.svyglm <- model_performance.lm
+
+#' @export
+model_performance.truncreg <- model_performance.lm
+
+#' @export
+model_performance.vglm <- model_performance.lm

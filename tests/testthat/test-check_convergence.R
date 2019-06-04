@@ -7,11 +7,11 @@ if (require("testthat") && require("performance") && require("lme4")) {
   cbpp$x <- rnorm(nrow(cbpp))
   cbpp$x2 <- runif(nrow(cbpp))
 
-  model <- glmer(
+  model <- suppressWarnings(glmer(
     cbind(incidence, size - incidence) ~ period + x + x2 + (1 + x | herd),
     data = cbpp,
     family = binomial()
-  )
+  ))
 
   test_that("check_convergence", {
     expect_true(check_convergence(model))

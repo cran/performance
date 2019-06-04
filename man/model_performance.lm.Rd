@@ -3,16 +3,20 @@
 \name{model_performance.lm}
 \alias{model_performance.lm}
 \alias{model_performance.glm}
-\title{Performance of (Generalized) Linear Models}
+\title{Performance of Regression Models}
 \usage{
-\method{model_performance}{lm}(model, metrics = "all", ...)
+\method{model_performance}{lm}(model, metrics = "all", verbose = TRUE,
+  ...)
 
-\method{model_performance}{glm}(model, metrics = "all", ...)
+\method{model_performance}{glm}(model, metrics = "all", verbose = TRUE,
+  ...)
 }
 \arguments{
-\item{model}{Object of class \code{lm} or \code{glm}.}
+\item{model}{A model.}
 
-\item{metrics}{Can be \code{"all"} or a character vector of metrics to be computed (some of \code{c("AIC", "BIC", "R2", "RMSE")}).}
+\item{metrics}{Can be \code{"all"} or a character vector of metrics to be computed (some of \code{c("AIC", "BIC", "R2", "RMSE", "LOGLOSS", "PCP", "SCORE")}).}
+
+\item{verbose}{Toggle off warnings.}
 
 \item{...}{Arguments passed to or from other methods.}
 }
@@ -20,7 +24,21 @@
 A data frame (with one row) and one column per "index" (see \code{metrics}).
 }
 \description{
-Compute indices of model performance for (generalized) linear models.
+Compute indices of model performance for regression models.
+}
+\details{
+Depending on \code{model}, following indices are computed:
+\itemize{
+  \item{\strong{AIC}} {Akaike's Information Criterion, see \code{\link[stats]{AIC}}}
+  \item{\strong{BIC}} {Bayesian Information Criterion, see \code{\link[stats]{BIC}}}
+  \item{\strong{R2}} {r-squared value, see \code{\link{r2}}}
+  \item{\strong{R2_adj}} {adjusted r-squared, see \code{\link{r2}}}
+  \item{\strong{RMSE}} {root mean squared error, see \code{\link{performance_rmse}}}
+  \item{\strong{LOGLOSS}} {Log-loss, see \code{\link{performance_logloss}}}
+  \item{\strong{SCORE_LOG}} {score of logarithmic proper scoring rule, see \code{\link{performance_score}}}
+  \item{\strong{SCORE_SPHERICAL}} {score of spherical proper scoring rule, see \code{\link{performance_score}}}
+  \item{\strong{PCP}} {percentage of correct predictions, see \code{\link{performance_pcp}}}
+}
 }
 \examples{
 model <- lm(mpg ~ wt + cyl, data = mtcars)

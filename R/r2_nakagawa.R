@@ -36,13 +36,6 @@ r2_nakagawa <- function(model) {
     {
       insight::get_variance(model, name_fun = "r2()", name_full = "r-squared")
     },
-    warning = function(e) {
-      if (inherits(e, c("simpleWarning", "warning"))) {
-        insight::print_color(e$message, "red")
-        cat("\n")
-      }
-      NULL
-    },
     error = function(e) {
       if (inherits(e, c("simpleError", "error"))) {
         insight::print_color(e$message, "red")
@@ -52,7 +45,17 @@ r2_nakagawa <- function(model) {
     }
   )
 
+
   if (is.null(vars) || all(is.na(vars))) {
+    return(NA)
+  }
+
+  # check if we have successfully computed all variance components...
+
+  components <- c("var.fixed", "var.random", "var.residual")
+  check_elements <- sapply(components, function(.i) !is.null(vars[[.i]]))
+
+  if (!all(check_elements)) {
     return(NA)
   }
 
@@ -61,6 +64,8 @@ r2_nakagawa <- function(model) {
   r2_marginal <- vars$var.fixed / (vars$var.fixed + vars$var.random + vars$var.residual)
   r2_conditional <- (vars$var.fixed + vars$var.random) / (vars$var.fixed + vars$var.random + vars$var.residual)
 
+  names(r2_conditional) <- "Conditional R2"
+  names(r2_marginal) <- "Marginal R2"
 
   structure(
     class = "r2_nakagawa",

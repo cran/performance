@@ -1,3 +1,74 @@
+#' @export
+print.check_outliers <- function(x, ...) {
+  outliers <- which(x[[".outliers"]])
+  if (length(outliers) >= 1) {
+    o <- paste0(" (cases ", paste0(outliers, collapse = ", "), ")")
+    insight::print_color(sprintf("Warning: Outliers detected%s.\n", o), 'red')
+  } else {
+    insight::print_color("OK: No outliers detected.\n", 'green')
+  }
+}
+
+
+
+#' @export
+print.check_model <- function(x, ...) {
+  if (!requireNamespace("see", quietly = TRUE)) {
+    stop("Package 'see' required to plot model assumptions. Please install it.")
+  }
+  NextMethod()
+}
+
+
+
+#' @importFrom insight print_color
+#' @export
+print.check_distribution <- function(x, ...) {
+  insight::print_color("# Distribution of Model Family\n\n", "blue")
+
+  x1 <- x[order(x$p_Residuals, decreasing = TRUE)[1:3], c(1, 2)]
+  x1 <- x1[x1$p_Residuals > 0, ]
+  x1$p_Residuals <- sprintf("%g%%", 100 * x1$p_Residuals)
+  colnames(x1) <- c("Distribution", "Probability")
+
+  insight::print_color("Predicted Distribution of Residuals\n\n", "red")
+  print.data.frame(x1, row.names = FALSE, ...)
+
+  x2 <- x[order(x$p_Response, decreasing = TRUE)[1:3], c(1, 3)]
+  x2 <- x2[x2$p_Response > 0, ]
+  x2$p_Response <- sprintf("%g%%", 100 * x2$p_Response)
+  colnames(x2) <- c("Distribution", "Probability")
+
+  insight::print_color("\nPredicted Distribution of Response\n\n", "red")
+  print.data.frame(x2, row.names = FALSE, ...)
+}
+
+
+
+#' @importFrom bayestestR area_under_curve
+#' @importFrom insight print_color
+#' @export
+print.performance_roc <- function(x, ...) {
+  if (length(unique(x$Model)) == 1) {
+    cat(sprintf("AUC: %.2f%%\n", 100 * bayestestR::area_under_curve(x$Sensivity, x$Specifity)))
+  } else {
+    insight::print_color("# Area under Curve\n\n", "blue")
+
+    dat <- split(x, f = x$Model)
+    max_space <- max(nchar(x$Model))
+
+    for (i in 1:length(dat)) {
+      cat(sprintf(
+        "  %*s: %.2f%%\n",
+        max_space,
+        names(dat)[i],
+        100 * bayestestR::area_under_curve(dat[[i]]$Sensivity, dat[[i]]$Specifity)
+      ))
+    }
+  }
+}
+
+
 #' @importFrom insight print_color
 #' @export
 print.item_difficulty <- function(x, ...) {
@@ -12,18 +83,17 @@ print.item_difficulty <- function(x, ...) {
 }
 
 
-
 #' @importFrom insight print_color
 #' @export
-print.error_rate <- function(x, digits = 2, ...) {
-  insight::print_color("# Error Rate of Logistic Regression Model\n\n", "blue")
-  cat(sprintf("  Full model: %.2f%%\n", 100 * x$error.model))
-  cat(sprintf("  Null model: %.2f%%\n", 100 * x$error.null))
+print.performance_pcp <- function(x, digits = 2, ...) {
+  insight::print_color("# Percentage of Correct Predictions from Logistic Regression Model\n\n", "blue")
+  cat(sprintf("  Full model: %.2f%% [%.2f%% - %.2f%%]\n", 100 * x$pcp_model, 100 * x$model_ci_low, 100 * x$model_ci_high))
+  cat(sprintf("  Null model: %.2f%% [%.2f%% - %.2f%%]\n", 100 * x$pcp_m0, 100 * x$null_ci_low, 100 * x$null_ci_high))
 
   insight::print_color("\n# Likelihood-Ratio-Test\n\n", "blue")
 
-  v1 <- sprintf("%.3f", x$lrt.chisq)
-  v2 <- sprintf("%.3f", x$lrt.p)
+  v1 <- sprintf("%.3f", x$lrt_chisq)
+  v2 <- sprintf("%.3f", x$lrt_p)
 
   space <- max(nchar(c(v1, v2)))
 
@@ -52,8 +122,13 @@ print.looic <- function(x, digits = 2, ...) {
 
 #' @importFrom insight print_color
 #' @export
-print.r2_lm <- function(x, digits = 3, ...) {
-  insight::print_color("# R2 for linear models\n\n", "blue")
+print.r2_generic <- function(x, digits = 3, ...) {
+  model_type <- attr(x, "model_type")
+  if (!is.null(model_type)) {
+    insight::print_color(sprintf("# R2 for %s Regression\n\n", model_type), "blue")
+  } else {
+    insight::print_color("# R2\n\n", "blue")
+  }
 
   out <- paste0(c(
     sprintf("       R2: %.*f", digits, x$R2),
@@ -298,75 +373,16 @@ print.icc_decomposed <- function(x, digits = 2, ...) {
 
 #' @export
 print.binned_residuals <- function(x, ...) {
-  if (!requireNamespace("ggplot2", quietly = TRUE)) {
-    stop("Package `ggplot2` required.", call. = F)
+  if (!requireNamespace("see", quietly = TRUE)) {
+    stop("Package 'see' required to plot binned residuals. Please install it.")
   }
-
-  if (!requireNamespace("graphics", quietly = TRUE)) {
-    stop("Package `graphics` required.", call. = F)
-  }
-
-  if (!requireNamespace("scales", quietly = TRUE)) {
-    stop("Package `scales` required.", call. = F)
-  }
-
-  x$se.lo <- -x$se
-  if (length(unique(x$group)) > 1)
-    ltitle <- "Within error bounds"
-  else
-    ltitle <- NULL
-
-  term <- attr(x, "term", exact = TRUE)
-
-  if (is.null(term))
-    xtitle <- sprintf("Estimated Probability of %s", attr(x, "resp_var", exact = TRUE))
-  else
-    xtitle = term
-
-  p <- ggplot2::ggplot(data = x, ggplot2::aes_string(x = "xbar")) +
-    ggplot2::geom_abline(slope = 0, intercept = 0, colour = "grey80")
-
-  if (!is.null(term)) {
-    p <- p +
-      ggplot2::stat_smooth(
-        ggplot2::aes_string(y = "ybar"),
-        method = "loess",
-        se = FALSE,
-        colour = "#00b159",
-        size = .5
-      )
-  }
-
-  p <- p +
-    ggplot2::geom_ribbon(ggplot2::aes_string(ymin = -Inf, ymax = "se.lo"), alpha = .1 , fill = "grey70") +
-    ggplot2::geom_ribbon(ggplot2::aes_string(ymin = "se", ymax = Inf), alpha = .1 , fill = "grey70") +
-    ggplot2::geom_line(ggplot2::aes_string(y = "se"), colour = "grey70") +
-    ggplot2::geom_line(ggplot2::aes_string(y = "se.lo"), colour = "grey70") +
-    ggplot2::theme_bw() +
-    ggplot2::scale_color_manual(values = c("#d11141", "#00aedb")) +
-    ggplot2::labs(
-      y = "Average residual",
-      x = xtitle,
-      colour = ltitle
-    )
-
-  if (is.null(term)) {
-    p <- p + ggplot2::scale_x_continuous(labels = scales::percent)
-  }
-
-  if (is.null(ltitle)) {
-    p <- p + ggplot2::geom_point(ggplot2::aes_string(y = "ybar"))
-  } else {
-    p <- p + ggplot2::geom_point(ggplot2::aes_string(y = "ybar", colour = "group"))
-  }
-
-  suppressWarnings(graphics::plot(p))
+  NextMethod()
 }
 
 
 
 #' @export
-print.hoslem_test <- function(x, ...) {
+print.performance_hosmer <- function(x, ...) {
   insight::print_color("# Hosmer-Lemeshow Goodness-of-Fit Test\n\n", "blue")
 
   v1 <- sprintf("%.3f", x$chisq)
@@ -383,4 +399,82 @@ print.hoslem_test <- function(x, ...) {
     message("Summary: model seems to fit well.")
   else
     message("Summary: model does not fit well.")
+}
+
+
+#' @export
+print.performance_accuracy <- function(x, ...) {
+  # headline
+  insight::print_color("# Accuracy of Model Predictions\n\n", "blue")
+
+  # statistics
+  cat(sprintf("Accuracy: %.2f%%\n", 100 * x$accuracy))
+  cat(sprintf("      SE: %.2f%%-points\n", 100 * x$std.error))
+  cat(sprintf("  Method: %s\n", x$stat))
+}
+
+
+#' @export
+print.performance_score <- function(x, ...) {
+  # headline
+  insight::print_color("# Proper Scoring Rules\n\n", "blue")
+
+  results <- format(
+    c(
+      sprintf("%.4f", x$logarithmic),
+      sprintf("%.4f", x$quadratic),
+      sprintf("%.4f", x$spherical)
+    ),
+    justify = "right")
+
+  cat(sprintf("logarithmic: %s\n", results[1]))
+  cat(sprintf("  quadratic: %s\n", results[2]))
+  cat(sprintf("  spherical: %s\n", results[3]))
+}
+
+
+#' @export
+print.check_collinearity <- function(x, ...) {
+  insight::print_color("# Check for Multicollinearity\n", "blue")
+
+  if ("Component" %in% colnames(x)) {
+    comp <- split(x, x$Component)
+    for (i in 1:length(comp)) {
+      cat(paste0("\n* ", comp[[i]]$Component[1], " component:\n"))
+      .print_collinearity(comp[[i]][, 1:3])
+    }
+  } else {
+    .print_collinearity(x)
+  }
+}
+
+
+.print_collinearity <- function(x) {
+  vifs <- x$VIF
+
+  x$VIF <- sprintf("%.2f", x$VIF)
+  x$SE_factor <- sprintf("%.2f", x$SE_factor)
+
+  colnames(x)[3] <- "Increased SE"
+
+  low_corr <- which(vifs < 5)
+  if (length(low_corr)) {
+    cat("\n")
+    insight::print_color("Low Correlation\n\n", "green")
+    print.data.frame(x[low_corr, ], row.names = FALSE)
+  }
+
+  mid_corr <- which(vifs >= 5 & vifs < 10)
+  if (length(mid_corr)) {
+    cat("\n")
+    insight::print_color("Moderate Correlation\n\n", "yellow")
+    print.data.frame(x[mid_corr, ], row.names = FALSE)
+  }
+
+  high_corr <- which(vifs >= 10)
+  if (length(high_corr)) {
+    cat("\n")
+    insight::print_color("High Correlation\n\n", "red")
+    print.data.frame(x[high_corr, ], row.names = FALSE)
+  }
 }

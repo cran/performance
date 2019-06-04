@@ -48,7 +48,7 @@ appropriate” r-squared for the given model.
 ``` r
 model <- lm(mpg ~ wt + cyl, data = mtcars)
 r2(model)
-#> # R2 for linear models
+#> # R2 for Linear Regression
 #> 
 #>        R2: 0.830
 #>   adj. R2: 0.819
@@ -94,7 +94,7 @@ r2(model)
 #> # Bayesian R2 with Standard Error
 #> 
 #>   Conditional R2: 0.954 [0.002]
-#>      Marginal R2: 0.412 [0.119]
+#>      Marginal R2: 0.410 [0.123]
 
 library(lme4)
 model <- lmer(Reaction ~ Days + (1 + Days | Subject), data = sleepstudy)
@@ -141,14 +141,14 @@ icc(model)
 #> Conditioned on: all random effects
 #> 
 #> ## Variance Ratio (comparable to ICC)
-#> Ratio: 0.39  CI 95%: [-0.57 0.78]
+#> Ratio: 0.39  CI 95%: [-0.55 0.78]
 #> 
 #> ## Variances of Posterior Predicted Distribution
-#> Conditioned on fixed effects: 22.79  CI 95%: [ 8.48 57.73]
-#> Conditioned on rand. effects: 37.70  CI 95%: [25.08 55.43]
+#> Conditioned on fixed effects: 22.96  CI 95%: [ 8.52 58.02]
+#> Conditioned on rand. effects: 37.84  CI 95%: [24.84 56.64]
 #> 
 #> ## Difference in Variances
-#> Difference: 14.42  CI 95%: [-18.82 36.07]
+#> Difference: 14.21  CI 95%: [-19.82 35.66]
 ```
 
 ## Model diagnostics
@@ -216,7 +216,7 @@ library(lme4)
 data(sleepstudy)
 
 # prepare data
-set.seed(1)
+set.seed(123)
 sleepstudy$mygrp <- sample(1:5, size = 180, replace = TRUE)
 sleepstudy$mysubgrp <- NA
 for (i in 1:5) {
@@ -260,9 +260,9 @@ m2 <- glm(vs ~ wt + mpg, data = mtcars, family = "binomial")
 model_performance(m2)
 ```
 
-|  AIC |  BIC | R2\_Tjur |
-| ---: | ---: | -------: |
-| 31.3 | 35.7 |     0.48 |
+|  AIC |  BIC | R2\_Tjur | RMSE | LOGLOSS | SCORE\_LOG | SCORE\_SPHERICAL |  PCP |
+| ---: | ---: | -------: | ---: | ------: | ---------: | ---------------: | ---: |
+| 31.3 | 35.7 |     0.48 | 0.89 |     0.4 |     \-14.9 |             0.09 | 0.74 |
 
 ### Linear mixed model
 
@@ -272,21 +272,27 @@ m3 <- lmer(Reaction ~ Days + (1 + Days | Subject), data = sleepstudy)
 model_performance(m3)
 ```
 
-|  AIC |  BIC | R2\_conditional | R2\_marginal | ICC\_adjusted | ICC\_conditional |  RMSE |
-| ---: | ---: | --------------: | -----------: | ------------: | ---------------: | ----: |
-| 1756 | 1775 |             0.8 |         0.28 |          0.72 |             0.52 | 23.44 |
+|  AIC |  BIC | R2\_conditional | R2\_marginal |  ICC |  RMSE |
+| ---: | ---: | --------------: | -----------: | ---: | ----: |
+| 1756 | 1775 |             0.8 |         0.28 | 0.72 | 23.44 |
 
 ### Comparing different models
 
 ``` r
-compare_performance(m1, m2, m3)
+counts <- c(18, 17, 15, 20, 10, 20, 25, 13, 12)
+outcome <- gl(3, 1, 9)
+treatment <- gl(3, 3)
+m4 <- glm(counts ~ outcome + treatment, family = poisson())
+
+compare_performance(m1, m2, m3, m4)
 ```
 
-| name | class   |    AIC |    BIC |  RMSE |   R2 | R2\_adjusted | R2\_Tjur | R2\_conditional | R2\_marginal | ICC\_adjusted | ICC\_conditional |
-| :--- | :------ | -----: | -----: | ----: | ---: | -----------: | -------: | --------------: | -----------: | ------------: | ---------------: |
-| m1   | glm     |   31.3 |   35.7 |       |      |              |     0.48 |                 |              |               |                  |
-| m2   | lm      |  156.0 |  161.9 |  2.44 | 0.83 |         0.82 |          |                 |              |               |                  |
-| m3   | lmerMod | 1755.6 | 1774.8 | 23.44 |      |              |          |             0.8 |         0.28 |          0.72 |             0.52 |
+| name | class   |     AIC |     BIC |  RMSE | SCORE\_LOG | SCORE\_SPHERICAL |   R2 | R2\_adjusted | R2\_Tjur | LOGLOSS |  PCP | R2\_conditional | R2\_marginal |  ICC | R2\_Nagelkerke |
+| :--- | :------ | ------: | ------: | ----: | ---------: | ---------------: | ---: | -----------: | -------: | ------: | ---: | --------------: | -----------: | ---: | -------------: |
+| m1   | lm      |  156.01 |  161.87 |  2.44 |            |                  | 0.83 |         0.82 |          |         |      |                 |              |      |                |
+| m2   | glm     |   31.30 |   35.70 |  0.89 |     \-14.9 |             0.09 |      |              |     0.48 |     0.4 | 0.74 |                 |              |      |                |
+| m3   | lmerMod | 1755.63 | 1774.79 | 23.44 |            |                  |      |              |          |         |      |             0.8 |         0.28 | 0.72 |                |
+| m4   | glm     |   56.76 |   57.75 |  0.75 |      \-2.6 |             0.32 |      |              |          |         |      |                 |              |      |           0.66 |
 
 # References
 

@@ -25,10 +25,19 @@ For \code{model_performance()}, a data frame (with one row) and one
   the same data frame with one row per model.
 }
 \description{
-See the documentation for your object's class: \link[=model_performance.lm]{lm},
-\link[=model_performance.glm]{glm}, \link[=model_performance.merMod]{mixed models}
-and \link[=model_performance.stanreg]{Bayesian models}. \code{compare_performance()}
-computes indices of model performance for different models.
+See the documentation for your object's class:
+\link[=model_performance.merMod]{mixed models},
+\link[=model_performance.stanreg]{Bayesian models} and
+\link[=model_performance.lm]{all other models}.
+\code{compare_performance()} computes indices of model performance for
+different models at once and hence allows comparison of indices accros models.
+}
+\details{
+If all models are of the same class, \code{compare_performance()}
+  returns an additional column named \code{BF}, which shows the Bayes factor
+  (see \code{\link[bayestestR]{bayesfactor_models}}) for each model against
+  the denominator model. The \emph{first} model is used as denominator model,
+  and its Bayes factor is set to \code{NA} to indicate the reference model.
 }
 \examples{
 library(lme4)
@@ -39,5 +48,11 @@ model_performance(m1)
 m2 <- glm(vs ~ wt + mpg, data = mtcars, family = "binomial")
 m3 <- lmer(Petal.Length ~ Sepal.Length + (1 | Species), data = iris)
 compare_performance(m1, m2, m3)
+
+data(iris)
+lm1 <- lm(Sepal.Length ~ Species, data = iris)
+lm2 <- lm(Sepal.Length ~ Species + Petal.Length, data = iris)
+lm3 <- lm(Sepal.Length ~ Species * Petal.Length, data = iris)
+compare_performance(lm1, lm2, lm3)
 
 }

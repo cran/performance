@@ -50,7 +50,7 @@ binned_residuals <- function(model, term = NULL, n_nins = NULL) {
   else
     pred <- mf[[term]]
 
-  y <- recode_to_zero(as.numeric(as.character(insight::get_response(model)))) - fv
+  y <- .recode_to_zero(insight::get_response(model)) - fv
 
   if (is.null(n_nins)) n_nins <- round(sqrt(length(pred)))
 
@@ -84,7 +84,7 @@ binned_residuals <- function(model, term = NULL, n_nins = NULL) {
   d$group <- "yes"
   d$group[gr] <- "no"
 
-  class(d) <- c("binned_residuals", class(d))
+  class(d) <- c("binned_residuals", "see_binned_residuals", class(d))
   attr(d, "resp_var") <- insight::find_response(model)
   attr(d, "term") <- term
 
