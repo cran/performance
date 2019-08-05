@@ -4,18 +4,20 @@
 \alias{r2_bayes}
 \title{Bayesian R2}
 \usage{
-r2_bayes(model, robust = TRUE)
+r2_bayes(model, robust = TRUE, ci = 0.89)
 }
 \arguments{
 \item{model}{A Bayesian regression model.}
 
 \item{robust}{Logical, if \code{TRUE}, the median instead of mean is used to
 calculate the central tendency of the variances.}
+
+\item{ci}{Value or vector of probability of the CI (between 0 and 1) to be estimated.}
 }
 \value{
 A list with the Bayesian R2 value. For mixed models, a list with the
   Bayesian R2 value and the marginal Bayesian R2 value. The standard errors
-  for the R2 values are saved as attributes.
+  and credible intervals for the R2 values are saved as attributes.
 }
 \description{
 Compute R2 for Bayesian models. For mixed models (including a random part),
@@ -31,6 +33,7 @@ it additionally computes the R2 related to the fixed effects only (marginal R2).
   R2 takes both the fixed and random effects into account.
 }
 \examples{
+library(performance)
 library(rstanarm)
 
 model <- stan_glm(mpg ~ wt + cyl, data = mtcars, chains = 1, iter = 500)

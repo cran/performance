@@ -18,6 +18,17 @@
 #' m <- lm(mpg ~ wt + cyl + gear + disp, data = mtcars)
 #' check_normality(m)
 #'
+#' # plot results
+#' x <- check_normality(m)
+#' plot(x)
+#'
+#' \dontrun{
+#' # QQ-plot
+#' plot(check_normality(m), type = "qq")
+#'
+#' # PP-plot
+#' plot(check_normality(m), type = "pp")}
+#'
 #' @importFrom stats shapiro.test rstandard
 #' @export
 check_normality <- function(x, ...) {
@@ -28,14 +39,28 @@ check_normality <- function(x, ...) {
 #' @export
 check_normality.default <- function(x, ...) {
   # check for normality of residuals
-  ts <- stats::shapiro.test(stats::rstandard(x))
+  ts <- tryCatch(
+    {
+      stats::shapiro.test(stats::rstandard(x))
+    },
+    error = function(e) { NULL }
+  )
+
+  if (is.null(ts)) {
+    insight::print_color(sprintf("'check_normality()' does not support models of class '%s'.\n", class(x)[1]), "red")
+    return(NULL)
+  }
+
   p.val <- ts$p.value
 
   if (p.val < 0.05) {
-    insight::print_color(sprintf("Warning: Non-normality of residuals detected (p = %.3f).", p.val), "red")
+    insight::print_color(sprintf("Warning: Non-normality of residuals detected (p = %.3f).\n", p.val), "red")
   } else {
-    insight::print_color(sprintf("OK: Residuals appear as normally distributed (p = %.3f).", p.val), "green")
+    insight::print_color(sprintf("OK: Residuals appear as normally distributed (p = %.3f).\n", p.val), "green")
   }
+
+  attr(p.val, "object_name") <- deparse(substitute(x), width.cutoff = 500)
+  class(p.val) <- unique(c("check_normality", "see_check_normality", class(p.val)))
 
   invisible(p.val)
 }

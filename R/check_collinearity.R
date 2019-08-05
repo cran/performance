@@ -1,4 +1,4 @@
-#' @title Check for multicollinearity of model predictors
+#' @title Check for multicollinearity of model terms
 #' @name check_collinearity
 #'
 #' @description \code{check_collinearity()} checks regression models for
@@ -18,10 +18,10 @@
 #'
 #' @return A data frame with three columns: The name of the model term, the
 #'   variance inflation factor and the factor by which the standard error
-#'   is increased due to possible correlation with other predictors.
+#'   is increased due to possible correlation with other terms.
 #'
 #' @details The variance inflation factor is a measure to analyze the magnitude
-#'   of multicollinearity of model predictors. A VIF less than 5 indicates
+#'   of multicollinearity of model terms. A VIF less than 5 indicates
 #'   a low correlation of that predictor with other predictors. A value between
 #'   5 and 10 indicates a moderate correlation, while VIF values larger than 10
 #'   are a sign for high, not tolerable correlation of model predictors. The
@@ -34,8 +34,12 @@
 #' m <- lm(mpg ~ wt + cyl + gear + disp, data = mtcars)
 #' check_collinearity(m)
 #'
+#' # plot results
+#' x <- check_collinearity(m)
+#' plot(x)
+#'
 #' @importFrom stats vcov cov2cor terms
-#' @importFrom insight has_intercept find_formula model_info
+#' @importFrom insight has_intercept find_formula model_info print_color
 #' @export
 check_collinearity <- function(x, ...) {
   UseMethod("check_collinearity")
@@ -100,10 +104,25 @@ check_collinearity.zerocount <- function(x, component = c("all", "conditional", 
 
   if (component == "all") {
     cond <- .check_collinearity(x, "conditional")
-    cond$Component = "conditional"
     zi <- .check_collinearity(x, "zero_inflated")
+    if (is.null(cond) && is.null(zi)) {
+      return(NULL)
+    }
+    if (is.null(cond)) {
+      zi$Component = "zero inflated"
+      return(zi)
+    }
+    if (is.null(zi)) {
+      cond$Component = "conditional"
+      return(cond)
+    }
+    cond$Component = "conditional"
     zi$Component = "zero inflated"
-    rbind(cond, zi)
+    dat_cond <- attr(cond, "data")
+    dat_zi <- attr(zi, "data")
+    dat <- rbind(cond, zi)
+    attr(dat, "data") <- rbind(dat_cond, dat_zi)
+    dat
   } else {
     .check_collinearity(x, component)
   }
@@ -133,7 +152,7 @@ check_collinearity.zerocount <- function(x, component = c("all", "conditional", 
   n.terms <- length(terms)
 
   if (n.terms < 2) {
-    warning("Not enough model terms to check for multicollinearity.")
+    insight::print_color(sprintf("Not enough model terms in the %s part of the model to check for multicollinearity.\n", component), "red")
     return(NULL)
   }
 
@@ -151,11 +170,18 @@ check_collinearity.zerocount <- function(x, component = c("all", "conditional", 
   }
 
   structure(
-    class = c("check_collinearity", "data.frame"),
+    class = c("check_collinearity", "see_check_collinearity", "data.frame"),
     data.frame(
-      Predictor = terms,
+      Parameter = terms,
       VIF = result,
       SE_factor = sqrt(result),
+      stringsAsFactors = FALSE
+    ),
+    data = data.frame(
+      Parameter = terms,
+      VIF = result,
+      SE_factor = sqrt(result),
+      Component = component,
       stringsAsFactors = FALSE
     )
   )

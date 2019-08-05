@@ -7,13 +7,29 @@
 check_distribution(model)
 }
 \arguments{
-\item{model}{A model (that should response to \code{residuals()}).}
+\item{model}{Typically, a model (that should response to \code{residuals()}).
+May also be a numeric vector.}
 }
 \description{
 Choosing the right distributional family for regression models is essential to get more accurate estimates and standard errors. This function may help to check a models' distributional family and see if the model-family probably should be reconsidered. Since it is difficult to exactly predict the correct model family, consider this function as somewhat experimental.
 }
 \details{
-This function uses an internal random forest model to classify the distribution from a model-family.
+This function uses an internal random forest model to classify the
+distribution from a model-family. Currently, following distributions are
+trained (i.e. results of \code{check_distribution()} may be one of the following):
+\code{"bernoulli"}, \code{"beta"}, \code{"beta-binomial"}, \code{"binomial"},
+\code{"chi"}, \code{"exponential"}, \code{"F"}, \code{"gamma"}, \code{"lognormal"},
+\code{"normal"}, \code{"negative binomial"}, \code{"negative binomial (zero-inflated)"},
+\code{"pareto"}, \code{"poisson"}, \code{"poisson (zero-inflated)"},
+\code{"uniform"} and \code{"weibull"}.
+\cr \cr
+Note the similarity between certain distributions according to shape, skewness,
+etc., for instance \code{plot(dnorm(1:100, 30, 3))} and \code{plot(dnorm(1:100, 30, 3))}.
+Thus, the predicted distribution may not be perfectly representing the distributional
+family of the underlying fitted model, or the response value.
+\cr \cr
+There is a \code{plot()}, which shows the probabilities of all predicted
+distributions, however, only if the probability is greater than zero.
 }
 \note{
 This function is somewhat experimental and might be improved in future releases.
@@ -24,5 +40,6 @@ This function is somewhat experimental and might be improved in future releases.
 library(lme4)
 model <- lmer(Reaction ~ Days + (Days | Subject), sleepstudy)
 check_distribution(model)
+plot(check_distribution(model))
 
 }

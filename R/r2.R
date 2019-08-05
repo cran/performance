@@ -18,7 +18,7 @@
 #'   \item Bayesian models: \link[=r2_bayes]{R2 bayes}
 #' }
 #'
-#' @seealso \code{\link{r2_bayes}}, \code{\link{r2_coxsnell}}, \code{\link{r2_kl}},
+#' @seealso \code{\link{r2_bayes}}, \code{\link{r2_coxsnell}}, \code{\link{r2_kullback}},
 #'   \code{\link{r2_loo}}, \code{\link{r2_mcfadden}}, \code{\link{r2_nagelkerke}},
 #'   \code{\link{r2_nakagawa}}, \code{\link{r2_tjur}}, \code{\link{r2_xu}} and
 #'   \code{\link{r2_zeroinflated}}.
@@ -40,7 +40,7 @@ r2 <- function(model, ...) {
 #' @importFrom insight print_color
 #' @export
 r2.default <- function(model, ...) {
-  insight::print_color(sprintf("Objects of class \"%s\" are not supported yet.\n", class(model)[1]), "red")
+  insight::print_color(sprintf("'r2()' does not support models of class '%s'.\n", class(model)[1]), "red")
   return(NA)
 }
 
@@ -201,10 +201,10 @@ r2.lm <- function(model, ...) {
   DoF_residual <- model_summary$fstatistic[3]
 
   if (!is.null(f.stat)) {
-    attr(out, "p_value") <- stats::pf(f.stat, DoF, DoF_residual, lower.tail = FALSE)
-    attr(out, "F_statistic") <- f.stat
-    attr(out, "DoF") <- DoF
-    attr(out, "DoF_residual") <- DoF_residual
+    attr(out, "p") <- stats::pf(f.stat, DoF, DoF_residual, lower.tail = FALSE)
+    attr(out, "F") <- f.stat
+    attr(out, "df") <- DoF
+    attr(out, "df_residual") <- DoF_residual
   }
 
   attr(out, "model_type") <- "Linear"

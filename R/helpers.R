@@ -1,5 +1,25 @@
+# trim leading / trailing whitespaces
+.trim <- function(x) gsub("^\\s+|\\s+$", "", x)
+
+
+
+# safe deparse, works for very long strings
+.safe_deparse <- function(string) {
+  paste0(sapply(deparse(string, width.cutoff = 500), .trim, simplify = TRUE), collapse = "")
+}
+
+
+
 # is string empty?
 .is_empty_object <- function(x) {
+  if (is.list(x)) {
+    x <- tryCatch(
+      {.compact_list(x)},
+      error = function(x) { x }
+    )
+  }
+  # this is an ugly fix because of ugly tibbles
+  if (inherits(x, c("tbl_df", "tbl"))) x <- as.data.frame(x)
   x <- suppressWarnings(x[!is.na(x)])
   length(x) == 0 || is.null(x)
 }

@@ -1,9 +1,22 @@
 #' @export
+print.performance_model <- function(x, digits = 3, ...) {
+  insight::print_color("# Indices of model performance\n\n", "blue")
+
+  x[] <- lapply(x, function(i) {
+    if (is.numeric(i)) i <- round(i, digits)
+    i
+  })
+
+  print.data.frame(x, row.names = FALSE, ...)
+}
+
+
+#' @export
 print.check_outliers <- function(x, ...) {
   outliers <- which(x[[".outliers"]])
   if (length(outliers) >= 1) {
     o <- paste0(" (cases ", paste0(outliers, collapse = ", "), ")")
-    insight::print_color(sprintf("Warning: Outliers detected%s.\n", o), 'red')
+    insight::print_color(sprintf("Warning: %i outliers detected%s.\n", length(outliers), o), 'red')
   } else {
     insight::print_color("OK: No outliers detected.\n", 'green')
   }
@@ -28,7 +41,7 @@ print.check_distribution <- function(x, ...) {
 
   x1 <- x[order(x$p_Residuals, decreasing = TRUE)[1:3], c(1, 2)]
   x1 <- x1[x1$p_Residuals > 0, ]
-  x1$p_Residuals <- sprintf("%g%%", 100 * x1$p_Residuals)
+  x1$p_Residuals <- sprintf("%g%%", round(100 * x1$p_Residuals))
   colnames(x1) <- c("Distribution", "Probability")
 
   insight::print_color("Predicted Distribution of Residuals\n\n", "red")
@@ -36,11 +49,26 @@ print.check_distribution <- function(x, ...) {
 
   x2 <- x[order(x$p_Response, decreasing = TRUE)[1:3], c(1, 3)]
   x2 <- x2[x2$p_Response > 0, ]
-  x2$p_Response <- sprintf("%g%%", 100 * x2$p_Response)
+  x2$p_Response <- sprintf("%g%%", round(100 * x2$p_Response))
   colnames(x2) <- c("Distribution", "Probability")
 
   insight::print_color("\nPredicted Distribution of Response\n\n", "red")
   print.data.frame(x2, row.names = FALSE, ...)
+}
+
+
+
+#' @importFrom insight print_color
+#' @export
+print.check_distribution_numeric <- function(x, ...) {
+  insight::print_color("# Predicted Distribution of Vector\n\n", "blue")
+
+  x1 <- x[order(x$p_Vector, decreasing = TRUE)[1:3], c(1, 2)]
+  x1 <- x1[x1$p_Vector > 0, ]
+  x1$p_Vector <- sprintf("%g%%", round(100 * x1$p_Vector))
+  colnames(x1) <- c("Distribution", "Probability")
+
+  print.data.frame(x1, row.names = FALSE, ...)
 }
 
 
@@ -130,11 +158,16 @@ print.r2_generic <- function(x, digits = 3, ...) {
     insight::print_color("# R2\n\n", "blue")
   }
 
-  out <- paste0(c(
-    sprintf("       R2: %.*f", digits, x$R2),
-    sprintf("  adj. R2: %.*f", digits, x$R2_adjusted)),
-    collapse = "\n"
-  )
+  if ("R2_adjusted" %in% names(x)) {
+    out <- paste0(c(
+      sprintf("       R2: %.*f", digits, x$R2),
+      sprintf("  adj. R2: %.*f", digits, x$R2_adjusted)),
+      collapse = "\n"
+    )
+  } else {
+    out <- sprintf("  R2: %.*f", digits, x$R2)
+  }
+
 
   cat(out)
   cat("\n")
@@ -164,10 +197,10 @@ print.r2_nakagawa <- function(x, digits = 3, ...) {
 print.r2_bayes <- function(x, digits = 3, ...) {
   insight::print_color("# Bayesian R2 with Standard Error\n\n", "blue")
 
-  out <- sprintf("  Conditional R2: %.*f [%.*f]", digits, x$R2_Bayes, digits, attr(x, "std.error")[["R2_Bayes"]])
+  out <- sprintf("  Conditional R2: %.*f [%.*f]", digits, x$R2_Bayes, digits, attr(x, "SE")[["R2_Bayes"]])
 
   if ("R2_Bayes_marginal" %in% names(x)) {
-    out <- paste0(c(out,  sprintf("     Marginal R2: %.*f [%.*f]", digits, x$R2_Bayes_marginal, digits, attr(x, "std.error")[["R2_Bayes_marginal"]])), collapse = "\n")
+    out <- paste0(c(out,  sprintf("     Marginal R2: %.*f [%.*f]", digits, x$R2_Bayes_marginal, digits, attr(x, "SE")[["R2_Bayes_marginal"]])), collapse = "\n")
   }
 
   cat(out)
@@ -287,7 +320,7 @@ print.icc_decomposed <- function(x, digits = 2, ...) {
   if (is.null(reform))
     reform <- "all random effects"
   else
-    reform <- deparse(reform)
+    reform <- .safe_deparse(reform)
 
   cat(sprintf("Conditioned on: %s\n\n", reform))
 
@@ -408,9 +441,9 @@ print.performance_accuracy <- function(x, ...) {
   insight::print_color("# Accuracy of Model Predictions\n\n", "blue")
 
   # statistics
-  cat(sprintf("Accuracy: %.2f%%\n", 100 * x$accuracy))
-  cat(sprintf("      SE: %.2f%%-points\n", 100 * x$std.error))
-  cat(sprintf("  Method: %s\n", x$stat))
+  cat(sprintf("Accuracy: %.2f%%\n", 100 * x$Accuracy))
+  cat(sprintf("      SE: %.2f%%-points\n", 100 * x$SE))
+  cat(sprintf("  Method: %s\n", x$Method))
 }
 
 

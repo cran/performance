@@ -8,8 +8,19 @@
 #'
 #' @return A data frame (with one row) and one column per "index" (see \code{metrics}).
 #'
-#' @details See 'Details' in \code{\link{model_performance.lm}} for more
-#' details on returned indices.
+#' @details Depending on \code{model}, following indices are computed:
+#' \itemize{
+#'   \item{\strong{ELPD}} {expected log predictive density, see \code{\link{looic}}}
+#'   \item{\strong{LOOIC}} {leave-one-out cross-validation (LOO) information criterion, see \code{\link{looic}}}
+#'   \item{\strong{WAIC}} {widely applicable information criterion, see \code{loo::waic}}
+#'   \item{\strong{R2}} {r-squared value, see \code{\link{r2}}}
+#'   \item{\strong{R2_LOO_adjusted}} {adjusted r-squared, see \code{\link{r2}}}
+#'   \item{\strong{RMSE}} {root mean squared error, see \code{\link{performance_rmse}}}
+#'   \item{\strong{LOGLOSS}} {Log-loss, see \code{\link{performance_logloss}}}
+#'   \item{\strong{SCORE_LOG}} {score of logarithmic proper scoring rule, see \code{\link{performance_score}}}
+#'   \item{\strong{SCORE_SPHERICAL}} {score of spherical proper scoring rule, see \code{\link{performance_score}}}
+#'   \item{\strong{PCP}} {percentage of correct predictions, see \code{\link{performance_pcp}}}
+#' }
 #'
 #' @examples
 #' library(rstanarm)
@@ -51,7 +62,7 @@ model_performance.stanreg <- function(model, metrics = "all", ...) {
 
   out <- list()
   if ("LOOIC" %in% c(metrics)) {
-    out <- append(out, looic(model))
+    out <- append(out, suppressWarnings(looic(model)))
   }
   if ("WAIC" %in% c(metrics)) {
     out$WAIC <- suppressWarnings(loo::waic(model)$estimates["waic", "Estimate"])
@@ -66,7 +77,7 @@ model_performance.stanreg <- function(model, metrics = "all", ...) {
     }
   }
   if ("R2_adjusted" %in% c(metrics) && mi$is_linear) {
-    out$R2_LOO_adjusted <- r2_loo(model)
+    out$R2_LOO_adjusted <- suppressWarnings(r2_loo(model))
   }
   if ("RMSE" %in% c(metrics) && !mi$is_ordinal && !mi$is_categorical) {
     out$RMSE <- performance_rmse(model)
@@ -84,6 +95,8 @@ model_performance.stanreg <- function(model, metrics = "all", ...) {
 
   out <- as.data.frame(out)
   row.names(out) <- NULL
+  class(out) <- c("performance_model", class(out))
+
   out
 }
 

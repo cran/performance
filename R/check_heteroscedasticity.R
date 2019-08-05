@@ -13,6 +13,10 @@
 #' m <- lm(mpg ~ wt + cyl + gear + disp, data = mtcars)
 #' check_heteroscedasticity(m)
 #'
+#' # plot results
+#' x <- check_heteroscedasticity(m)
+#' plot(x)
+#'
 #' @importFrom stats residuals df.residual fitted anova pchisq
 #' @importFrom insight print_color
 #' @export
@@ -37,10 +41,13 @@ check_heteroscedasticity.default <- function(x, ...) {
   p.val <- stats::pchisq(Chisq, df = 1, lower.tail = FALSE)
 
   if (p.val < 0.05) {
-    insight::print_color(sprintf("Warning: Heteroscedasticity (non-constant error variance) detected (p = %.3f).", p.val), "red")
+    insight::print_color(sprintf("Warning: Heteroscedasticity (non-constant error variance) detected (p = %.3f).\n", p.val), "red")
   } else {
-    insight::print_color(sprintf("OK: Error variance appears to be homoscedastic (p = %.3f).", p.val), "green")
+    insight::print_color(sprintf("OK: Error variance appears to be homoscedastic (p = %.3f).\n", p.val), "green")
   }
+
+  attr(p.val, "object_name") <- deparse(substitute(x), width.cutoff = 500)
+  class(p.val) <- unique(c("check_heteroscedasticity", "see_check_heteroscedasticity", class(p.val)))
 
   invisible(p.val)
 }

@@ -10,6 +10,12 @@
 #' @param line_size Size of line-geoms.
 #' @param panel Logical, if \code{TRUE}, plots are arranged as panels; else,
 #' single plots for each diagnostic are returned.
+#' @param check Character vector, indicating which checks for should be performed
+#'   and plotted. May be one or more of
+#'   \code{"all", "vif", "qq", "normality", "ncv", "homogeneity", "outliers", "reqq"}.
+#'   \code{"reqq"} is a QQ-plot for random effects and only available for mixed models.
+#'   \code{"ncv"} checks for non-constant variance, i.e. for heteroscedasticity.
+#'   By default, all possible checks are performed and plotted.
 #' @param ... Currently not used.
 #'
 #' @return The data frame that is used for plotting.
@@ -39,22 +45,24 @@ check_model <- function(x, ...) {
 
 #' @rdname check_model
 #' @export
-check_model.default <- function(x, dot_size = 2, line_size = .8, panel = TRUE, ...) {
+check_model.default <- function(x, dot_size = 2, line_size = .8, panel = TRUE, check = "all", ...) {
   minfo <- insight::model_info(x)
 
   if (minfo$is_bayesian) {
     ca <- .check_assumptions_stan(x)
   } else if (minfo$is_linear) {
     ca <- .check_assumptions_linear(x, minfo)
-  } else if (minfo$is_mixed) {
-    ca <- .check_assumptions_glm(x)
   } else {
-    stop(paste0("`check_assumptions()` not implemented for models of class '", class(x)[1], "' yet."), call. = FALSE)
+    ca <- .check_assumptions_glm(x, minfo)
   }
+  # else {
+  #   stop(paste0("`check_assumptions()` not implemented for models of class '", class(x)[1], "' yet."), call. = FALSE)
+  # }
 
   attr(ca, "panel") <- panel
   attr(ca, "dot_size") <- dot_size
   attr(ca, "line_size") <- line_size
+  attr(ca, "check") <- check
 
   ca
 }
@@ -72,7 +80,7 @@ check_model.default <- function(x, dot_size = 2, line_size = .8, panel = TRUE, .
   dat$NCV <- .diag_ncv(model)
   dat$HOMOGENEITY <- .diag_homogeneity(model)
   dat$OUTLIERS <- check_outliers(model)
-  class(dat$OUTLIERS) <- "data.frame"
+  if (!is.null(dat$OUTLIERS)) class(dat$OUTLIERS) <- "data.frame"
 
   dat <- .compact_list(dat)
   class(dat) <- c("check_model", "see_check_model")
@@ -82,12 +90,15 @@ check_model.default <- function(x, dot_size = 2, line_size = .8, panel = TRUE, .
 
 
 
-.check_assumptions_glm <- function(model) {
+.check_assumptions_glm <- function(model, model_info) {
   dat <- list()
 
+  dat$VIF <- .diag_vif(model)
+  dat$QQ <- .diag_qq(model)
+  dat$HOMOGENEITY <- .diag_homogeneity(model)
   dat$REQQ <- .diag_reqq(model, level = .95, model_info = model_info)
   dat$OUTLIERS <- check_outliers(model)
-  class(dat$OUTLIERS) <- "data.frame"
+  if (!is.null(dat$OUTLIERS)) class(dat$OUTLIERS) <- "data.frame"
 
   dat <- .compact_list(dat)
   class(dat) <- c("check_model", "see_check_model")

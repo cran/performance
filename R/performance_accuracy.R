@@ -12,9 +12,9 @@
 #'    is used to compute the accuracy values.
 #' @param n Number of bootstrap-samples.
 #'
-#' @return A list with two values: The \code{accuracy} of the model predictions, i.e.
-#'    the proportion of accurately predicted values from the model and
-#'    its standard error, \code{std.error}.
+#' @return A list with three values: The \code{Accuracy} of the model predictions, i.e.
+#'    the proportion of accurately predicted values from the model, its standard
+#'    error, \code{SE}, and the \code{Method} used to compute the accuracy.
 #'
 #' @details For linar models, the accuracy is the correlation coefficient
 #'    between the actual and the predicted value of the outcome. For
@@ -122,7 +122,7 @@ performance_accuracy <- function(model, method = c("cv", "boot"), k = 5, n = 100
       }, bootstr, models, SIMPLIFY = FALSE)
 
       response <- lapply(bootstr, function(.x) {
-        as.data.frame(model_data[.x, ])[[resp.name]]
+        .factor_to_numeric(as.data.frame(model_data[.x, ])[[resp.name]])
       })
 
       accuracy <- mapply(function(.x, .y) {
@@ -144,7 +144,7 @@ performance_accuracy <- function(model, method = c("cv", "boot"), k = 5, n = 100
       }, cv, models, SIMPLIFY = FALSE)
 
       response <- lapply(cv, function(.x) {
-        as.data.frame(model_data[.x$test, ])[[resp.name]]
+        .factor_to_numeric(as.data.frame(model_data[.x$test, ])[[resp.name]])
       })
 
       accuracy <- mapply(function(.x, .y) {
@@ -158,9 +158,9 @@ performance_accuracy <- function(model, method = c("cv", "boot"), k = 5, n = 100
   structure(
     class = c("performance_accuracy"),
     list(
-      accuracy = mean(accuracy),
-      std.error = stats::sd(accuracy),
-      stat = measure
+      Accuracy = mean(accuracy),
+      SE = stats::sd(accuracy),
+      Method = measure
     )
   )
 }

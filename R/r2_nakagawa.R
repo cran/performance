@@ -52,17 +52,26 @@ r2_nakagawa <- function(model) {
 
   # check if we have successfully computed all variance components...
 
-  components <- c("var.fixed", "var.random", "var.residual")
+  components <- c("var.fixed", "var.residual")
   check_elements <- sapply(components, function(.i) !is.null(vars[[.i]]))
 
   if (!all(check_elements)) {
     return(NA)
   }
 
+
   # Calculate R2 values
 
-  r2_marginal <- vars$var.fixed / (vars$var.fixed + vars$var.random + vars$var.residual)
-  r2_conditional <- (vars$var.fixed + vars$var.random) / (vars$var.fixed + vars$var.random + vars$var.residual)
+  if (.is_empty_object(vars$var.random) || is.na(vars$var.random)) {
+    # if no random effect variance, return simple R2
+    print_color("Random effect variances not available. Returned R2 does not account for random effects.\n", "red")
+    r2_marginal <- vars$var.fixed / (vars$var.fixed + vars$var.residual)
+    r2_conditional <- NA
+  } else {
+    r2_marginal <- vars$var.fixed / (vars$var.fixed + vars$var.random + vars$var.residual)
+    r2_conditional <- (vars$var.fixed + vars$var.random) / (vars$var.fixed + vars$var.random + vars$var.residual)
+  }
+
 
   names(r2_conditional) <- "Conditional R2"
   names(r2_marginal) <- "Marginal R2"

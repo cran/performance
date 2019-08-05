@@ -22,4 +22,8 @@ Check model for (non-)constant error variance.
 m <- lm(mpg ~ wt + cyl + gear + disp, data = mtcars)
 check_heteroscedasticity(m)
 
+# plot results
+x <- check_heteroscedasticity(m)
+plot(x)
+
 }

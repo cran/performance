@@ -7,10 +7,11 @@
 #' @param model A Bayesian regression model.
 #' @param robust Logical, if \code{TRUE}, the median instead of mean is used to
 #'   calculate the central tendency of the variances.
+#' @param ci Value or vector of probability of the CI (between 0 and 1) to be estimated.
 #'
 #' @return A list with the Bayesian R2 value. For mixed models, a list with the
 #'   Bayesian R2 value and the marginal Bayesian R2 value. The standard errors
-#'   for the R2 values are saved as attributes.
+#'   and credible intervals for the R2 values are saved as attributes.
 #'
 #' @details \code{r2_bayes()} returns an "unadjusted" R2 value. See \code{\link{r2_loo}}
 #'   to calculate a LOO-adjusted R2, which comes conceptionally closer to an
@@ -21,6 +22,7 @@
 #'   R2 takes both the fixed and random effects into account.
 #'
 #' @examples
+#' library(performance)
 #' library(rstanarm)
 #'
 #' model <- stan_glm(mpg ~ wt + cyl, data = mtcars, chains = 1, iter = 500)
@@ -47,8 +49,9 @@
 #'
 #' @importFrom insight find_algorithm is_multivariate find_response
 #' @importFrom stats median mad sd
+#' @importFrom bayestestR ci
 #' @export
-r2_bayes <- function(model, robust = TRUE) {
+r2_bayes <- function(model, robust = TRUE, ci = .89) {
   r2_bayesian <- .r2_posterior(model)
 
   if (is.null(r2_bayesian))
@@ -58,13 +61,15 @@ r2_bayes <- function(model, robust = TRUE) {
     structure(
       class = "r2_bayes_mv",
       rapply(r2_bayesian, ifelse(robust, stats::median, mean)),
-      "std.error" = rapply(r2_bayesian, ifelse(robust, stats::mad, stats::sd))
+      "SE" = rapply(r2_bayesian, ifelse(robust, stats::mad, stats::sd)),
+      "CI" = rapply(r2_bayesian, bayestestR::ci, ci = ci)
     )
   } else {
     structure(
       class = "r2_bayes",
       lapply(r2_bayesian, ifelse(robust, stats::median, mean)),
-      "std.error" = lapply(r2_bayesian, ifelse(robust, stats::mad, stats::sd))
+      "SE" = lapply(r2_bayesian, ifelse(robust, stats::mad, stats::sd)),
+      "CI" = lapply(r2_bayesian, bayestestR::ci, ci = ci)
     )
   }
 }
