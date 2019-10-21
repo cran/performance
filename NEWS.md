@@ -1,3 +1,27 @@
+# performance 0.4.0
+
+## General
+
+* `performance()` is an alias for `model_performance()`.
+
+## Deprecated and Defunct
+
+* `principal_components()` was removed and re-implemented in the **parameters**-package. Please use `parameters::principal_components()` now.
+
+## Changes to functions
+
+* `check_outliers()` now also works on data frames.
+* Added more methods to `check_outliers()`.
+* `performance_score()` now also works on `stan_lmer()` and `stan_glmer()` objects.
+* `check_singularity()` now works with models of class *clmm*.
+* `r2()` now works with models of class *clmm*, *bigglm* and *biglm*.
+* `check_overdispersion()` for mixed models now checks that model family is Poisson.
+
+## Bug fixes
+
+* Fixed bug in `compare_performance()` that toggled a warning although models were fit from same data.
+* Fixed bug in `check_model()` for *glmmTMB* models that occured when checking for outliers.
+
 # performance 0.3.0
 
 ## General

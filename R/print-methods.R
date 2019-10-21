@@ -13,7 +13,7 @@ print.performance_model <- function(x, digits = 3, ...) {
 
 #' @export
 print.check_outliers <- function(x, ...) {
-  outliers <- which(x[[".outliers"]])
+  outliers <- which(as.numeric(x) >= 0.5)
   if (length(outliers) >= 1) {
     o <- paste0(" (cases ", paste0(outliers, collapse = ", "), ")")
     insight::print_color(sprintf("Warning: %i outliers detected%s.\n", length(outliers), o), 'red')
@@ -211,8 +211,13 @@ print.r2_bayes <- function(x, digits = 3, ...) {
 
 #' @export
 print.perf_pca_rotate <- function(x, cutoff = 0.1, digits = 3, ...) {
+  .rotation <- attr(x, "rotation", exact = TRUE)
 
-  insight::print_color(sprintf("# Rotated loadings from Principal Component Analysis (%s-rotation)\n\n", attr(x, "rotation", exact = TRUE)), "blue")
+  if (.rotation == "none")
+    insight::print_color("# Loadings from Principal Component Analysis (no rotation)\n\n", "blue")
+  else
+    insight::print_color(sprintf("# Rotated loadings from Principal Component Analysis (%s-rotation)\n\n", .rotation), "blue")
+
 
   xs <- attr(x, "variance", exact = TRUE)
   x <- round(x, digits = digits)

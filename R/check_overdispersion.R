@@ -27,8 +27,7 @@
 #' section \emph{How can I deal with overdispersion in GLMMs?}. Note that
 #' this function only returns an \emph{approximate} estimate of an
 #' overdispersion parameter, and is probably inaccurate for zero-inflated
-#' mixed models (fitted with \code{glmmTMB}). The same code is also used to
-#' check overdispersion for negative binomial models.
+#' mixed models (fitted with \code{glmmTMB}).
 #' }
 #' \subsection{How to fix Overdispersion}{
 #' Overdispersion can be fixed by either modelling the dispersion parameter,
@@ -110,8 +109,14 @@ check_overdispersion.glmmTMB <- function(x, ...) {
 }
 
 
+#' @importFrom insight model_info
 #' @importFrom stats df.residual residuals pchisq
 check_overdispersion.lme4 <- function(x) {
+  # check if we have poisson
+  if (!insight::model_info(x)$is_poisson) {
+    stop("Model must be from Poisson-family.", call. = F)
+  }
+
   rdf <- stats::df.residual(x)
   rp <- stats::residuals(x, type = "pearson")
   Pearson.chisq <- sum(rp^2)
