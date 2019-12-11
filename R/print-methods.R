@@ -1,3 +1,31 @@
+#' @importFrom insight format_table
+#' @export
+print.compare_performance <- function(x, digits = 3, ...) {
+  insight::print_color("# Comparison of Model Performance Indices\n\n", "blue")
+
+  # if we have ranking, add score and remove incomplete indices in print
+  if ("Performance_Score" %in% colnames(x)) {
+    x$Performance_Score <- sprintf("%.2f%%", 100 * x$Performance_Score)
+    x <- x[!sapply(x, anyNA)]
+  }
+
+  x[] <- lapply(x, function(i) {
+    if (is.numeric(i))
+      round(i, digits = digits)
+    else
+      i
+  })
+
+  ## TODO remove suppressWarnings() once insight is updated on CRAN (> 0.7.1)
+  cat(suppressWarnings(insight::format_table(x)))
+
+  if ("Performance_Score" %in% colnames(x)) {
+    insight::print_color(sprintf("\nModel %s (of class %s) performed best with an overall performance score of %s.\n", x$Model[1], x$Type[1], x$Performance_Score[1]), "yellow")
+  }
+}
+
+
+
 #' @export
 print.performance_model <- function(x, digits = 3, ...) {
   insight::print_color("# Indices of model performance\n\n", "blue")
@@ -16,9 +44,9 @@ print.check_outliers <- function(x, ...) {
   outliers <- which(as.numeric(x) >= 0.5)
   if (length(outliers) >= 1) {
     o <- paste0(" (cases ", paste0(outliers, collapse = ", "), ")")
-    insight::print_color(sprintf("Warning: %i outliers detected%s.\n", length(outliers), o), 'red')
+    insight::print_color(sprintf("Warning: %i outliers detected%s.\n", length(outliers), o), "red")
   } else {
-    insight::print_color("OK: No outliers detected.\n", 'green')
+    insight::print_color("OK: No outliers detected.\n", "green")
   }
 }
 
@@ -106,7 +134,7 @@ print.item_difficulty <- function(x, ...) {
   insight::print_color(sprintf("  %*s  ideal\n", spaces + 10, "difficulty"), "red")
 
   for (i in 1:length(x$item)) {
-    cat(sprintf("  %*s      %.2f   %.2f\n",  spaces, x$item[i], x$difficulty[i], x$ideal[i]))
+    cat(sprintf("  %*s      %.2f   %.2f\n", spaces, x$item[i], x$difficulty[i], x$ideal[i]))
   }
 }
 
@@ -138,8 +166,9 @@ print.looic <- function(x, digits = 2, ...) {
 
   out <- paste0(c(
     sprintf("  LOOIC: %.*f [%.*f]", digits, x$LOOIC, digits, x$LOOIC_SE),
-    sprintf("   ELPD: %.*f [%.*f]", digits, x$ELPD, digits, x$ELPD_SE)),
-    collapse = "\n"
+    sprintf("   ELPD: %.*f [%.*f]", digits, x$ELPD, digits, x$ELPD_SE)
+  ),
+  collapse = "\n"
   )
 
   cat(out)
@@ -158,11 +187,21 @@ print.r2_generic <- function(x, digits = 3, ...) {
     insight::print_color("# R2\n\n", "blue")
   }
 
-  if ("R2_adjusted" %in% names(x)) {
+  if (all(c("R2_adjusted", "R2_within_adjusted") %in% names(x))) {
+    out <- paste0(c(
+      sprintf("              R2: %.*f", digits, x$R2),
+      sprintf("         adj. R2: %.*f", digits, x$R2_adjusted),
+      sprintf("       within R2: %.*f", digits, x$R2_within),
+      sprintf("  adj. within R2: %.*f", digits, x$R2_within_adjusted)
+    ),
+    collapse = "\n"
+    )
+  } else if ("R2_adjusted" %in% names(x)) {
     out <- paste0(c(
       sprintf("       R2: %.*f", digits, x$R2),
-      sprintf("  adj. R2: %.*f", digits, x$R2_adjusted)),
-      collapse = "\n"
+      sprintf("  adj. R2: %.*f", digits, x$R2_adjusted)
+    ),
+    collapse = "\n"
     )
   } else {
     out <- sprintf("  R2: %.*f", digits, x$R2)
@@ -178,12 +217,18 @@ print.r2_generic <- function(x, digits = 3, ...) {
 #' @importFrom insight print_color
 #' @export
 print.r2_nakagawa <- function(x, digits = 3, ...) {
-  insight::print_color("# R2 for mixed models\n\n", "blue")
+  model_type <- attr(x, "model_type")
+  if (is.null(model_type)) {
+    insight::print_color("# R2 for Mixed Models\n\n", "blue")
+  } else {
+    insight::print_color("# R2 for %s Regression\n\n", "blue")
+  }
 
   out <- paste0(c(
     sprintf("  Conditional R2: %.*f", digits, x$R2_conditional),
-    sprintf("     Marginal R2: %.*f", digits, x$R2_marginal)),
-    collapse = "\n"
+    sprintf("     Marginal R2: %.*f", digits, x$R2_marginal)
+  ),
+  collapse = "\n"
   )
 
   cat(out)
@@ -200,7 +245,7 @@ print.r2_bayes <- function(x, digits = 3, ...) {
   out <- sprintf("  Conditional R2: %.*f [%.*f]", digits, x$R2_Bayes, digits, attr(x, "SE")[["R2_Bayes"]])
 
   if ("R2_Bayes_marginal" %in% names(x)) {
-    out <- paste0(c(out,  sprintf("     Marginal R2: %.*f [%.*f]", digits, x$R2_Bayes_marginal, digits, attr(x, "SE")[["R2_Bayes_marginal"]])), collapse = "\n")
+    out <- paste0(c(out, sprintf("     Marginal R2: %.*f [%.*f]", digits, x$R2_Bayes_marginal, digits, attr(x, "SE")[["R2_Bayes_marginal"]])), collapse = "\n")
   }
 
   cat(out)
@@ -213,20 +258,22 @@ print.r2_bayes <- function(x, digits = 3, ...) {
 print.perf_pca_rotate <- function(x, cutoff = 0.1, digits = 3, ...) {
   .rotation <- attr(x, "rotation", exact = TRUE)
 
-  if (.rotation == "none")
+  if (.rotation == "none") {
     insight::print_color("# Loadings from Principal Component Analysis (no rotation)\n\n", "blue")
-  else
+  } else {
     insight::print_color(sprintf("# Rotated loadings from Principal Component Analysis (%s-rotation)\n\n", .rotation), "blue")
+  }
 
 
   xs <- attr(x, "variance", exact = TRUE)
   x <- round(x, digits = digits)
 
   x <- as.data.frame(apply(x, MARGIN = c(1, 2), function(.y) {
-    if (abs(.y) < cutoff)
+    if (abs(.y) < cutoff) {
       ""
-    else
+    } else {
       as.character(.y)
+    }
   }), stringsAsFactors = FALSE)
 
   xs <- as.data.frame(t(as.data.frame(round(xs, digits = digits))))
@@ -257,8 +304,9 @@ print.icc <- function(x, digits = 3, ...) {
 
   out <- paste0(c(
     sprintf("     Adjusted ICC: %.*f", digits, x$ICC_adjusted),
-    sprintf("  Conditional ICC: %.*f", digits, x$ICC_conditional)),
-    collapse = "\n"
+    sprintf("  Conditional ICC: %.*f", digits, x$ICC_conditional)
+  ),
+  collapse = "\n"
   )
 
   cat(out)
@@ -278,12 +326,13 @@ print.check_zi <- function(x, ...) {
   lower <- 1 - x$tolerance
   upper <- 1 + x$tolerance
 
-  if (x$ratio < lower)
+  if (x$ratio < lower) {
     message("Model is underfitting zeros (probable zero-inflation).")
-  else if (x$ratio > upper)
+  } else if (x$ratio > upper) {
     message("Model is overfitting zeros.")
-  else
+  } else {
     message("Model seems ok, ratio of observed and predicted zeros is within the tolerance range.")
+  }
 }
 
 
@@ -307,10 +356,11 @@ print.check_overdisp <- function(x, digits = 3, ...) {
   cat(sprintf("  Pearson's Chi-Squared = %s\n", format(x$chisq_statistic, justify = "right", width = maxlen)))
   cat(sprintf("                p-value = %s\n\n", format(x$p_value, justify = "right", width = maxlen)))
 
-  if (pval > 0.05)
+  if (pval > 0.05) {
     message("No overdispersion detected.")
-  else
+  } else {
     message("Overdispersion detected.")
+  }
 }
 
 
@@ -322,10 +372,11 @@ print.icc_decomposed <- function(x, digits = 2, ...) {
   cat("# Random Effect Variances and ICC\n\n")
 
   reform <- attr(x, "re.form", exact = TRUE)
-  if (is.null(reform))
+  if (is.null(reform)) {
     reform <- "all random effects"
-  else
+  } else {
     reform <- .safe_deparse(reform)
+  }
 
   cat(sprintf("Conditioned on: %s\n\n", reform))
 
@@ -433,10 +484,11 @@ print.performance_hosmer <- function(x, ...) {
   cat(sprintf("           df: %*s\n", space, v2))
   cat(sprintf("      p-value: %*s\n\n", space, v3))
 
-  if (x$p.value >= 0.05)
+  if (x$p.value >= 0.05) {
     message("Summary: model seems to fit well.")
-  else
+  } else {
     message("Summary: model does not fit well.")
+  }
 }
 
 
@@ -463,7 +515,8 @@ print.performance_score <- function(x, ...) {
       sprintf("%.4f", x$quadratic),
       sprintf("%.4f", x$spherical)
     ),
-    justify = "right")
+    justify = "right"
+  )
 
   cat(sprintf("logarithmic: %s\n", results[1]))
   cat(sprintf("  quadratic: %s\n", results[2]))

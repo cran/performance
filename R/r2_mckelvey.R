@@ -24,13 +24,12 @@
 #'
 #' @examples
 #' ## Dobson (1990) Page 93: Randomized Controlled Trial:
-#' counts <- c(18,17,15,20,10,20,25,13,12)#
-#' outcome <- gl(3,1,9)
-#' treatment <- gl(3,3)
+#' counts <- c(18, 17, 15, 20, 10, 20, 25, 13, 12) #
+#' outcome <- gl(3, 1, 9)
+#' treatment <- gl(3, 3)
 #' model <- glm(counts ~ outcome + treatment, family = poisson())
 #'
 #' r2_mckelvey(model)
-#'
 #' @importFrom insight n_obs model_info
 #' @importFrom stats predict family coef update
 #' @export
@@ -49,11 +48,12 @@ r2_mckelvey.default <- function(model) {
   faminfo <- insight::model_info(model)
   n <- insight::n_obs(model)
 
-  if (faminfo$is_binomial) {
+  if (faminfo$is_binomial | faminfo$is_ordinal) {
     dist.variance <- switch(
       faminfo$link_function,
       probit = 1,
       logit = pi^2 / 3,
+      clogloglink = pi^2 / 6,
       NA
     )
   } else if (faminfo$is_count) {
@@ -66,6 +66,11 @@ r2_mckelvey.default <- function(model) {
   }
 
   y.hat <- stats::predict(model, type = "link")
+
+  # fix for VGAM
+  yhat_columns <- ncol(y.hat)
+  if (!is.null(yhat_columns) && yhat_columns > 1) y.hat <- as.vector(y.hat[, 1])
+
   dist.residual <- sum((y.hat - mean(y.hat))^2)
 
   mckelvey <- dist.residual / (n * dist.variance + dist.residual)

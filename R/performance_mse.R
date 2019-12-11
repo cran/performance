@@ -18,17 +18,21 @@
 #' data(mtcars)
 #' m <- lm(mpg ~ hp + gear, data = mtcars)
 #' performance_mse(m)
-#'
 #' @importFrom insight print_color
 #' @importFrom stats residuals
 #' @export
 performance_mse <- function(model, verbose = TRUE) {
-  res <- tryCatch({
-    stats::residuals(model)
-  },
-  error = function(e) {
-    NULL
-  }
+  res <- tryCatch(
+    {
+      if (inherits(model, c("vgam", "vglm"))) {
+        model@residuals
+      } else {
+        stats::residuals(model)
+      }
+    },
+    error = function(e) {
+      NULL
+    }
   )
 
   if (is.null(res) || all(is.na(res))) {

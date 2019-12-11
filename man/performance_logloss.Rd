@@ -4,10 +4,12 @@
 \alias{performance_logloss}
 \title{Log Loss}
 \usage{
-performance_logloss(model, ...)
+performance_logloss(model, verbose = TRUE, ...)
 }
 \arguments{
 \item{model}{Model with binary outcome.}
+
+\item{verbose}{Toggle off warnings.}
 
 \item{...}{Currently not used.}
 }
@@ -28,7 +30,6 @@ Logistic regression models predict the probability of an outcome of
 data(mtcars)
 m <- glm(formula = vs ~ hp + wt, family = binomial, data = mtcars)
 performance_logloss(m)
-
 }
 \seealso{
 \code{\link[=performance_score]{performance_score()}}

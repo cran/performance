@@ -7,8 +7,11 @@
 \usage{
 check_collinearity(x, ...)
 
-\method{check_collinearity}{glmmTMB}(x, component = c("all",
-  "conditional", "count", "zi", "zero_inflated"), ...)
+\method{check_collinearity}{glmmTMB}(
+  x,
+  component = c("all", "conditional", "count", "zi", "zero_inflated"),
+  ...
+)
 }
 \arguments{
 \item{x}{A model object (that should at least respond to \code{vcov()},
@@ -53,7 +56,6 @@ check_collinearity(m)
 # plot results
 x <- check_collinearity(m)
 plot(x)
-
 }
 \references{
 James, G., Witten, D., Hastie, T., & Tibshirani, R. (Hrsg.). (2013). An introduction to statistical learning: with applications in R. New York: Springer.

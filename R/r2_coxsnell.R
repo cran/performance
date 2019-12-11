@@ -17,7 +17,6 @@
 #' @examples
 #' model <- glm(vs ~ wt + mpg, data = mtcars, family = "binomial")
 #' r2_coxsnell(model)
-#'
 #' @references
 #' \itemize{
 #'   \item Cox, D. R., Snell, E. J. (1989). Analysis of binary data (Vol. 32). Monographs on Statistics and Applied Probability.
@@ -34,12 +33,15 @@ r2_coxsnell <- function(model) {
 }
 
 
+# helper ---------------------------
+
+
 .r2_coxsnell <- function(model, l_base) {
   l_full <- stats::logLik(model)
   G2 <- -2 * (l_base - l_full)
 
   # Is it still necessary?
-  if (inherits(model, c("vglm", "clm2"))) {
+  if (inherits(model, c("vglm", "vgam", "clm2"))) {
     n <- insight::n_obs(model)
   } else {
     n <- attr(l_full, "nobs")
@@ -53,6 +55,13 @@ r2_coxsnell <- function(model) {
 }
 
 
+
+
+
+
+# r2-coxsnell based on model information ---------------------------
+
+
 #' @export
 r2_coxsnell.glm <- function(model) {
   r2_coxsnell <- (1 - exp((model$deviance - model$null.deviance) / insight::n_obs(model)))
@@ -60,31 +69,18 @@ r2_coxsnell.glm <- function(model) {
   r2_coxsnell
 }
 
+#' @export
+r2_coxsnell.BBreg <- r2_coxsnell.glm
 
 #' @export
-r2_coxsnell.BBreg <- function(model) {
-  r2_coxsnell <- (1 - exp((model$deviance - model$null.deviance) / insight::n_obs(model)))
-  names(r2_coxsnell) <- "Cox & Snell's R2"
-  r2_coxsnell
-}
+r2_coxsnell.mclogit <- r2_coxsnell.glm
 
 
-#' @export
-r2_coxsnell.multinom <- function(model) {
-  l_base <- stats::logLik(stats::update(model, ~1, trace = FALSE))
-  .r2_coxsnell(model, l_base)
-}
 
 
-#' @export
-r2_coxsnell.vglm <- function(model) {
-  if (!(is.null(model@call$summ) && !identical(model@call$summ, 0))) {
-    stop("Can't get log-likelihood when `summ` is not zero.", call. = FALSE)
-  }
 
-  l_base <- stats::logLik(stats::update(model, ~1))
-  .r2_coxsnell(model, l_base)
-}
+
+# r2-coxsnell based on loglik stored in model object ---------------------------
 
 
 #' @export
@@ -93,41 +89,22 @@ r2_coxsnell.coxph <- function(model) {
   .r2_coxsnell(model, l_base)
 }
 
-
 #' @export
-r2_coxsnell.survreg <- function(model) {
-  l_base <- model$loglik[1]
-  .r2_coxsnell(model, l_base)
-}
+r2_coxsnell.survreg <- r2_coxsnell.coxph
 
 
-#' @export
-r2_coxsnell.clm <- function(model) {
-  l_base <- stats::logLik(stats::update(model, ~1))
-  .r2_coxsnell(model, l_base)
-}
+
+
+
+
+# r2-coxsnell based on loglik of null-model (update) ---------------------------
 
 
 #' @export
-r2_coxsnell.crch <- function(model) {
-  l_base <- stats::logLik(stats::update(model, ~1))
+r2_coxsnell.multinom <- function(model) {
+  l_base <- stats::logLik(stats::update(model, ~1, trace = FALSE))
   .r2_coxsnell(model, l_base)
 }
-
-
-#' @export
-r2_coxsnell.censReg <- function(model) {
-  l_base <- stats::logLik(stats::update(model, ~1))
-  .r2_coxsnell(model, l_base)
-}
-
-
-#' @export
-r2_coxsnell.truncreg <- function(model) {
-  l_base <- stats::logLik(stats::update(model, ~1))
-  .r2_coxsnell(model, l_base)
-}
-
 
 #' @export
 r2_coxsnell.clm2 <- function(model) {
@@ -135,9 +112,23 @@ r2_coxsnell.clm2 <- function(model) {
   .r2_coxsnell(model, l_base)
 }
 
-
 #' @export
-r2_coxsnell.polr <- function(model) {
+r2_coxsnell.clm <- function(model) {
   l_base <- stats::logLik(stats::update(model, ~1))
   .r2_coxsnell(model, l_base)
 }
+
+#' @export
+r2_coxsnell.crch <- r2_coxsnell.clm
+
+#' @export
+r2_coxsnell.censReg <- r2_coxsnell.clm
+
+#' @export
+r2_coxsnell.truncreg <- r2_coxsnell.clm
+
+#' @export
+r2_coxsnell.polr <- r2_coxsnell.clm
+
+#' @export
+r2_coxsnell.glmx <- r2_coxsnell.clm

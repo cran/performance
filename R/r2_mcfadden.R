@@ -21,13 +21,16 @@
 #'
 #' model <- mlogit(mode ~ price + catch, data = Fish)
 #' r2_mcfadden(model)
-#'
 #' @importFrom insight find_parameters
 #' @importFrom stats logLik update
 #' @export
 r2_mcfadden <- function(model) {
   UseMethod("r2_mcfadden")
 }
+
+
+
+# helper -----------------------
 
 
 .r2_mcfadden <- function(model, l_null) {
@@ -46,11 +49,49 @@ r2_mcfadden <- function(model) {
 }
 
 
+
+
+
+
+
+# r2 via loglik and update --------------------------
+
+
 #' @export
 r2_mcfadden.glm <- function(model) {
   l_null <- stats::logLik(stats::update(model, ~1))
   .r2_mcfadden(model, l_null)
 }
+
+#' @export
+r2_mcfadden.clm <- r2_mcfadden.glm
+
+#' @export
+r2_mcfadden.glmx <- r2_mcfadden.glm
+
+#' @export
+r2_mcfadden.polr <- r2_mcfadden.glm
+
+#' @export
+r2_mcfadden.bracl <- r2_mcfadden.glm
+
+#' @export
+r2_mcfadden.brmultinom <- r2_mcfadden.glm
+
+#' @export
+r2_mcfadden.mclogit <- r2_mcfadden.glm
+
+#' @export
+r2_mcfadden.censReg <- r2_mcfadden.glm
+
+#' @export
+r2_mcfadden.truncreg <- r2_mcfadden.glm
+
+
+
+
+
+# special models -------------------------------------------
 
 
 #' @export
@@ -65,24 +106,11 @@ r2_mcfadden.vglm <- function(model) {
 
 
 #' @export
-r2_mcfadden.clm <- function(model) {
-  l_null <- stats::logLik(stats::update(model, ~1))
-  .r2_mcfadden(model, l_null)
-}
-
-
-#' @export
 r2_mcfadden.clm2 <- function(model) {
   l_null <- stats::logLik(stats::update(model, location = ~1, scale = ~1))
   .r2_mcfadden(model, l_null)
 }
 
-
-#' @export
-r2_mcfadden.polr <- function(model) {
-  l_null <- stats::logLik(stats::update(model, ~1))
-  .r2_mcfadden(model, l_null)
-}
 
 
 #' @export

@@ -11,7 +11,6 @@
 #' @examples
 #' model <- glm(vs ~ wt + mpg, data = mtcars, family = "binomial")
 #' r2_nagelkerke(model)
-#'
 #' @references Nagelkerke, N. J. (1991). A note on a general definition of the coefficient of determination. Biometrika, 78(3), 691-692.
 #'
 #' @export
@@ -20,13 +19,18 @@ r2_nagelkerke <- function(model) {
 }
 
 
+
+
+# helper ---------------------------
+
+
 .r2_nagelkerke <- function(model, l_base) {
   L.full <- stats::logLik(model)
   D.full <- -2 * L.full
 
   D.base <- -2 * l_base
   # Is it still necessary?
-  if (inherits(model, c("vglm", "clm2"))) {
+  if (inherits(model, c("vglm", "vgam", "clm2"))) {
     n <- insight::n_obs(model)
   } else {
     n <- attr(L.full, "nobs")
@@ -41,6 +45,10 @@ r2_nagelkerke <- function(model) {
 
 
 
+
+
+# Nagelkerke's R2 based on Cox&Snell's R2 ----------------
+
 #' @export
 r2_nagelkerke.glm <- function(model) {
   r2_nagelkerke <- r2_coxsnell(model) / (1 - exp(-model$null.deviance / insight::n_obs(model)))
@@ -48,64 +56,21 @@ r2_nagelkerke.glm <- function(model) {
   r2_nagelkerke
 }
 
-
 #' @export
-r2_nagelkerke.BBreg <- function(model) {
-  r2_nagelkerke <- r2_coxsnell(model) / (1 - exp(-model$null.deviance / insight::n_obs(model)))
-  names(r2_nagelkerke) <- "Nagelkerke's R2"
-  r2_nagelkerke
-}
+r2_nagelkerke.BBreg <- r2_nagelkerke.glm
+
+
+
+
+
+
+
+# Nagelkerke's R2 based on LogLik ----------------
 
 
 #' @export
 r2_nagelkerke.multinom <- function(model) {
   l_base <- stats::logLik(stats::update(model, ~1, trace = FALSE))
-  .r2_nagelkerke(model, l_base)
-}
-
-#' @export
-r2_nagelkerke.vglm <- function(model) {
-  if (!(is.null(model@call$summ) && !identical(model@call$summ, 0))) {
-    stop("Can't get log-likelihood when `summ` is not zero.", call. = FALSE)
-  }
-
-  l_base <- stats::logLik(stats::update(model, ~1))
-  .r2_nagelkerke(model, l_base)
-}
-
-#' @export
-r2_nagelkerke.clm <- function(model) {
-  l_base <- stats::logLik(stats::update(model, ~1))
-  .r2_nagelkerke(model, l_base)
-}
-
-#' @export
-r2_nagelkerke.censReg <- function(model) {
-  l_base <- stats::logLik(stats::update(model, ~1))
-  .r2_nagelkerke(model, l_base)
-}
-
-#' @export
-r2_nagelkerke.truncreg <- function(model) {
-  l_base <- stats::logLik(stats::update(model, ~1))
-  .r2_nagelkerke(model, l_base)
-}
-
-#' @export
-r2_nagelkerke.coxph <- function(model) {
-  l_base <- model$loglik[1]
-  .r2_nagelkerke(model, l_base)
-}
-
-#' @export
-r2_nagelkerke.survreg <- function(model) {
-  l_base <- model$loglik[1]
-  .r2_nagelkerke(model, l_base)
-}
-
-#' @export
-r2_nagelkerke.crch <- function(model) {
-  l_base <- model$loglik[1]
   .r2_nagelkerke(model, l_base)
 }
 
@@ -116,7 +81,48 @@ r2_nagelkerke.clm2 <- function(model) {
 }
 
 #' @export
-r2_nagelkerke.polr <- function(model) {
+r2_nagelkerke.clm <- function(model) {
   l_base <- stats::logLik(stats::update(model, ~1))
   .r2_nagelkerke(model, l_base)
 }
+
+#' @export
+r2_nagelkerke.polr <- r2_nagelkerke.clm
+
+#' @export
+r2_nagelkerke.bracl <- r2_nagelkerke.clm
+
+#' @export
+r2_nagelkerke.glmx <- r2_nagelkerke.clm
+
+#' @export
+r2_nagelkerke.brmultinom <- r2_nagelkerke.clm
+
+#' @export
+r2_nagelkerke.mclogit <- r2_nagelkerke.clm
+
+#' @export
+r2_nagelkerke.censReg <- r2_nagelkerke.clm
+
+#' @export
+r2_nagelkerke.truncreg <- r2_nagelkerke.clm
+
+
+
+
+
+
+# Nagelkerke's R2 based on LogLik stored in model object ----------------
+
+
+#' @export
+r2_nagelkerke.coxph <- function(model) {
+  l_base <- model$loglik[1]
+  .r2_nagelkerke(model, l_base)
+}
+
+#' @export
+r2_nagelkerke.survreg <- r2_nagelkerke.coxph
+
+#' @export
+r2_nagelkerke.crch <- r2_nagelkerke.coxph

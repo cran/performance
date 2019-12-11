@@ -30,11 +30,15 @@
 #' library(lme4)
 #' model <- lmer(Sepal.Length ~ Petal.Length + (1 | Species), data = iris)
 #' r2(model)
-#'
 #' @export
 r2 <- function(model, ...) {
   UseMethod("r2")
 }
+
+
+
+
+# Default models -----------------------------------------------
 
 
 #' @importFrom insight print_color
@@ -43,144 +47,6 @@ r2.default <- function(model, ...) {
   insight::print_color(sprintf("'r2()' does not support models of class '%s'.\n", class(model)[1]), "red")
   return(NA)
 }
-
-
-
-#' @export
-r2.BBreg <- function(model, ...) {
-  list("R2_CoxSnell" = r2_coxsnell(model))
-}
-
-
-
-#' @export
-r2.betareg <- function(model, ...) {
-  list(
-    R2 = c(`Pseudo R2` = model$pseudo.r.squared)
-  )
-}
-
-
-
-#' @export
-r2.brmsfit <- function(model, ...) {
-  r2_bayes(model, ...)
-}
-
-
-
-#' @export
-r2.censReg <- function(model, ...) {
-  list("R2_Nagelkerke" = r2_nagelkerke(model))
-}
-
-
-
-#' @export
-r2.clm <- function(model, ...) {
-  list("R2_Nagelkerke" = r2_nagelkerke(model))
-}
-
-
-
-#' @export
-r2.clm2 <- function(model, ...) {
-  list("R2_Nagelkerke" = r2_nagelkerke(model))
-}
-
-
-#' @export
-r2.coxph <- function(model, ...) {
-  list("R2_Nagelkerke" = r2_nagelkerke(model))
-}
-
-
-
-#' @export
-r2.crch <- function(model, ...) {
-  list("R2_CoxSnell" = r2_coxsnell(model))
-}
-
-
-
-#' @export
-r2.feis <- function(model, ...) {
-  out <- list(
-    R2 = c(`R2` = model$r2),
-    R2_adjusted = c(`adjusted R2` = model$adj.r2)
-  )
-
-  attr(out, "model_type") <- "Fixed Effects Individual Slope"
-  structure(class = "r2_generic", out)
-}
-
-
-
-#' @export
-r2.felm <- function(model, ...) {
-  model_summary <- summary(model)
-  out <- list(
-    R2 = c(`R2` = model_summary$r2),
-    R2_adjusted = c(`adjusted R2` = model_summary$r2adj)
-  )
-
-  attr(out, "model_type") <- "Fixed Effects"
-  structure(class = "r2_generic", out)
-}
-
-
-
-#' @importFrom insight model_info
-#' @export
-r2.glm <- function(model, ...) {
-  if (insight::model_info(model)$is_logit) {
-    list("R2_Tjur" = r2_tjur(model))
-  } else {
-    list("R2_Nagelkerke" = r2_nagelkerke(model))
-  }
-}
-
-
-
-#' @export
-r2.glmmTMB <- function(model, ...) {
-  r2_nakagawa(model)
-}
-
-
-
-#' @export
-r2.hurdle <- function(model, ...) {
-  r2_zeroinflated(model)
-}
-
-
-
-#' @export
-r2.iv_robust <- function(model, ...) {
-  out <- list(
-    R2 = c(`R2` = model$r.squared),
-    R2_adjusted = c(`adjusted R2` = model$adj.r.squared)
-  )
-
-  attr(out, "model_type") <- "Two-Stage Least Squares Instrumental-Variable"
-  structure(class = "r2_generic", out)
-}
-
-
-
-#' @export
-r2.ivreg <- function(model, ...) {
-  model_summary <- summary(model)
-  out <- list(
-    R2 = c(`R2` = model_summary$r.squared),
-    R2_adjusted = c(`adjusted R2` = model_summary$adj.r.squared)
-  )
-
-  attr(out, "model_type") <- "Instrumental-Variable"
-  structure(class = "r2_generic", out)
-}
-
 
 
 #' @importFrom stats pf
@@ -213,9 +79,278 @@ r2.lm <- function(model, ...) {
 
 
 
+#' @importFrom insight model_info
 #' @export
-r2.lme <- function(model, ...) {
+r2.glm <- function(model, ...) {
+  if (insight::model_info(model)$is_logit) {
+    list("R2_Tjur" = r2_tjur(model))
+  } else {
+    list("R2_Nagelkerke" = r2_nagelkerke(model))
+  }
+}
+
+#' @export
+r2.glmx <- r2.glm
+
+
+
+
+
+# Cox & Snell R2 ---------------------
+
+
+#' @export
+r2.BBreg <- function(model, ...) {
+  list("R2_CoxSnell" = r2_coxsnell(model))
+}
+
+#' @export
+r2.crch <- r2.BBreg
+
+
+
+
+
+
+# Nagelkerke R2 ----------------------
+
+
+#' @export
+r2.censReg <- function(model, ...) {
+  list("R2_Nagelkerke" = r2_nagelkerke(model))
+}
+
+#' @export
+r2.clm <- r2.censReg
+
+#' @export
+r2.clm2 <- r2.censReg
+
+#' @export
+r2.coxph <- r2.censReg
+
+#' @export
+r2.multinom <- r2.censReg
+
+#' @export
+r2.mclogit <- r2.censReg
+
+#' @export
+r2.polr <- r2.censReg
+
+#' @export
+r2.survreg <- r2.censReg
+
+#' @export
+r2.truncreg <- r2.censReg
+
+#' @export
+r2.bracl <- r2.censReg
+
+#' @export
+r2.brmultinom <- r2.censReg
+
+
+
+
+
+
+
+
+
+# Zeroinflated R2 ------------------
+
+
+#' @export
+r2.hurdle <- function(model, ...) {
+  r2_zeroinflated(model)
+}
+
+#' @export
+r2.zerotrunc <- r2.hurdle
+
+#' @export
+r2.zeroinfl <- r2.hurdle
+
+
+
+
+
+
+# Nakagawa R2 ----------------------
+
+
+#' @export
+r2.merMod <- function(model, ...) {
   r2_nakagawa(model)
+}
+
+#' @export
+r2.glmmTMB <- r2.merMod
+
+#' @export
+r2.glmmadmb <- r2.merMod
+
+#' @export
+r2.lme <- r2.merMod
+
+#' @export
+r2.clmm <- r2.merMod
+
+#' @export
+r2.mixed <- r2.merMod
+
+#' @export
+r2.MixMod <- r2.merMod
+
+#' @export
+r2.rlmerMod <- r2.merMod
+
+
+#' @export
+r2.wbm <- function(model, ...) {
+  out <- r2_nakagawa(model)
+
+  if (is.null(out) || is.na(out)) {
+    s <- summary(model)
+
+    r2_marginal <- s$mod_info_list$pR2_fe
+    r2_conditional <- s$mod_info_list$pR2_total
+
+    names(r2_conditional) <- "Conditional R2"
+    names(r2_marginal) <- "Marginal R2"
+
+    out <- list(
+      "R2_conditional" = r2_conditional,
+      "R2_marginal" = r2_marginal
+    )
+
+    attr(out, "model_type") <- "Fixed Effects"
+    class(out) <- "r2_nakagawa"
+  }
+
+  out
+}
+
+
+
+
+
+
+# Bayes R2 ------------------------
+
+
+#' @export
+r2.brmsfit <- function(model, ...) {
+  r2_bayes(model, ...)
+}
+
+#' @export
+r2.stanreg <- r2.brmsfit
+
+
+
+
+
+
+
+# Other methods ------------------------------
+
+
+#' @export
+r2.betareg <- function(model, ...) {
+  list(
+    R2 = c(`Pseudo R2` = model$pseudo.r.squared)
+  )
+}
+
+
+
+#' @export
+r2.feis <- function(model, ...) {
+  out <- list(
+    R2 = c(`R2` = model$r2),
+    R2_adjusted = c(`adjusted R2` = model$adj.r2)
+  )
+
+  attr(out, "model_type") <- "Fixed Effects Individual Slope"
+  structure(class = "r2_generic", out)
+}
+
+
+
+#' @export
+r2.fixest <- function(model, ...) {
+  if (!requireNamespace("fixest", quietly = TRUE)) {
+    stop("Package 'fixest' needed to calculate R2. Please install it.")
+  }
+
+  r2 <- fixest::r2(model)
+
+  out_normal <- .compact_list(list(
+    R2 = r2["r2"],
+    R2_adjusted = r2["ar2"],
+    R2_within = r2["wr2"],
+    R2_within_adjusted = r2["war2"]
+  ), remove_na = TRUE)
+
+  out_pseudo <- .compact_list(list(
+    R2 = r2["pr2"],
+    R2_adjusted = r2["apr2"],
+    R2_within = r2["wpr2"],
+    R2_within_adjusted = r2["wapr2"]
+  ), remove_na = TRUE)
+
+  if (length(out_normal)) {
+    out <- out_normal
+  } else {
+    out <- out_pseudo
+  }
+
+  attr(out, "model_type") <- "Fixed Effects"
+  structure(class = "r2_generic", out)
+}
+
+
+
+#' @export
+r2.felm <- function(model, ...) {
+  model_summary <- summary(model)
+  out <- list(
+    R2 = c(`R2` = model_summary$r2),
+    R2_adjusted = c(`adjusted R2` = model_summary$r2adj)
+  )
+
+  attr(out, "model_type") <- "Fixed Effects"
+  structure(class = "r2_generic", out)
+}
+
+
+
+
+#' @export
+r2.iv_robust <- function(model, ...) {
+  out <- list(
+    R2 = c(`R2` = model$r.squared),
+    R2_adjusted = c(`adjusted R2` = model$adj.r.squared)
+  )
+
+  attr(out, "model_type") <- "Two-Stage Least Squares Instrumental-Variable"
+  structure(class = "r2_generic", out)
+}
+
+
+
+#' @export
+r2.ivreg <- function(model, ...) {
+  model_summary <- summary(model)
+  out <- list(
+    R2 = c(`R2` = model_summary$r.squared),
+    R2_adjusted = c(`adjusted R2` = model_summary$adj.r.squared)
+  )
+
+  attr(out, "model_type") <- "Instrumental-Variable"
+  structure(class = "r2_generic", out)
 }
 
 
@@ -261,33 +396,8 @@ r2.lmrob <- function(model, ...) {
   structure(class = "r2_generic", out)
 }
 
-
-
 #' @export
-r2.merMod <- function(model, ...) {
-  r2_nakagawa(model)
-}
-
-
-
-#' @export
-r2.clmm <- function(model, ...) {
-  r2_nakagawa(model)
-}
-
-
-
-#' @export
-r2.mixed <- function(model, ...) {
-  r2_nakagawa(model)
-}
-
-
-
-#' @export
-r2.MixMod <- function(model, ...) {
-  r2_nakagawa(model)
-}
+r2.complmrob <- r2.lmrob
 
 
 
@@ -299,8 +409,8 @@ r2.mlogit <- function(model, ...) {
 
 
 #' @export
-r2.multinom <- function(model, ...) {
-  list("R2_Nagelkerke" = r2_nagelkerke(model))
+r2.mmclogit <- function(model, ...) {
+  list(R2 = NA)
 }
 
 
@@ -320,30 +430,9 @@ r2.plm <- function(model, ...) {
 
 
 #' @export
-r2.polr <- function(model, ...) {
-  list("R2_Nagelkerke" = r2_nagelkerke(model))
-}
-
-
-
-#' @export
-r2.stanreg <- function(model, ...) {
-  r2_bayes(model, ...)
-}
-
-
-
-#' @export
-r2.survreg <- function(model, ...) {
-  list("R2_Nagelkerke" = r2_nagelkerke(model))
-}
-
-
-
-#' @export
 r2.svyglm <- function(model, ...) {
   rsq <- (model$null.deviance - model$deviance) / model$null.deviance
-  rsq.adjust = 1 - ((1 - rsq) * (model$df.null / model$df.residual))
+  rsq.adjust <- 1 - ((1 - rsq) * (model$df.null / model$df.residual))
 
   out <- list(
     R2 = c(`R2` = rsq),
@@ -357,34 +446,9 @@ r2.svyglm <- function(model, ...) {
 
 
 #' @export
-r2.truncreg <- function(model, ...) {
-  list("R2_Nagelkerke" = r2_nagelkerke(model))
-}
-
-
-
-#' @export
 r2.vglm <- function(model, ...) {
-  list("R2_Nagelkerke" = r2_nagelkerke(model))
+  list("R2_McKelvey" = r2_mckelvey(model))
 }
-
-
 
 #' @export
-r2.wbm <- function(model, ...) {
-  r2_nakagawa(model)
-}
-
-
-
-#' @export
-r2.zerotrunc <- function(model, ...) {
-  r2_zeroinflated(model)
-}
-
-
-
-#' @export
-r2.zeroinfl <- function(model, ...) {
-  r2_zeroinflated(model)
-}
+r2.vgam <- r2.vglm

@@ -40,7 +40,6 @@
 #' # plot results
 #' x <- check_collinearity(m)
 #' plot(x)
-#'
 #' @importFrom stats vcov cov2cor terms
 #' @importFrom insight has_intercept find_formula model_info print_color
 #' @export
@@ -111,15 +110,15 @@ check_collinearity.zerocount <- function(x, component = c("all", "conditional", 
       return(NULL)
     }
     if (is.null(cond)) {
-      zi$Component = "zero inflated"
+      zi$Component <- "zero inflated"
       return(zi)
     }
     if (is.null(zi)) {
-      cond$Component = "conditional"
+      cond$Component <- "conditional"
       return(cond)
     }
-    cond$Component = "conditional"
-    zi$Component = "zero inflated"
+    cond$Component <- "conditional"
+    zi$Component <- "zero inflated"
     dat_cond <- attr(cond, "data")
     dat_zi <- attr(zi, "data")
     dat <- rbind(cond, zi)
@@ -132,8 +131,10 @@ check_collinearity.zerocount <- function(x, component = c("all", "conditional", 
 
 
 
+
+#' @importFrom insight get_varcov
 .check_collinearity <- function(x, component) {
-  v <- .vcov_as_matrix(x, component)
+  v <- insight::get_varcov(x, component = component)
   assign <- .term_assignments(x, component)
 
   if (insight::has_intercept(x)) {
@@ -172,18 +173,22 @@ check_collinearity.zerocount <- function(x, component = c("all", "conditional", 
 
   structure(
     class = c("check_collinearity", "see_check_collinearity", "data.frame"),
-    data.frame(
-      Parameter = terms,
-      VIF = result,
-      SE_factor = sqrt(result),
-      stringsAsFactors = FALSE
+    .remove_backticks_from_parameter_names(
+      data.frame(
+        Parameter = terms,
+        VIF = result,
+        SE_factor = sqrt(result),
+        stringsAsFactors = FALSE
+      )
     ),
-    data = data.frame(
-      Parameter = terms,
-      VIF = result,
-      SE_factor = sqrt(result),
-      Component = component,
-      stringsAsFactors = FALSE
+    data = .remove_backticks_from_parameter_names(
+      data.frame(
+        Parameter = terms,
+        VIF = result,
+        SE_factor = sqrt(result),
+        Component = component,
+        stringsAsFactors = FALSE
+      )
     )
   )
 }
@@ -191,67 +196,42 @@ check_collinearity.zerocount <- function(x, component = c("all", "conditional", 
 
 
 
-
-#' @importFrom stats vcov
-.vcov_as_matrix <- function(x, component) {
-  if (inherits(x, c("hurdle", "zeroinfl", "zerocount"))) {
-    switch(
-      component,
-      conditional = as.matrix(stats::vcov(x, model = "count")),
-      zero_inflated = as.matrix(stats::vcov(x, model = "zero"))
-    )
-  } else if (inherits(x, "MixMod")) {
-    switch(
-      component,
-      conditional = as.matrix(stats::vcov(x, parm = "fixed-effects")),
-      zero_inflated = as.matrix(stats::vcov(x, parm = "zero_part"))
-    )
-  } else {
-    switch(
-      component,
-      conditional = as.matrix(.collapse_cond(stats::vcov(x))),
-      zero_inflated = as.matrix(.collapse_zi(stats::vcov(x)))
-    )
-  }
-}
-
-
-
-
 #' @importFrom stats model.matrix
 .term_assignments <- function(x, component) {
-  tryCatch({
-    if (inherits(x, c("hurdle", "zeroinfl", "zerocount"))) {
-      assign <- switch(
-        component,
-        conditional = attr(stats::model.matrix(x, model = "count"), "assign"),
-        zero_inflated = attr(stats::model.matrix(x, model = "zero"), "assign")
-      )
-    } else if (inherits(x, "glmmTMB")) {
-      assign <- switch(
-        component,
-        conditional = attr(stats::model.matrix(x), "assign"),
-        zero_inflated = .find_term_assignment(x, component)
-      )
-    } else if (inherits(x, "MixMod")) {
-      assign <- switch(
-        component,
-        conditional = attr(stats::model.matrix(x, type = "fixed"), "assign"),
-        zero_inflated = attr(stats::model.matrix(x, type = "zi_fixed"), "assign")
-      )
-    } else {
-      assign <- attr(stats::model.matrix(x), "assign")
-    }
+  tryCatch(
+    {
+      if (inherits(x, c("hurdle", "zeroinfl", "zerocount"))) {
+        assign <- switch(
+          component,
+          conditional = attr(stats::model.matrix(x, model = "count"), "assign"),
+          zero_inflated = attr(stats::model.matrix(x, model = "zero"), "assign")
+        )
+      } else if (inherits(x, "glmmTMB")) {
+        assign <- switch(
+          component,
+          conditional = attr(stats::model.matrix(x), "assign"),
+          zero_inflated = .find_term_assignment(x, component)
+        )
+      } else if (inherits(x, "MixMod")) {
+        assign <- switch(
+          component,
+          conditional = attr(stats::model.matrix(x, type = "fixed"), "assign"),
+          zero_inflated = attr(stats::model.matrix(x, type = "zi_fixed"), "assign")
+        )
+      } else {
+        assign <- attr(stats::model.matrix(x), "assign")
+      }
 
-    if (is.null(assign)) {
-      assign <- .find_term_assignment(x, component)
-    }
+      if (is.null(assign)) {
+        assign <- .find_term_assignment(x, component)
+      }
 
-    assign
-  },
-  error = function(e) {
-    .find_term_assignment(x, component)
-  })
+      assign
+    },
+    error = function(e) {
+      .find_term_assignment(x, component)
+    }
+  )
 }
 
 
@@ -278,14 +258,4 @@ check_collinearity.zerocount <- function(x, component = c("all", "conditional", 
     insight::clean_names(insight::find_parameters(x)[["zero_inflated"]]),
     parms
   )])
-}
-
-
-
-.collapse_zi <- function(x) {
-  if (is.list(x) && "zi" %in% names(x)) {
-    x[["zi"]]
-  } else {
-    x
-  }
 }

@@ -28,9 +28,7 @@
 #'
 #' model <- glm(vs ~ wt + mpg, data = mtcars, family = "binomial")
 #' model_performance(model)
-#'
 #' @importFrom insight model_info
-#' @importFrom stats AIC BIC
 #' @export
 model_performance.lm <- function(model, metrics = "all", verbose = TRUE, ...) {
   if (all(metrics == "all")) {
@@ -43,10 +41,10 @@ model_performance.lm <- function(model, metrics = "all", verbose = TRUE, ...) {
   attrib <- list()
 
   if ("AIC" %in% toupper(metrics)) {
-    out$AIC <- stats::AIC(model)
+    out$AIC <- .get_AIC(model)
   }
   if ("BIC" %in% toupper(metrics)) {
-    out$BIC <- stats::BIC(model)
+    out$BIC <- .get_BIC(model)
   }
   if ("R2" %in% toupper(metrics)) {
     R2 <- r2(model)
@@ -67,7 +65,7 @@ model_performance.lm <- function(model, metrics = "all", verbose = TRUE, ...) {
   }
 
   if (("PCP" %in% toupper(metrics)) && info$is_binomial && !info$is_ordinal) {
-    out$PCP <- performance_pcp(model)$pcp_model
+    out$PCP <- performance_pcp(model, verbose = verbose)$pcp_model
   }
 
   # TODO: What with sigma and deviance?
@@ -85,6 +83,9 @@ model_performance.lm <- function(model, metrics = "all", verbose = TRUE, ...) {
 #' @rdname model_performance.lm
 #' @export
 model_performance.glm <- model_performance.lm
+
+#' @export
+model_performance.glmx <- model_performance.lm
 
 #' @export
 model_performance.betareg <- model_performance.lm
@@ -133,3 +134,6 @@ model_performance.truncreg <- model_performance.lm
 
 #' @export
 model_performance.vglm <- model_performance.lm
+
+#' @export
+model_performance.fixest <- model_performance.lm

@@ -3,6 +3,50 @@
 
 
 
+
+
+#' @importFrom stats AIC
+.get_AIC <- function(x) {
+  if (inherits(x, c("vgam", "vglm"))) {
+    if (!requireNamespace("VGAM", quietly = TRUE)) {
+      warning("Package 'VGAM' required for this function work. Please install it.", call. = FALSE)
+      return(NULL)
+    }
+    VGAM::AIC(x)
+  } else {
+    tryCatch({
+      stats::AIC(x)
+    },
+    error = function(e) {
+      NULL
+    })
+  }
+}
+
+
+
+
+#' @importFrom stats BIC
+.get_BIC <- function(x) {
+  if (inherits(x, c("vgam", "vglm"))) {
+    if (!requireNamespace("VGAM", quietly = TRUE)) {
+      warning("Package 'VGAM' required for this function work. Please install it.", call. = FALSE)
+      return(NULL)
+    }
+    VGAM::BIC(x)
+  } else {
+    tryCatch({
+      stats::BIC(x)
+    },
+    error = function(e) {
+      NULL
+    })
+  }
+}
+
+
+
+
 # safe deparse, works for very long strings
 .safe_deparse <- function(string) {
   paste0(sapply(deparse(string, width.cutoff = 500), .trim, simplify = TRUE), collapse = "")
@@ -14,8 +58,12 @@
 .is_empty_object <- function(x) {
   if (is.list(x)) {
     x <- tryCatch(
-      {.compact_list(x)},
-      error = function(x) { x }
+      {
+        .compact_list(x)
+      },
+      error = function(x) {
+        x
+      }
     )
   }
   # this is an ugly fix because of ugly tibbles
@@ -37,7 +85,9 @@
 
 #' @importFrom stats na.omit sd
 .std <- function(x) {
-  if (!is.numeric(x)) return(x)
+  if (!is.numeric(x)) {
+    return(x)
+  }
 
   # remove missings
   tmp <- stats::na.omit(x)
@@ -71,11 +121,21 @@
 
 
 
+
 # safe conversion from factor to numeric
 #' @importFrom stats na.omit
 .factor_to_numeric <- function(x) {
-  if (is.numeric(x))
+  if (is.data.frame(x)) {
+    as.data.frame(lapply(x, .factor_to_numeric_helper))
+  } else {
+    .factor_to_numeric_helper(x)
+  }
+}
+
+.factor_to_numeric_helper <- function(x) {
+  if (is.numeric(x)) {
     return(x)
+  }
 
   if (anyNA(suppressWarnings(as.numeric(as.character(stats::na.omit(x)))))) {
     if (is.character(x)) {
@@ -91,7 +151,14 @@
 
 
 # remove NULL elements from lists
-.compact_list <- function(x) x[!sapply(x, function(i) length(i) == 0 || is.null(i) || any(i == "NULL"))]
+.compact_list <- function(x, remove_na = FALSE) {
+  if (remove_na) {
+    x[!sapply(x, function(i) length(i) == 0 || is.null(i) || (length(i) == 1 & is.na(i)) || any(i == "NULL"))]
+  } else {
+    x[!sapply(x, function(i) length(i) == 0 || is.null(i) || any(i == "NULL"))]
+  }
+}
+
 
 
 
@@ -99,4 +166,13 @@
 # remove column
 .remove_column <- function(data, variables) {
   data[, -which(colnames(data) %in% variables), drop = FALSE]
+}
+
+
+
+.remove_backticks_from_parameter_names <- function(x) {
+  if (is.data.frame(x) && "Parameter" %in% colnames(x)) {
+    x$Parameter <- gsub("`", "", x$Parameter, fixed = TRUE)
+  }
+  x
 }

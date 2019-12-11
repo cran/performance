@@ -4,12 +4,14 @@
 \alias{model_performance.stanreg}
 \title{Performance of Bayesian Models}
 \usage{
-\method{model_performance}{stanreg}(model, metrics = "all", ...)
+\method{model_performance}{stanreg}(model, metrics = "all", verbose = TRUE, ...)
 }
 \arguments{
 \item{model}{Object of class \code{stanreg} or \code{brmsfit}.}
 
 \item{metrics}{Can be \code{"all"} or a character vector of metrics to be computed (some of \code{c("LOOIC", "WAIC", "R2", "R2_adj", "RMSE", "LOGLOSS", "SCORE")}).}
+
+\item{verbose}{Toggle off warnings.}
 
 \item{...}{Arguments passed to or from other methods.}
 }
@@ -47,7 +49,6 @@ model <- stan_glmer(
   iter = 500
 )
 model_performance(model)
-
 }
 \references{
 Gelman, A., Goodrich, B., Gabry, J., & Vehtari, A. (2018). R-squared for Bayesian regression models. The American Statistician, The American Statistician, 1-6.

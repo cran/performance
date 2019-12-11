@@ -3,7 +3,7 @@
 #' @inheritParams model_performance.lm
 #' @rdname model_performance
 #' @export
-compare_performance <- function(..., metrics = "all", verbose = TRUE) {
+compare_performance <- function(..., metrics = "all", rank = FALSE, verbose = TRUE) {
   objects <- list(...)
   object_names <- match.call(expand.dots = FALSE)$`...`
 
@@ -16,7 +16,7 @@ compare_performance <- function(..., metrics = "all", verbose = TRUE) {
   }
 
   m <- mapply(function(.x, .y) {
-    dat <- model_performance(.x, metrics = metrics)
+    dat <- model_performance(.x, metrics = metrics, verbose = FALSE)
     cbind(data.frame(Model = as.character(.y), Type = class(.x)[1], stringsAsFactors = FALSE), dat)
   }, objects, object_names, SIMPLIFY = FALSE)
 
@@ -26,7 +26,9 @@ compare_performance <- function(..., metrics = "all", verbose = TRUE) {
     {
       bayestestR::bayesfactor_models(..., denominator = 1, verbose = FALSE)
     },
-    error = function(e) { NULL }
+    error = function(e) {
+      NULL
+    }
   )
 
   dfs <- Reduce(function(x, y) merge(x, y, all = TRUE, sort = FALSE), m)
@@ -42,6 +44,63 @@ compare_performance <- function(..., metrics = "all", verbose = TRUE) {
     warning("When comparing models, please note that probably not all models were fit from same data.", call. = FALSE)
   }
 
+  # create "ranking" of models
+  if (isTRUE(rank)) {
+    dfs <- .rank_performance_indices(dfs, verbose)
+  }
+
   # dfs[order(sapply(object_names, as.character), dfs$Model), ]
+  class(dfs) <- c("compare_performance", "see_compare_performance", class(dfs))
   dfs
+}
+
+
+
+
+.rank_performance_indices <- function(x, verbose) {
+  # all models comparable?
+  if (length(unique(x$Type)) > 1 && isTRUE(verbose)) {
+    warning("Models are not of same type. Comparison of indices might be not meaningful.", call. = FALSE)
+  }
+
+  # set reference for Bayes factors to 1
+  if ("BF" %in% colnames(x)) x$BF[is.na(x$BF)] <- 1
+
+  out <- x
+
+  # normalize indices, for comparison
+  out[] <- lapply(out, function(i) {
+    if (is.numeric(i)) i <- .normalize_vector(i)
+    i
+  })
+
+  # recode some indices, so higher values = better fit
+  for (i in c("AIC", "BIC", "RMSE")) {
+    if (i %in% colnames(out)) {
+      out[[i]] <- 1 - out[[i]]
+    }
+  }
+
+  # any indices with NA?
+  missing_indices <- sapply(out, anyNA)
+  if (any(missing_indices) && isTRUE(verbose)) {
+    warning(sprintf(
+      "Following indices with missing values are not used for ranking: %s",
+      paste0(colnames(out)[missing_indices], collapse = ", ")
+    ), call. = FALSE)
+  }
+
+  # create rank-index, only for complete indices
+  numeric_columns <- sapply(out, function(i) is.numeric(i) & !anyNA(i))
+  rank_index <- rowMeans(out[numeric_columns], na.rm = TRUE)
+
+  x$Performance_Score <- rank_index
+  x <- x[order(rank_index, decreasing = TRUE), ]
+
+  rownames(x) <- NULL
+  x
+}
+
+.normalize_vector <- function(x) {
+  as.vector((x - min(x, na.rm = TRUE)) / diff(range(x, na.rm = TRUE), na.rm = TRUE))
 }

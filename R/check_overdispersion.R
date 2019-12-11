@@ -54,29 +54,35 @@
 #'   data = Salamanders
 #' )
 #' check_overdispersion(m)
-#'
 #' @export
 check_overdispersion <- function(x, ...) {
   UseMethod("check_overdispersion")
 }
 
 
-#' @importFrom insight get_response
-#' @importFrom stats fitted nobs coef pchisq family
+
+
+# Overdispersion for classical models -----------------------------
+
+
+#' @importFrom insight get_response model_info find_parameters
+#' @importFrom stats fitted nobs coef pchisq
 #' @export
 check_overdispersion.glm <- function(x, ...) {
   # check if we have poisson
-  if (!stats::family(x)$family %in% c("poisson", "quasipoisson"))
+  model_info <- insight::model_info(x)
+  if (!model_info$is_poisson) {
     stop("Model must be from Poisson-family.", call. = F)
+  }
 
   yhat <- stats::fitted(x)
 
   n <- stats::nobs(x)
-  k <- length(stats::coef(x))
+  k <- length(insight::find_parameters(x, effects = "fixed", flatten = TRUE))
 
   zi <- (insight::get_response(x) - yhat) / sqrt(yhat)
   chisq <- sum(zi^2)
-  ratio <-  chisq / (n - k)
+  ratio <- chisq / (n - k)
   p.value <- stats::pchisq(chisq, df = n - k, lower.tail = FALSE)
 
   structure(
@@ -90,28 +96,24 @@ check_overdispersion.glm <- function(x, ...) {
   )
 }
 
+#' @export
+check_overdispersion.fixest <- check_overdispersion.glm
 
 #' @export
-check_overdispersion.negbin <- function(x, ...) {
-  check_overdispersion.lme4(x)
-}
+check_overdispersion.glmx <- check_overdispersion.glm
 
 
-#' @export
-check_overdispersion.merMod <- function(x, ...) {
-  check_overdispersion.lme4(x)
-}
 
 
-#' @export
-check_overdispersion.glmmTMB <- function(x, ...) {
-  check_overdispersion.lme4(x)
-}
+
+
+# Overdispersion for mixed models ---------------------------
 
 
 #' @importFrom insight model_info
 #' @importFrom stats df.residual residuals pchisq
-check_overdispersion.lme4 <- function(x) {
+#' @export
+check_overdispersion.merMod <- function(x, ...) {
   # check if we have poisson
   if (!insight::model_info(x)$is_poisson) {
     stop("Model must be from Poisson-family.", call. = F)
@@ -133,3 +135,9 @@ check_overdispersion.lme4 <- function(x) {
     )
   )
 }
+
+#' @export
+check_overdispersion.negbin <- check_overdispersion.merMod
+
+#' @export
+check_overdispersion.glmmTMB <- check_overdispersion.merMod

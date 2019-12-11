@@ -1,3 +1,29 @@
+# performance 0.4.2
+
+## General
+
+* Support for `bracl`, `brmultinom`, `fixest`, `glmx`, `glmmadmb`, `mclogit`, `mmclogit`, `vgam` and `vglm` models.
+* `model_performance()` now supports *plm* models.
+* `r2()` now supports *complmrob* models.
+* `compare_performance()` now gets a `plot()`-method (requires package **see**).
+
+## Changes to functions
+
+* `compare_performance()` gets a `rank`-argument, to rank models according to their overall model performance.
+* `compare_performance()` has a nicer `print()`-method now.
+* Verbosity for `compare_performance()` was slightly adjusted.
+* `model_performance()`-methods for different objects now also have a `verbose`-argument.
+
+## Minor changes
+
+* `check_collinearity()` now no longer returns backticks in row- and column names.
+
+## Bug fixes
+
+* Fixed issue in `r2()` for `wbm`-models with cross-level interactions.
+* `plot()`-methods for `check_heteroscedasticity()` and `check_homogeneity()` now work without requiring to load package *see* before.
+* Fixed issues with models of class `rlmerMod`.
+
 # performance 0.4.0
 
 ## General

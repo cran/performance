@@ -36,7 +36,6 @@
 #' model <- glm(counts ~ outcome + treatment, family = poisson())
 #'
 #' performance_score(model)
-#'
 #' \dontrun{
 #' library(glmmTMB)
 #' data(Salamanders)
@@ -58,6 +57,13 @@ performance_score <- function(model, verbose = TRUE) {
 
   if (minfo$is_ordinal) {
     if (verbose) insight::print_color("Can't calculate proper scoring rules for ordinal or cumulative link models.\n", "red")
+    return(list(logarithmic = NA, quadratic = NA, spherical = NA))
+  }
+
+  resp <- insight::get_response(model)
+
+  if (!is.null(ncol(resp)) && ncol(resp) > 1) {
+    if (verbose) insight::print_color("Can't calculate proper scoring rules for models without integer response values.\n", "red")
     return(list(logarithmic = NA, quadratic = NA, spherical = NA))
   }
 
@@ -101,7 +107,7 @@ performance_score <- function(model, verbose = TRUE) {
   }
 
   pr <- .predict_score_y(model)
-  resp <- .factor_to_numeric(insight::get_response(model))
+  resp <- .factor_to_numeric(resp)
   p_y <- prob_fun(resp, mean = pr$pred, pis = pr$pred_zi, sum(resp))
 
   quadrat_p <- sum(p_y^2)
@@ -129,15 +135,17 @@ performance_score <- function(model, verbose = TRUE) {
       }
       glmmTMB::getME(model, "theta")
     } else {
-      sum(stats::residuals(model , type = "pearson")^2) / stats::df.residual(model)
+      sum(stats::residuals(model, type = "pearson")^2) / stats::df.residual(model)
     }
   } else {
-    tryCatch({
-      sum(stats::residuals(model , type = "pearson")^2) / stats::df.residual(model)
-    },
-    error = function(e) {
-      0
-    })
+    tryCatch(
+      {
+        sum(stats::residuals(model, type = "pearson")^2) / stats::df.residual(model)
+      },
+      error = function(e) {
+        0
+      }
+    )
   }
 }
 

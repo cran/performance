@@ -5,11 +5,9 @@
 \alias{model_performance.glm}
 \title{Performance of Regression Models}
 \usage{
-\method{model_performance}{lm}(model, metrics = "all", verbose = TRUE,
-  ...)
+\method{model_performance}{lm}(model, metrics = "all", verbose = TRUE, ...)
 
-\method{model_performance}{glm}(model, metrics = "all", verbose = TRUE,
-  ...)
+\method{model_performance}{glm}(model, metrics = "all", verbose = TRUE, ...)
 }
 \arguments{
 \item{model}{A model.}
@@ -46,5 +44,4 @@ model_performance(model)
 
 model <- glm(vs ~ wt + mpg, data = mtcars, family = "binomial")
 model_performance(model)
-
 }

@@ -2,15 +2,12 @@
 #'
 #' This function calculates the intraclass-correlation coefficient
 #'  (ICC) - sometimes also called \emph{variance partition coefficient}
-#'  (VPC) - for mixed effects models. The ICC is calculated for \code{merMod}
-#'  (\pkg{lme4}), \code{glmmTMB} (\pkg{glmmTMB}), \code{MixMod} (\pkg{GLMMadpative}),
-#'  \code{lme} (\pkg{nlme}), \code{mixed} (\pkg{afex}), and \code{stanreg}
-#'  (\pkg{rstanarm}) objects. For models fitted with the \pkg{brms}-package,
-#'  a variance decomposition based on the posterior predictive distribution
-#'  is calculated (see 'Details').
+#'  (VPC) - for mixed effects models. The ICC can be calculated for all models
+#'  supported by \code{\link[insight]{get_variance}}. For models fitted with
+#'  the \pkg{brms}-package, a variance decomposition based on the posterior
+#'  predictive distribution is calculated (see 'Details').
 #'
-#' @param model A mixed effects model of class \code{merMod}, \code{glmmTMB},
-#'  \code{MixMod}, \code{lme}, \code{mixed}, \code{stanreg} or \code{brmsfit}.
+#' @param model A (Bayesian) mixed effects model.
 #' @param re.form Formula containing group-level effects to be considered in
 #'   the prediction. If \code{NULL} (default), include all group-level effects.
 #'   Else, for instance for nested models, name a specific group-level effect
@@ -105,7 +102,6 @@
 #' library(lme4)
 #' model <- lme4::lmer(Sepal.Length ~ Petal.Length + (1 | Species), data = iris)
 #' icc(model)
-#'
 #' @importFrom insight model_info get_variance print_color
 #' @export
 icc <- function(model, ...) {
@@ -196,10 +192,11 @@ icc.brmsfit <- function(model, re.form = NULL, robust = TRUE, ci = .95, ...) {
   PPD_0 <- brms::posterior_predict(model, re.form = NA, summary = FALSE)
   var_rand_intercept <- apply(PPD_0, MARGIN = 1, FUN = stats::var)
 
-  if (robust)
+  if (robust) {
     fun <- get("median", asNamespace("stats"))
-  else
+  } else {
     fun <- get("mean", asNamespace("base"))
+  }
 
   var_icc <- var_rand_intercept / var_total
   var_residual <- var_total - var_rand_intercept
