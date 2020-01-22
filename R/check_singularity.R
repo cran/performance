@@ -42,23 +42,24 @@
 #'   }
 #'
 #' @examples
-#' library(lme4)
-#' data(sleepstudy)
-#' set.seed(123)
-#' sleepstudy$mygrp <- sample(1:5, size = 180, replace = TRUE)
-#' sleepstudy$mysubgrp <- NA
-#' for (i in 1:5) {
-#'   filter_group <- sleepstudy$mygrp == i
-#'   sleepstudy$mysubgrp[filter_group] <-
-#'     sample(1:30, size = sum(filter_group), replace = TRUE)
+#' if (require("lme4")) {
+#'   data(sleepstudy)
+#'   set.seed(123)
+#'   sleepstudy$mygrp <- sample(1:5, size = 180, replace = TRUE)
+#'   sleepstudy$mysubgrp <- NA
+#'   for (i in 1:5) {
+#'     filter_group <- sleepstudy$mygrp == i
+#'     sleepstudy$mysubgrp[filter_group] <-
+#'       sample(1:30, size = sum(filter_group), replace = TRUE)
+#'   }
+#'
+#'   model <- lmer(
+#'     Reaction ~ Days + (1 | mygrp / mysubgrp) + (1 | Subject),
+#'     data = sleepstudy
+#'   )
+#'
+#'   check_singularity(model)
 #' }
-#'
-#' model <- lmer(
-#'   Reaction ~ Days + (1 | mygrp / mysubgrp) + (1 | Subject),
-#'   data = sleepstudy
-#' )
-#'
-#' check_singularity(model)
 #' @export
 check_singularity <- function(x, tolerance = 1e-5, ...) {
   UseMethod("check_singularity")
@@ -106,6 +107,18 @@ check_singularity.clmm <- function(x, tolerance = 1e-5, ...) {
   }
 
   vc <- ordinal::VarCorr(x)
+  any(sapply(vc, function(.x) any(abs(diag(.x)) < tolerance)))
+}
+
+
+
+#' @export
+check_singularity.cpglmm <- function(x, tolerance = 1e-5, ...) {
+  if (!requireNamespace("cplm", quietly = TRUE)) {
+    stop("Package `cplm` needed for this function to work. Please install it.")
+  }
+
+  vc <- cplm::VarCorr(x)
   any(sapply(vc, function(.x) any(abs(diag(.x)) < tolerance)))
 }
 

@@ -4,28 +4,6 @@
 
 
 
-
-#' @importFrom stats AIC
-.get_AIC <- function(x) {
-  if (inherits(x, c("vgam", "vglm"))) {
-    if (!requireNamespace("VGAM", quietly = TRUE)) {
-      warning("Package 'VGAM' required for this function work. Please install it.", call. = FALSE)
-      return(NULL)
-    }
-    VGAM::AIC(x)
-  } else {
-    tryCatch({
-      stats::AIC(x)
-    },
-    error = function(e) {
-      NULL
-    })
-  }
-}
-
-
-
-
 #' @importFrom stats BIC
 .get_BIC <- function(x) {
   if (inherits(x, c("vgam", "vglm"))) {

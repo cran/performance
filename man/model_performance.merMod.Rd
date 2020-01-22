@@ -9,7 +9,7 @@
 \arguments{
 \item{model}{A mixed effects model.}
 
-\item{metrics}{Can be \code{"all"} or a character vector of metrics to be computed (some of \code{c("AIC", "BIC", "R2", "ICC", "RMSE", "LOGLOSS", "SCORE")}).}
+\item{metrics}{Can be \code{"all"}, \code{"common"} or a character vector of metrics to be computed (some of \code{c("AIC", "BIC", "R2", "ICC", "RMSE", "LOGLOSS", "SCORE")}). \code{"common"} will compute AIC, BIC, R2, ICC and RMSE.}
 
 \item{verbose}{Toggle off warnings.}
 
@@ -30,7 +30,8 @@ This method returns the \emph{adjusted ICC} only, as this is typically
   more details on returned indices.
 }
 \examples{
-library(lme4)
-model <- lmer(Petal.Length ~ Sepal.Length + (1 | Species), data = iris)
-model_performance(model)
+if (require("lme4")) {
+  model <- lmer(Petal.Length ~ Sepal.Length + (1 | Species), data = iris)
+  model_performance(model)
+}
 }

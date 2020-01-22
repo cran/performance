@@ -94,7 +94,7 @@ r2(model)
 #> # Bayesian R2 with Standard Error
 #> 
 #>   Conditional R2: 0.953 [0.006]
-#>      Marginal R2: 0.825 [0.043]
+#>      Marginal R2: 0.823 [0.044]
 
 library(lme4)
 model <- lmer(Reaction ~ Days + (1 + Days | Subject), data = sleepstudy)
@@ -141,14 +141,14 @@ icc(model)
 #> Conditioned on: all random effects
 #> 
 #> ## Variance Ratio (comparable to ICC)
-#> Ratio: 0.39  CI 95%: [-0.53 0.77]
+#> Ratio: 0.39  CI 95%: [-0.54 0.77]
 #> 
 #> ## Variances of Posterior Predicted Distribution
-#> Conditioned on fixed effects: 22.87  CI 95%: [ 8.63 57.48]
-#> Conditioned on rand. effects: 37.67  CI 95%: [25.00 56.22]
+#> Conditioned on fixed effects: 22.78  CI 95%: [ 8.81 57.96]
+#> Conditioned on rand. effects: 37.63  CI 95%: [25.22 55.66]
 #> 
 #> ## Difference in Variances
-#> Difference: 14.48  CI 95%: [-18.34 35.14]
+#> Difference: 14.42  CI 95%: [-18.75 35.31]
 ```
 
 ## Model diagnostics

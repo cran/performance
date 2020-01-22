@@ -27,9 +27,10 @@
 #' model <- glm(vs ~ wt + mpg, data = mtcars, family = "binomial")
 #' r2(model)
 #'
-#' library(lme4)
-#' model <- lmer(Sepal.Length ~ Petal.Length + (1 | Species), data = iris)
-#' r2(model)
+#' if (require("lme4")) {
+#'   model <- lmer(Sepal.Length ~ Petal.Length + (1 | Species), data = iris)
+#'   r2(model)
+#' }
 #' @export
 r2 <- function(model, ...) {
   UseMethod("r2")
@@ -121,6 +122,9 @@ r2.censReg <- function(model, ...) {
 }
 
 #' @export
+r2.cpglm <- r2.censReg
+
+#' @export
 r2.clm <- r2.censReg
 
 #' @export
@@ -187,6 +191,9 @@ r2.merMod <- function(model, ...) {
 
 #' @export
 r2.glmmTMB <- r2.merMod
+
+#' @export
+r2.cpglmm <- r2.merMod
 
 #' @export
 r2.glmmadmb <- r2.merMod
