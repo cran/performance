@@ -2,11 +2,9 @@
 # performance <img src='man/figures/logo.png' align="right" height="139" />
 
 [![CRAN](http://www.r-pkg.org/badges/version/performance)](https://cran.r-project.org/package=performance)
-[![Documentation](https://img.shields.io/badge/documentation-performance-orange.svg?colorB=E91E63)](https://easystats.github.io/performance/)
 [![Build
 Status](https://travis-ci.org/easystats/performance.svg?branch=master)](https://travis-ci.org/easystats/performance)
 [![downloads](http://cranlogs.r-pkg.org/badges/performance)](https://cran.r-project.org/package=performance)
-[![total](http://cranlogs.r-pkg.org/badges/grand-total/performance)](http://cranlogs.r-pkg.org/)
 
 ***Test if your model is a good model\!***
 
@@ -31,6 +29,7 @@ library("performance")
 
 # Examples
 
+[![Documentation](https://img.shields.io/badge/documentation-performance-orange.svg?colorB=E91E63)](https://easystats.github.io/performance/)
 [![Features](https://img.shields.io/badge/features-performance-orange.svg?colorB=2196F3)](https://easystats.github.io/performance/reference/index.html)
 [![Blog](https://img.shields.io/badge/blog-easystats-orange.svg?colorB=FF9800)](https://easystats.github.io/blog/posts/)
 
@@ -94,7 +93,7 @@ r2(model)
 #> # Bayesian R2 with Standard Error
 #> 
 #>   Conditional R2: 0.953 [0.006]
-#>      Marginal R2: 0.823 [0.044]
+#>      Marginal R2: 0.825 [0.042]
 
 library(lme4)
 model <- lmer(Reaction ~ Days + (1 + Days | Subject), data = sleepstudy)
@@ -141,14 +140,14 @@ icc(model)
 #> Conditioned on: all random effects
 #> 
 #> ## Variance Ratio (comparable to ICC)
-#> Ratio: 0.39  CI 95%: [-0.54 0.77]
+#> Ratio: 0.39  CI 95%: [-0.55 0.78]
 #> 
 #> ## Variances of Posterior Predicted Distribution
-#> Conditioned on fixed effects: 22.78  CI 95%: [ 8.81 57.96]
-#> Conditioned on rand. effects: 37.63  CI 95%: [25.22 55.66]
+#> Conditioned on fixed effects: 22.69  CI 95%: [ 8.42 58.44]
+#> Conditioned on rand. effects: 37.71  CI 95%: [25.06 55.58]
 #> 
 #> ## Difference in Variances
-#> Difference: 14.42  CI 95%: [-18.75 35.31]
+#> Difference: 14.29  CI 95%: [-19.67 35.40]
 ```
 
 ## Model diagnostics

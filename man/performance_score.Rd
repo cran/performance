@@ -10,8 +10,6 @@ performance_score(model, verbose = TRUE)
 \item{model}{Model with binary or count outcome.}
 
 \item{verbose}{Toggle off warnings.}
-
-\item{...}{Currently not used.}
 }
 \value{
 A list with three elements, the logarithmic, quadratic/Brier and spherical score.
@@ -54,7 +52,7 @@ if (require("glmmTMB")) {
     data = Salamanders
   )
 
-performance_score(model)
+  performance_score(model)
 }
 }
 

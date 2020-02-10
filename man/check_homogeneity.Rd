@@ -9,7 +9,7 @@ check_homogeneity(x, method = c("bartlett", "fligner", "auto"), ...)
 \arguments{
 \item{x}{A linear model or an ANOVA object.}
 
-\item{method}{Name of the method (underlying test) that should be performend
+\item{method}{Name of the method (underlying test) that should be performed
 to check the homogeneity of variances. May either be \code{"bartlett"} for
 the Bartlett test (assuming normal distributed samples or groups),
 \code{"fligner"} for the Fligner-Killeen test (rank-based, non-parametric test),
@@ -25,6 +25,9 @@ Invisibly returns the p-value of the test statistics. A p-value
 \description{
 Check model for homogeneity of variances between groups described
 by independent variables in a model.
+}
+\note{
+There is also a \href{https://easystats.github.io/see/articles/performance.html}{\code{plot()}-method} implemented in the \href{https://easystats.github.io/see/}{\pkg{see}-package}.
 }
 \examples{
 model <- lm(len ~ supp + dose, data = ToothGrowth)

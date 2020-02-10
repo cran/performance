@@ -13,9 +13,10 @@
 #' @details The default-method calculates an R2 value based on the residual
 #'   variance divided by the total variance. For \code{method = "correlation"},
 #'   R2 is a correlation-based measure, which is rather crude. It simply computes
-#'   the squared correlation between the model's actual and predicted reponse.
+#'   the squared correlation between the model's actual and predicted response.
 #'
 #' @examples
+#' \donttest{
 #' if (require("pscl")) {
 #'   data(bioChemists)
 #'   model <- zeroinfl(
@@ -24,6 +25,7 @@
 #'   )
 #'
 #'   r2_zeroinflated(model)
+#' }
 #' }
 #' @importFrom stats cor predict coef model.matrix
 #' @importFrom insight model_info get_response find_parameters n_obs
