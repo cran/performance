@@ -80,6 +80,50 @@ r2.lm <- function(model, ...) {
 
 
 
+#' @importFrom stats summary.lm
+#' @export
+r2.aov <- function(model, ...) {
+  model_summary <- stats::summary.lm(model)
+
+  out <- list(
+    R2 = model_summary$r.squared,
+    R2_adjusted = model_summary$adj.r.squared
+  )
+
+  names(out$R2) <- "R2"
+  names(out$R2_adjusted) <- "adjusted R2"
+
+  attr(out, "model_type") <- "Anova"
+  structure(class = "r2_generic", out)
+}
+
+
+
+#' @importFrom stats pf
+#' @export
+r2.mlm <- function(model, ...) {
+  model_summary <- summary(model)
+
+  out <- lapply(names(model_summary), function(i) {
+    tmp <- list(
+      R2 = model_summary[[i]]$r.squared,
+      R2_adjusted = model_summary[[i]]$adj.r.squared,
+      Response = sub("Response ", "", i)
+    )
+    names(tmp$R2) <- "R2"
+    names(tmp$R2_adjusted) <- "adjusted R2"
+    names(tmp$Response) <- "Response"
+    tmp
+  })
+
+  names(out) <- names(model_summary)
+
+  attr(out, "model_type") <- "Multivariate Linear"
+  structure(class = "r2_mlm", out)
+}
+
+
+
 #' @importFrom insight model_info
 #' @export
 r2.glm <- function(model, ...) {
@@ -153,6 +197,9 @@ r2.bracl <- r2.censReg
 
 #' @export
 r2.brmultinom <- r2.censReg
+
+#' @export
+r2.bife <- r2.censReg
 
 
 
@@ -269,6 +316,20 @@ r2.betareg <- function(model, ...) {
   list(
     R2 = c(`Pseudo R2` = model$pseudo.r.squared)
   )
+}
+
+
+#' @export
+r2.rma <- function(model, ...) {
+  s <- summary(model)
+
+  if (is.null(s$R2)) {
+    return(NULL)
+  }
+
+  out <- list(R2 = s$R2 / 100)
+  attr(out, "model_type") <- "Meta-Analysis"
+  structure(class = "r2_generic", out)
 }
 
 
@@ -418,6 +479,17 @@ r2.mlogit <- function(model, ...) {
 #' @export
 r2.mmclogit <- function(model, ...) {
   list(R2 = NA)
+}
+
+
+
+#' @export
+r2.Arima <- function(model, ...) {
+  if (!requireNamespace("forecast", quietly = TRUE)) {
+    list(R2 = NA)
+  } else {
+    list(R2 = stats::cor(stats::fitted(model), insight::get_data(model))^2)
+  }
 }
 
 

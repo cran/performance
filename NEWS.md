@@ -1,3 +1,23 @@
+# performance 0.4.5
+
+## General
+
+* `model_performance()` and `r2()` now support *rma*-objects from package *metafor*, *mlm* and *bife* models.
+
+## Changes to functions
+
+* `compare_performance()` gets a `bayesfactor` argument, to include or exclude the Bayes factor for model comparisons in the output.
+* Added `r2.aov()`.
+
+## Bug fixes
+
+* Fixed issue in `performance_aic()` for models from package *survey*, which returned three different AIC values. Now only the AIC value is returned.
+* Fixed issue in `check_collinearity()` for *glmmTMB* models when zero-inflated formula only had one predictor.
+* Fixed issue in `check_model()` for *lme* models.
+* Fixed issue in `check_distribution()` for *brmsfit* models.
+* Fixed issue in `check_heteroscedasticity()` for *aov* objects.
+* Fixed issues for *lmrob* and *glmrob* objects.
+
 # performance 0.4.4
 
 ## General

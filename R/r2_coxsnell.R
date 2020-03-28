@@ -64,6 +64,10 @@ r2_coxsnell <- function(model) {
 
 #' @export
 r2_coxsnell.glm <- function(model) {
+  # if no deviance, return NA
+  if (is.null(model$deviance)) {
+    return(NULL)
+  }
   r2_coxsnell <- (1 - exp((model$deviance - model$null.deviance) / insight::n_obs(model)))
   names(r2_coxsnell) <- "Cox & Snell's R2"
   r2_coxsnell
@@ -74,6 +78,13 @@ r2_coxsnell.BBreg <- r2_coxsnell.glm
 
 #' @export
 r2_coxsnell.mclogit <- r2_coxsnell.glm
+
+#' @export
+r2_coxsnell.bife <- function(model) {
+  r2_coxsnell <- (1 - exp((model$deviance - model$null_deviance) / insight::n_obs(model)))
+  names(r2_coxsnell) <- "Cox & Snell's R2"
+  r2_coxsnell
+}
 
 
 
@@ -91,6 +102,12 @@ r2_coxsnell.coxph <- function(model) {
 
 #' @export
 r2_coxsnell.survreg <- r2_coxsnell.coxph
+
+#' @export
+r2_coxsnell.svycoxph <- function(model) {
+  l_base <- model$ll[1]
+  .r2_coxsnell(model, l_base)
+}
 
 
 
@@ -115,6 +132,10 @@ r2_coxsnell.clm2 <- function(model) {
 #' @export
 r2_coxsnell.clm <- function(model) {
   l_base <- stats::logLik(stats::update(model, ~1))
+  # if no loglik, return NA
+  if (length(as.numeric(l_base)) == 0) {
+    return(NULL)
+  }
   .r2_coxsnell(model, l_base)
 }
 

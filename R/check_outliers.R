@@ -206,7 +206,7 @@ check_outliers.default <- function(x, method = c("cook", "pareto"), threshold = 
   }
 
   # Cook
-  if ("cook" %in% c(method) & insight::model_info(x)$is_bayesian == FALSE) {
+  if ("cook" %in% c(method) & insight::model_info(x)$is_bayesian == FALSE & !inherits(x, "bife")) {
     df <- cbind(df, .check_outliers_cook(x, threshold = thresholds$cook)$data_cook)
   }
   # Pareto
@@ -242,10 +242,6 @@ check_outliers.default <- function(x, method = c("cook", "pareto"), threshold = 
 check_outliers.numeric <- function(x, method = "zscore", threshold = NULL, ...) {
   check_outliers(as.data.frame(x), method = method, threshold = threshold, ...)
 }
-
-
-
-
 
 
 
@@ -356,20 +352,24 @@ as.numeric.check_outliers <- function(x, ...) {
 
 
 
+.check_outliers_thresholds <- function(x) {
+  suppressWarnings(.check_outliers_thresholds_nowarn(x))
+}
+
 #' @importFrom stats qf qchisq
-.check_outliers_thresholds <- function(x,
-                                       zscore = stats::qnorm(p = 1 - 0.025),
-                                       iqr = 1.5,
-                                       cook = stats::qf(0.5, ncol(x), nrow(x) - ncol(x)),
-                                       pareto = 0.7,
-                                       mahalanobis = stats::qchisq(p = 1 - 0.025, df = ncol(x)),
-                                       robust = stats::qchisq(p = 1 - 0.025, df = ncol(x)),
-                                       mcd = stats::qchisq(p = 1 - 0.025, df = ncol(x)),
-                                       ics = 0.025,
-                                       optics = 2 * ncol(x),
-                                       iforest = 0.025,
-                                       lof = 0.025,
-                                       ...) {
+.check_outliers_thresholds_nowarn <- function(x) {
+  zscore <- stats::qnorm(p = 1 - 0.025)
+  iqr <- 1.5
+  cook <- stats::qf(0.5, ncol(x), nrow(x) - ncol(x))
+  pareto <- 0.7
+  mahalanobis <- stats::qchisq(p = 1 - 0.025, df = ncol(x))
+  robust <- stats::qchisq(p = 1 - 0.025, df = ncol(x))
+  mcd <- stats::qchisq(p = 1 - 0.025, df = ncol(x))
+  ics <- 0.025
+  optics <- 2 * ncol(x)
+  iforest <- 0.025
+  lof <- 0.025
+
   list(
     "zscore" = zscore,
     "iqr" = iqr,
@@ -387,12 +387,13 @@ as.numeric.check_outliers <- function(x, ...) {
 
 
 
+#' @importFrom stats median sd qnorm mad
 .check_outliers_zscore <- function(x, threshold = stats::qnorm(p = 1 - 0.025), robust = TRUE, method = "max") {
   # Standardize
   if (robust == FALSE) {
-    d <- abs(as.data.frame(sapply(x, function(x) (x - mean(x, na.rm = TRUE)) / sd(x, na.rm = TRUE))))
+    d <- abs(as.data.frame(sapply(x, function(x) (x - mean(x, na.rm = TRUE)) / stats::sd(x, na.rm = TRUE))))
   } else {
-    d <- abs(as.data.frame(sapply(x, function(x) (x - median(x, na.rm = TRUE)) / mad(x, na.rm = TRUE))))
+    d <- abs(as.data.frame(sapply(x, function(x) (x - stats::median(x, na.rm = TRUE)) / stats::mad(x, na.rm = TRUE))))
   }
 
   out <- data.frame(Obs = 1:nrow(as.data.frame(d)))
@@ -649,7 +650,7 @@ as.numeric.check_outliers <- function(x, ...) {
 
 
 #' @importFrom utils packageVersion
-#' @importFrom stats median qnorm mad sd
+#' @importFrom stats median qnorm mad sd predict
 .check_outliers_iforest <- function(x, threshold = 0.025) {
   out <- data.frame(Obs = 1:nrow(x))
 
@@ -661,7 +662,7 @@ as.numeric.check_outliers <- function(x, ...) {
   # Compute
   if (utils::packageVersion("solitude") < "0.2.0") {
     iforest <- solitude::isolationForest(x)
-    out$Distance_iforest <- predict(iforest, x, type = "anomaly_score")
+    out$Distance_iforest <- stats::predict(iforest, x, type = "anomaly_score")
   } else if (utils::packageVersion("solitude") == "0.2.0") {
     stop("Must update package `solitude` (above version 0.2.0). Please run `install.packages('solitude')`.", call. = FALSE)
   } else {
@@ -713,7 +714,28 @@ as.numeric.check_outliers <- function(x, ...) {
 
 
 
+
+
+
+
+# Non-supported model classes ---------------------------------------
+
 #' @export
 check_outliers.glmmTMB <- function(x, ...) {
+  NULL
+}
+
+#' @export
+check_outliers.lme <- function(x, ...) {
+  NULL
+}
+
+#' @export
+check_outliers.lmrob <- function(x, ...) {
+  NULL
+}
+
+#' @export
+check_outliers.glmrob <- function(x, ...) {
   NULL
 }

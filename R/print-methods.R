@@ -17,8 +17,7 @@ print.compare_performance <- function(x, digits = 3, ...) {
     }
   })
 
-  ## TODO remove suppressWarnings() once insight is updated on CRAN (> 0.7.1)
-  cat(suppressWarnings(insight::format_table(x)))
+  cat(insight::format_table(x))
 
   if ("Performance_Score" %in% colnames(x)) {
     insight::print_color(sprintf("\nModel %s (of class %s) performed best with an overall performance score of %s.\n", x$Model[1], x$Type[1], x$Performance_Score[1]), "yellow")
@@ -27,6 +26,7 @@ print.compare_performance <- function(x, digits = 3, ...) {
 
 
 
+#' @importFrom insight format_table
 #' @export
 print.performance_model <- function(x, digits = 3, ...) {
   insight::print_color("# Indices of model performance\n\n", "blue")
@@ -36,7 +36,7 @@ print.performance_model <- function(x, digits = 3, ...) {
     i
   })
 
-  print.data.frame(x, row.names = FALSE, ...)
+  cat(insight::format_table(x))
 }
 
 
@@ -211,6 +211,31 @@ print.r2_generic <- function(x, digits = 3, ...) {
 
   cat(out)
   cat("\n")
+}
+
+
+
+#' @importFrom insight print_color
+#' @export
+print.r2_mlm <- function(x, digits = 3, ...) {
+  model_type <- attr(x, "model_type")
+  if (!is.null(model_type)) {
+    insight::print_color(sprintf("# R2 for %s Regression\n\n", model_type), "blue")
+  } else {
+    insight::print_color("# R2\n\n", "blue")
+  }
+
+  for (i in names(x)) {
+    insight::print_color(sprintf("## %s\n", i), "cyan")
+    out <- paste0(c(
+      sprintf("        R2: %.*f", digits, x[[i]]$R2),
+      sprintf("   adj. R2: %.*f", digits, x[[i]]$R2_adjusted)
+    ),
+    collapse = "\n"
+    )
+    cat(out)
+    cat("\n\n")
+  }
 }
 
 

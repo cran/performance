@@ -30,13 +30,25 @@ performance_aicc <- function(x, ...) {
 #' @importFrom stats AIC
 #' @export
 performance_aic <- function(x, ...) {
-  if (inherits(x, c("vgam", "vglm"))) {
-    if (!requireNamespace("VGAM", quietly = TRUE)) {
-      warning("Package 'VGAM' required for this function work. Please install it.", call. = FALSE)
-      return(NULL)
-    }
-    VGAM::AIC(x)
-  } else if (insight::model_info(x)$family == "Tweedie") {
+  UseMethod("performance_aic")
+}
+
+
+
+
+# default -------------------------------------------------
+
+
+#' @export
+performance_aic.default <- function(x, ...) {
+  info <- insight::model_info(x)
+
+  ## TODO remove is.list() once insight 0.8.3 is on CRAN
+  if (is.null(info) || !is.list(info)) {
+    info <- list(family = "unknown")
+  }
+
+  if (info$family == "Tweedie") {
     if (!requireNamespace("tweedie", quietly = TRUE)) {
       warning("Package 'tweedie' required for this function work. Please install it.", call. = FALSE)
       return(NULL)
@@ -55,6 +67,78 @@ performance_aic <- function(x, ...) {
 }
 
 
+
+
+
+
+# VGAM models ------------------------------------
+
+
+#' @export
+performance_aic.vgam <- function(x, ...) {
+  if (!requireNamespace("VGAM", quietly = TRUE)) {
+    warning("Package 'VGAM' required for this function work. Please install it.", call. = FALSE)
+    return(NULL)
+  }
+  VGAM::AIC(x)
+}
+
+#' @export
+performance_aic.vglm <- performance_aic.vgam
+
+
+
+
+
+
+
+
+# Survey models --------------------------------------
+
+#' @export
+performance_aic.svyglm <- function(x, ...) {
+  tryCatch(
+    {
+      stats::AIC(x)[["AIC"]]
+    },
+    error = function(e) {
+      NULL
+    }
+  )
+}
+
+#' @export
+performance_aic.svycoxph <- performance_aic.svyglm
+
+
+
+
+
+
+
+
+# methods ------------------------------------------
+
+
+#' @importFrom insight find_parameters n_obs
+#' @importFrom stats logLik
+#' @export
+AIC.bife <- function(object, ..., k = 2) {
+  nparam <- length(insight::find_parameters(object, effects = "fixed", flatten = TRUE))
+  n <- insight::n_obs(object)
+  -2 * as.numeric(stats::logLik(object)) + k * (n - nparam)
+}
+
+
+
+
+
+
+
+
+# AICc ------------------------------------------
+
+
 #' @importFrom insight n_obs
 #' @importFrom stats logLik
 #' @export
@@ -68,10 +152,29 @@ performance_aicc.default <- function(x, ...) {
 
 
 #' @export
+performance_aicc.bife <- function(x, ...) {
+  n <- insight::n_obs(x)
+  ll <- stats::logLik(x)
+  nparam <- length(insight::find_parameters(x, effects = "fixed", flatten = TRUE))
+  k <- n - nparam
+  -2 * as.vector(ll) + 2 * k * (n / (n - k - 1))
+}
+
+#' @export
+performance_aicc.Arima <- performance_aicc.bife
+
+
+#' @export
 performance_aicc.vglm <- function(x, ...) {
   if (!requireNamespace("VGAM", quietly = TRUE)) {
     warning("Package 'VGAM' required for this function work. Please install it.", call. = FALSE)
     return(NULL)
   }
   VGAM::AICc(x)
+}
+
+
+#' @export
+performance_aicc.rma <- function(x, ...) {
+  stats::AIC(x, correct = TRUE)
 }

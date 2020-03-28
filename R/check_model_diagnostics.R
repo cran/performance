@@ -65,22 +65,29 @@
     stop("Package 'lme4' required for this function to work. Please install it.", call. = FALSE)
   }
 
-  if (inherits(model, "glmmTMB")) {
-    var_attr <- "condVar"
-    re <- .collapse_cond(lme4::ranef(model, condVar = TRUE))
-  } else {
-    var_attr <- "postVar"
-    re <- lme4::ranef(model, condVar = TRUE)
-  }
+  tryCatch(
+    {
+      if (inherits(model, "glmmTMB")) {
+        var_attr <- "condVar"
+        re <- .collapse_cond(lme4::ranef(model, condVar = TRUE))
+      } else {
+        var_attr <- "postVar"
+        re <- lme4::ranef(model, condVar = TRUE)
+      }
+    },
+    error = function(e) {
+      return(NULL)
+    }
+  )
 
 
   se <- tryCatch(
     {
-      lapply(re, function(.x) {
+      suppressWarnings(lapply(re, function(.x) {
         pv <- attr(.x, var_attr, exact = TRUE)
         cols <- seq_len(dim(pv)[1])
         unlist(lapply(cols, function(.y) sqrt(pv[.y, .y, ])))
-      })
+      }))
     },
     error = function(e) {
       NULL
