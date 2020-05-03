@@ -2,10 +2,13 @@
 % Please edit documentation in R/icc.R
 \name{icc}
 \alias{icc}
+\alias{icc.default}
 \alias{icc.brmsfit}
 \title{Intraclass Correlation Coefficient (ICC)}
 \usage{
 icc(model, ...)
+
+\method{icc}{default}(model, by_group = FALSE, ...)
 
 \method{icc}{brmsfit}(model, re.form = NULL, robust = TRUE, ci = 0.95, ...)
 }
@@ -13,6 +16,9 @@ icc(model, ...)
 \item{model}{A (Bayesian) mixed effects model.}
 
 \item{...}{Currently not used.}
+
+\item{by_group}{Logical, if \code{TRUE}, \code{icc()} returns the variance
+components for each random-effects level (if there are multiple levels).}
 
 \item{re.form}{Formula containing group-level effects to be considered in
 the prediction. If \code{NULL} (default), include all group-level effects.
@@ -75,19 +81,11 @@ This function calculates the intraclass-correlation coefficient
  structure (random intercept).
  }
  \subsection{ICC for specific group-levels}{
- The proportion of variance for specific levels related to  each other
- (e.g., similarity of level-1-units within level-2-units or level-2-units
- within level-3-units) must be calculated manually. Use \code{\link[insight]{get_variance}}
- to get the random intercept variances (between-group-variances) and residual
- variance of the model, and calculate the ICC for the various level correlations.
- \cr \cr
- For example, for the ICC between level 1 and 2: \cr
- \code{sum(insight::get_variance_intercept(model)) /} \cr
- \code{  (sum(insight::get_variance_intercept(model)) + insight::get_variance_residual(model))}
- \cr \cr
- For for the ICC between level 2 and 3: \cr
- \code{insight::get_variance_intercept(model)[2] /} \cr
- \code{  sum(insight::get_variance_intercept(model))}
+ The proportion of variance for specific levels related to the overall model
+ can be computed by setting \code{by_group = TRUE}. The reported ICC is
+ the variance for each (random effect) group compared to the total
+ variance of the model. For mixed models with a simple random intercept,
+ this is identical to the classical (adjusted) ICC.
  }
  \subsection{ICC for brms-models}{
  If \code{model} is of class \code{brmsfit}, \code{icc()} calculates a
@@ -109,8 +107,26 @@ This function calculates the intraclass-correlation coefficient
 }
 \examples{
 if (require("lme4")) {
-  model <- lme4::lmer(Sepal.Length ~ Petal.Length + (1 | Species), data = iris)
+  model <- lmer(Sepal.Length ~ Petal.Length + (1 | Species), data = iris)
   icc(model)
+}
+
+# ICC for specific group-levels
+if (require("lme4")) {
+  data(sleepstudy)
+  set.seed(12345)
+  sleepstudy$grp <- sample(1:5, size = 180, replace = TRUE)
+  sleepstudy$subgrp <- NA
+  for (i in 1:5) {
+    filter_group <- sleepstudy$grp == i
+    sleepstudy$subgrp[filter_group] <-
+    sample(1:30, size = sum(filter_group), replace = TRUE)
+  }
+  model <- lmer(
+    Reaction ~ Days + (1 | grp / subgrp) + (1 | Subject),
+    data = sleepstudy
+  )
+  icc(model, by_group = TRUE)
 }
 }
 \references{

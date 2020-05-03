@@ -1,3 +1,22 @@
+# performance 0.4.6
+
+## General
+
+* Minor revisions to `model_performance()` to meet changes in *mlogit* package.
+* Support for `bayesx` models.
+
+## Changes to functions
+
+* `icc()` gains a `by_group` argument, to compute ICCs per different group factors in mixed models with multiple levels or cross-classified design.
+* `r2_nakagawa()` gains a `by_group` argument, to compute explained variance at different levels (following the variance-reduction approach by Hox 2010).
+* `performance_lrt()` now works on *lavaan* objects.
+
+## Bug fixes
+
+* Fix issues in some functions for models with logical dependent variable.
+* Fix bug in `check_itemscale()`, which caused multiple computations of skewness statistics.
+* Fix issues in `r2()` for *gam* models.
+
 # performance 0.4.5
 
 ## General

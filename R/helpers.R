@@ -12,6 +12,8 @@
       return(NULL)
     }
     VGAM::BIC(x)
+  } else if (inherits(x, "bayesx")) {
+    stats::BIC(x)[["BIC"]]
   } else {
     tryCatch(
       {
@@ -115,6 +117,10 @@
 .factor_to_numeric_helper <- function(x, lowest = NULL) {
   if (is.numeric(x)) {
     return(x)
+  }
+
+  if (is.logical(x)) {
+    return(as.numeric(x))
   }
 
   if (anyNA(suppressWarnings(as.numeric(as.character(stats::na.omit(x)))))) {

@@ -124,9 +124,6 @@ model_performance.iv_robust <- model_performance.lm
 model_performance.ivreg <- model_performance.lm
 
 #' @export
-model_performance.mlogit <- model_performance.lm
-
-#' @export
 model_performance.multinom <- model_performance.lm
 
 #' @export
@@ -134,6 +131,9 @@ model_performance.plm <- model_performance.lm
 
 #' @export
 model_performance.polr <- model_performance.lm
+
+#' @export
+model_performance.bayesx <- model_performance.lm
 
 #' @export
 model_performance.survreg <- model_performance.lm
@@ -158,3 +158,15 @@ model_performance.flexsurvreg <- model_performance.lm
 
 #' @export
 model_performance.hurdle <- model_performance.lm
+
+
+
+#' @export
+model_performance.mlogit <- function(model, metrics = "all", verbose = TRUE, ...) {
+  if (requireNamespace("mlogit", quietly = TRUE)) {
+    model_performance.lm(model = model, metrics = metrics, verbose = verbose, ...)
+  } else {
+    NULL
+  }
+}
+

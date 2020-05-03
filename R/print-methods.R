@@ -1,6 +1,7 @@
 #' @importFrom insight format_table
 #' @export
 print.compare_performance <- function(x, digits = 3, ...) {
+  orig_x <- x
   insight::print_color("# Comparison of Model Performance Indices\n\n", "blue")
 
   # if we have ranking, add score and remove incomplete indices in print
@@ -22,6 +23,8 @@ print.compare_performance <- function(x, digits = 3, ...) {
   if ("Performance_Score" %in% colnames(x)) {
     insight::print_color(sprintf("\nModel %s (of class %s) performed best with an overall performance score of %s.\n", x$Model[1], x$Type[1], x$Performance_Score[1]), "yellow")
   }
+
+  invisible(orig_x)
 }
 
 
@@ -29,6 +32,7 @@ print.compare_performance <- function(x, digits = 3, ...) {
 #' @importFrom insight format_table
 #' @export
 print.performance_model <- function(x, digits = 3, ...) {
+  orig_x <- x
   insight::print_color("# Indices of model performance\n\n", "blue")
 
   x[] <- lapply(x, function(i) {
@@ -37,6 +41,7 @@ print.performance_model <- function(x, digits = 3, ...) {
   })
 
   cat(insight::format_table(x))
+  invisible(orig_x)
 }
 
 
@@ -49,6 +54,7 @@ print.check_outliers <- function(x, ...) {
   } else {
     insight::print_color("OK: No outliers detected.\n", "green")
   }
+  invisible(x)
 }
 
 
@@ -83,6 +89,7 @@ print.check_distribution <- function(x, ...) {
 
   insight::print_color("\nPredicted Distribution of Response\n\n", "red")
   print.data.frame(x2, row.names = FALSE, ...)
+  invisible(x)
 }
 
 
@@ -98,6 +105,7 @@ print.check_distribution_numeric <- function(x, ...) {
   colnames(x1) <- c("Distribution", "Probability")
 
   print.data.frame(x1, row.names = FALSE, ...)
+  invisible(x)
 }
 
 
@@ -123,6 +131,7 @@ print.performance_roc <- function(x, ...) {
       ))
     }
   }
+  invisible(x)
 }
 
 
@@ -137,6 +146,7 @@ print.item_difficulty <- function(x, ...) {
   for (i in 1:length(x$item)) {
     cat(sprintf("  %*s      %.2f   %.2f\n", spaces, x$item[i], x$difficulty[i], x$ideal[i]))
   }
+  invisible(x)
 }
 
 
@@ -156,6 +166,8 @@ print.performance_pcp <- function(x, digits = 2, ...) {
 
   cat(sprintf("  Chi-squared: %*s\n", space, v1))
   cat(sprintf("      p-value: %*s\n\n", space, v2))
+
+  invisible(x)
 }
 
 
@@ -174,6 +186,7 @@ print.looic <- function(x, digits = 2, ...) {
 
   cat(out)
   cat("\n")
+  invisible(x)
 }
 
 
@@ -208,9 +221,9 @@ print.r2_generic <- function(x, digits = 3, ...) {
     out <- sprintf("  R2: %.*f", digits, x$R2)
   }
 
-
   cat(out)
   cat("\n")
+  invisible(x)
 }
 
 
@@ -236,6 +249,7 @@ print.r2_mlm <- function(x, digits = 3, ...) {
     cat(out)
     cat("\n\n")
   }
+  invisible(x)
 }
 
 
@@ -259,6 +273,7 @@ print.r2_nakagawa <- function(x, digits = 3, ...) {
 
   cat(out)
   cat("\n")
+  invisible(x)
 }
 
 
@@ -276,12 +291,14 @@ print.r2_bayes <- function(x, digits = 3, ...) {
 
   cat(out)
   cat("\n")
+  invisible(x)
 }
 
 
 
 #' @export
 print.perf_pca_rotate <- function(x, cutoff = 0.1, digits = 3, ...) {
+  orig_x <- x
   .rotation <- attr(x, "rotation", exact = TRUE)
 
   if (.rotation == "none") {
@@ -310,15 +327,19 @@ print.perf_pca_rotate <- function(x, cutoff = 0.1, digits = 3, ...) {
   print(x, quote = FALSE, ...)
   insight::print_color("\n(Explained) Variance\n", "cyan")
   print(xs, ...)
+
+  invisible(orig_x)
 }
 
 
 
 #' @export
 print.perf_pca <- function(x, digits = 3, ...) {
+  orig_x <- x
   x <- as.data.frame(round(x, digits = digits))
   rownames(x) <- c("Standard deviation", "Eigenvalue", "Proportion variance", "Cumulative variance")
   print(x, ...)
+  invisible(orig_x)
 }
 
 
@@ -337,6 +358,28 @@ print.icc <- function(x, digits = 3, ...) {
 
   cat(out)
   cat("\n")
+  invisible(x)
+}
+
+
+
+#' @importFrom insight print_color
+#' @export
+print.icc_by_group <- function(x, digits = 3, ...) {
+  insight::print_color("# ICC by Group\n\n", "blue")
+  cat(insight::format_table(x, digits = digits))
+  invisible(x)
+}
+
+
+
+#' @importFrom insight print_color
+#' @export
+print.r2_nakagawa_by_group <- function(x, digits = 3, ...) {
+  insight::print_color("# Explained Variance by Level\n\n", "blue")
+  cat(insight::format_table(x, digits = digits))
+  cat("\n")
+  invisible(x)
 }
 
 
@@ -359,12 +402,16 @@ print.check_zi <- function(x, ...) {
   } else {
     message("Model seems ok, ratio of observed and predicted zeros is within the tolerance range.")
   }
+
+  invisible(x)
 }
 
 
 
 #' @export
 print.check_overdisp <- function(x, digits = 3, ...) {
+  orig_x <- x
+
   x$dispersion_ratio <- sprintf("%.*f", digits, x$dispersion_ratio)
   x$chisq_statistic <- sprintf("%.*f", digits, x$chisq_statistic)
 
@@ -387,6 +434,8 @@ print.check_overdisp <- function(x, digits = 3, ...) {
   } else {
     message("Overdispersion detected.")
   }
+
+  invisible(orig_x)
 }
 
 
@@ -482,6 +531,8 @@ print.icc_decomposed <- function(x, digits = 2, ...) {
     ci.res.lo,
     ci.res.hi
   ))
+
+  invisible(x)
 }
 
 
@@ -515,6 +566,8 @@ print.performance_hosmer <- function(x, ...) {
   } else {
     message("Summary: model does not fit well.")
   }
+
+  invisible(x)
 }
 
 
@@ -527,6 +580,8 @@ print.performance_accuracy <- function(x, ...) {
   cat(sprintf("Accuracy: %.2f%%\n", 100 * x$Accuracy))
   cat(sprintf("      SE: %.2f%%-points\n", 100 * x$SE))
   cat(sprintf("  Method: %s\n", x$Method))
+
+  invisible(x)
 }
 
 
@@ -547,6 +602,8 @@ print.performance_score <- function(x, ...) {
   cat(sprintf("logarithmic: %s\n", results[1]))
   cat(sprintf("  quadratic: %s\n", results[2]))
   cat(sprintf("  spherical: %s\n", results[3]))
+
+  invisible(x)
 }
 
 
@@ -563,6 +620,8 @@ print.check_collinearity <- function(x, ...) {
   } else {
     .print_collinearity(x)
   }
+
+  invisible(x)
 }
 
 
@@ -609,6 +668,8 @@ print.performance_lrt <- function(x, digits = 3, ...) {
     if (length(best) == 0) best <- 1
     insight::print_color(sprintf("\nModel '%s' seems to have the best model fit.\n", x$Model[best]), "yellow")
   }
+
+  invisible(x)
 }
 
 
