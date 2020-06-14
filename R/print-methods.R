@@ -10,6 +10,16 @@ print.compare_performance <- function(x, digits = 3, ...) {
     x <- x[!sapply(x, anyNA)]
   }
 
+  # format p-values for meta-analysis
+  if (requireNamespace("parameters", quietly = TRUE)) {
+    if ("p_CochransQ" %in% colnames(x)) {
+      x$p_CochransQ <- parameters::format_p(x$p_CochransQ)
+    }
+    if ("p_Omnibus" %in% colnames(x)) {
+      x$p_Omnibus <- parameters::format_p(x$p_Omnibus)
+    }
+  }
+
   x[] <- lapply(x, function(i) {
     if (is.numeric(i)) {
       round(i, digits = digits)
@@ -34,6 +44,16 @@ print.compare_performance <- function(x, digits = 3, ...) {
 print.performance_model <- function(x, digits = 3, ...) {
   orig_x <- x
   insight::print_color("# Indices of model performance\n\n", "blue")
+
+  # format p-values for meta-analysis
+  if (requireNamespace("parameters", quietly = TRUE)) {
+    if ("p_CochransQ" %in% colnames(x)) {
+      x$p_CochransQ <- parameters::format_p(x$p_CochransQ)
+    }
+    if ("p_Omnibus" %in% colnames(x)) {
+      x$p_Omnibus <- parameters::format_p(x$p_Omnibus)
+    }
+  }
 
   x[] <- lapply(x, function(i) {
     if (is.numeric(i)) i <- round(i, digits)
@@ -115,7 +135,7 @@ print.check_distribution_numeric <- function(x, ...) {
 #' @export
 print.performance_roc <- function(x, ...) {
   if (length(unique(x$Model)) == 1) {
-    cat(sprintf("AUC: %.2f%%\n", 100 * bayestestR::area_under_curve(x$Sensivity, x$Specifity)))
+    cat(sprintf("AUC: %.2f%%\n", 100 * bayestestR::area_under_curve(x$Specifity, x$Sensivity)))
   } else {
     insight::print_color("# Area under Curve\n\n", "blue")
 
@@ -127,7 +147,7 @@ print.performance_roc <- function(x, ...) {
         "  %*s: %.2f%%\n",
         max_space,
         names(dat)[i],
-        100 * bayestestR::area_under_curve(dat[[i]]$Sensivity, dat[[i]]$Specifity)
+        100 * bayestestR::area_under_curve(dat[[i]]$Specifity, dat[[i]]$Sensivity)
       ))
     }
   }
@@ -292,54 +312,6 @@ print.r2_bayes <- function(x, digits = 3, ...) {
   cat(out)
   cat("\n")
   invisible(x)
-}
-
-
-
-#' @export
-print.perf_pca_rotate <- function(x, cutoff = 0.1, digits = 3, ...) {
-  orig_x <- x
-  .rotation <- attr(x, "rotation", exact = TRUE)
-
-  if (.rotation == "none") {
-    insight::print_color("# Loadings from Principal Component Analysis (no rotation)\n\n", "blue")
-  } else {
-    insight::print_color(sprintf("# Rotated loadings from Principal Component Analysis (%s-rotation)\n\n", .rotation), "blue")
-  }
-
-
-  xs <- attr(x, "variance", exact = TRUE)
-  x <- round(x, digits = digits)
-
-  x <- as.data.frame(apply(x, MARGIN = c(1, 2), function(.y) {
-    if (abs(.y) < cutoff) {
-      ""
-    } else {
-      as.character(.y)
-    }
-  }), stringsAsFactors = FALSE)
-
-  xs <- as.data.frame(t(as.data.frame(round(xs, digits = digits))))
-
-  colnames(xs) <- sprintf("PC%i", 1:ncol(xs))
-  rownames(xs) <- c("Proportion variance", "Cumulative variance", "Proportion explained", "Cumulative explained")
-
-  print(x, quote = FALSE, ...)
-  insight::print_color("\n(Explained) Variance\n", "cyan")
-  print(xs, ...)
-
-  invisible(orig_x)
-}
-
-
-
-#' @export
-print.perf_pca <- function(x, digits = 3, ...) {
-  orig_x <- x
-  x <- as.data.frame(round(x, digits = digits))
-  rownames(x) <- c("Standard deviation", "Eigenvalue", "Proportion variance", "Cumulative variance")
-  print(x, ...)
-  invisible(orig_x)
 }
 
 

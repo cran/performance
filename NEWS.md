@@ -1,3 +1,20 @@
+# performance 0.4.7
+
+## General
+
+* Support for models from package *mfx*.
+
+## Changes to functions
+
+* `model_performance.rma()` now includes results from heterogeneity test for meta-analysis objects.
+* `check_normality()` now also works for mixed models (with the limitation that studentized residuals are used).
+* `check_normality()` gets an `effects`-argument for mixed models, to check random effects for normality.
+
+## Bug fixes
+
+* Fixed issue in `performance_accuracy()` for binomial models when response variable had non-numeric factor levels.
+* Fixed issues in `performance_roc()`, which printed 1 - AUC instead of AUC.
+
 # performance 0.4.6
 
 ## General

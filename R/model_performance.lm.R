@@ -11,8 +11,8 @@
 #'
 #' @details Depending on \code{model}, following indices are computed:
 #' \itemize{
-#'   \item{\strong{AIC}} {Akaike's Information Criterion, see \code{\link[stats]{AIC}}}
-#'   \item{\strong{BIC}} {Bayesian Information Criterion, see \code{\link[stats]{BIC}}}
+#'   \item{\strong{AIC}} {Akaike's Information Criterion, see \code{?stats::AIC}}
+#'   \item{\strong{BIC}} {Bayesian Information Criterion, see \code{?stats::BIC}}
 #'   \item{\strong{R2}} {r-squared value, see \code{\link{r2}}}
 #'   \item{\strong{R2_adj}} {adjusted r-squared, see \code{\link{r2}}}
 #'   \item{\strong{RMSE}} {root mean squared error, see \code{\link{performance_rmse}}}
@@ -159,6 +159,44 @@ model_performance.flexsurvreg <- model_performance.lm
 #' @export
 model_performance.hurdle <- model_performance.lm
 
+
+
+# mfx models -------------------------------
+
+#' @export
+model_performance.logitor <- function(model, ...) {
+  model_performance(model$fit, ...)
+}
+
+#' @export
+model_performance.logitmfx <- model_performance.logitor
+
+#' @export
+model_performance.probitmfx <- model_performance.logitor
+
+#' @export
+model_performance.poissonirr <- model_performance.logitor
+
+#' @export
+model_performance.poissonmfx <- model_performance.logitor
+
+#' @export
+model_performance.negbinirr <- model_performance.logitor
+
+#' @export
+model_performance.negbinmfx <- model_performance.logitor
+
+#' @export
+model_performance.betaor <- model_performance.logitor
+
+#' @export
+model_performance.betamfx <- model_performance.logitor
+
+
+
+
+
+# other models -------------------------------
 
 
 #' @export

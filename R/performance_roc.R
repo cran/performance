@@ -5,14 +5,16 @@
 #' based on response and predictions of a binomial model.
 #'
 #' @param x A numeric vector, representing the outcome (0/1), or a model with
-#' binomial outcome.
+#'   binomial outcome.
 #' @param predictions If \code{x} is numeric, a numeric vector of same length
-#' as \code{x}, representing the actual predicted values.
+#'   as \code{x}, representing the actual predicted values.
 #' @param new_data If \code{x} is a model, a data frame that is passed to
-#' \code{predict()} as \code{newdata}-argument. If \code{NULL}, the ROC for
-#' the full model is calculated.
+#'   \code{predict()} as \code{newdata}-argument. If \code{NULL}, the ROC for
+#'   the full model is calculated.
 #' @param ... One or more models with binomial outcome. In this case,
-#' \code{new_data} is ignored.
+#'   \code{new_data} is ignored.
+#'
+#' @note There is also a \href{https://easystats.github.io/see/articles/performance.html}{\code{plot()}-method} implemented in the \href{https://easystats.github.io/see/}{\pkg{see}-package}.
 #'
 #' @return A data frame with three columns, the x/y-coordinate pairs for the ROC
 #' curve (\code{Sensivity} and \code{Specifity}), and a column with the model
@@ -32,7 +34,7 @@
 #' performance_roc(model, new_data = test_data)
 #'
 #' roc <- performance_roc(model, new_data = test_data)
-#' area_under_curve(roc$Sensivity, roc$Specifity)
+#' area_under_curve(roc$Specifity, roc$Sensivity)
 #'
 #' m1 <- glm(y ~ Sepal.Length + Sepal.Width, data = iris, family = "binomial")
 #' m2 <- glm(y ~ Sepal.Length + Petal.Width, data = iris, family = "binomial")
@@ -54,6 +56,9 @@ performance_roc <- function(x, ..., predictions, new_data) {
   } else if (inherits(x, "glm") && length(dots) == 0) {
     if (missing(new_data)) new_data <- NULL
     .performance_roc_model(x, new_data)
+  } else if (inherits(x, c("logitor", "logitmfx", "probitmfx")) && length(dots) == 0) {
+    if (missing(new_data)) new_data <- NULL
+    .performance_roc_model(x$fit, new_data)
   } else if (length(dots) > 0) {
     .performance_roc_models(list(x, ...), names = object_names)
   }

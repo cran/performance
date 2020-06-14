@@ -19,11 +19,11 @@
 #' @details For linar models, the accuracy is the correlation coefficient
 #'    between the actual and the predicted value of the outcome. For
 #'    logistic regression models, the accuracy corresponds to the
-#'    AUC-value, calculated with the \code{\link[bayestestR]{auc}}-function.
+#'    AUC-value, calculated with the \code{bayestestR::auc()}-function.
 #'    \cr \cr
 #'    The accuracy is the mean value of multiple correlation resp.
 #'    AUC-values, which are either computed with crossvalidation
-#'    or nonparametric bootstrapping (see argument \code{method}).
+#'    or non-parametric bootstrapping (see argument \code{method}).
 #'    The standard error is the standard deviation of the computed
 #'    correlation resp. AUC-values.
 #'
@@ -116,12 +116,12 @@ performance_accuracy <- function(model, method = c("cv", "boot"), k = 5, n = 100
       }, bootstr, models, SIMPLIFY = FALSE)
 
       response <- lapply(bootstr, function(.x) {
-        .factor_to_numeric(as.data.frame(model_data[.x, ])[[resp.name]])
+        .factor_to_numeric(as.data.frame(model_data[.x, ])[[resp.name]], lowest = 0)
       })
 
       accuracy <- mapply(function(.x, .y) {
         roc <- performance_roc(x = .x, predictions = .y)
-        bayestestR::area_under_curve(roc$Sensivity, roc$Specifity)
+        bayestestR::area_under_curve(roc$Specifity, roc$Sensivity)
       }, response, predictions)
     } else {
 
@@ -137,12 +137,12 @@ performance_accuracy <- function(model, method = c("cv", "boot"), k = 5, n = 100
       }, cv, models, SIMPLIFY = FALSE)
 
       response <- lapply(cv, function(.x) {
-        .factor_to_numeric(as.data.frame(model_data[.x$test, ])[[resp.name]])
+        .factor_to_numeric(as.data.frame(model_data[.x$test, ])[[resp.name]], lowest = 0)
       })
 
       accuracy <- mapply(function(.x, .y) {
         roc <- performance_roc(x = .x, predictions = .y)
-        bayestestR::area_under_curve(roc$Sensivity, roc$Specifity)
+        bayestestR::area_under_curve(roc$Specifity, roc$Sensivity)
       }, response, predictions)
     }
   }
