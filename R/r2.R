@@ -80,6 +80,23 @@ r2.lm <- function(model, ...) {
 
 
 
+#' @export
+r2.ols <- function(model, ...) {
+  out <- list(R2 = model$stats["R2"])
+  names(out$R2) <- "R2"
+
+  attr(out, "model_type") <- "Linear"
+  structure(class = "r2_generic", out)
+}
+
+#' @export
+r2.lrm <- r2.ols
+
+#' @export
+r2.cph <- r2.ols
+
+
+
 #' @importFrom stats summary.lm
 #' @export
 r2.aov <- function(model, ...) {
@@ -537,6 +554,11 @@ r2.mmclogit <- function(model, ...) {
   list(R2 = NA)
 }
 
+
+#' @export
+r2.mclogit <- function(model, ...) {
+  list(R2 = NA)
+}
 
 
 #' @export

@@ -4,24 +4,27 @@
 #'  (ICC) - sometimes also called \emph{variance partition coefficient}
 #'  (VPC) - for mixed effects models. The ICC can be calculated for all models
 #'  supported by \code{insight::get_variance()}. For models fitted with
-#'  the \pkg{brms}-package, a variance decomposition based on the posterior
-#'  predictive distribution is calculated (see 'Details').
+#'  the \pkg{brms}-package, \code{icc()} might fail due to the large variety
+#'  of models and families supported by the \pkg{brms}-package. In such cases,
+#'  an alternative to the ICC is the \code{variance_decomposition()}, which is
+#'  based on the posterior predictive distribution (see 'Details').
 #'
 #' @param model A (Bayesian) mixed effects model.
-#' @param re.form Formula containing group-level effects to be considered in
+#' @param re_formula Formula containing group-level effects to be considered in
 #'   the prediction. If \code{NULL} (default), include all group-level effects.
 #'   Else, for instance for nested models, name a specific group-level effect
-#'   to calculate the variance decomposition for this group-level.
-#' @param ci The Credible Interval level.
+#'   to calculate the variance decomposition for this group-level. See 'Details'
+#'   and \code{?brms::posterior_predict}.
+#' @param ci Credible interval level.
 #' @param by_group Logical, if \code{TRUE}, \code{icc()} returns the variance
 #'   components for each random-effects level (if there are multiple levels).
-#' @param ... Currently not used.
+#'   See 'Details'.
 #'
 #' @inheritParams r2_bayes
 #'
-#' @return A list with two values, the adjusted and conditional ICC. For models
-#'   of class \code{brmsfit}, a list with two values, the decomposed ICC as well
-#'   as the credible intervals for this ICC.
+#' @return A list with two values, the adjusted and conditional ICC. For
+#' \code{variance_decomposition()}, a list with two values, the decomposed
+#' ICC as well as the credible intervals for this ICC.
 #'
 #' @references \itemize{
 #'  \item Hox, J. J. (2010). Multilevel analysis: techniques and applications (2nd ed). New York: Routledge.
@@ -74,18 +77,21 @@
 #'  variance of the model. For mixed models with a simple random intercept,
 #'  this is identical to the classical (adjusted) ICC.
 #'  }
-#'  \subsection{ICC for brms-models}{
-#'  If \code{model} is of class \code{brmsfit}, \code{icc()} calculates a
-#'  variance decomposition based on the posterior predictive distribution. In
-#'  this case, first, the draws from the posterior predictive distribution
-#'  \emph{not conditioned} on group-level terms (\code{posterior_predict(..., re.form = NA)})
-#'  are calculated as well as draws from this distribution \emph{conditioned}
-#'  on \emph{all random effects} (by default, unless specified else in \code{re.form})
-#'  are taken. Then, second, the variances for each of these draws are calculated.
-#'  The "ICC" is then the ratio between these two variances. This is the recommended
-#'  way to analyse random-effect-variances for non-Gaussian models. It is then possible
+#'  \subsection{Variance decomposition for brms-models}{
+#'  If \code{model} is of class \code{brmsfit}, \code{icc()} might fail due to
+#'  the large variety of models and families supported by the \pkg{brms} package.
+#'  In such cases, \code{variance_decomposition()} is an alternative ICC measure.
+#'  The function calculates a variance decomposition based on the posterior
+#'  predictive distribution. In this case, first, the draws from the posterior
+#'  predictive distribution \emph{not conditioned} on group-level terms
+#'  (\code{posterior_predict(..., re_formula = NA)}) are calculated as well as
+#'  draws from this distribution \emph{conditioned} on \emph{all random effects}
+#'  (by default, unless specified else in \code{re_formula}) are taken. Then,
+#'  second, the variances for each of these draws are calculated. The "ICC"
+#'  is then the ratio between these two variances. This is the recommended way
+#'  to analyse random-effect-variances for non-Gaussian models. It is then possible
 #'  to compare variances across models, also by specifying different group-level
-#'  terms via the \code{re.form}-argument.
+#'  terms via the \code{re_formula}-argument.
 #'  \cr \cr
 #'  Sometimes, when the variance of the posterior predictive distribution is
 #'  very large, the variance ratio in the output makes no sense, e.g. because
@@ -115,18 +121,18 @@
 #'   )
 #'   icc(model, by_group = TRUE)
 #' }
-#' @importFrom insight model_info get_variance print_color
+#' @importFrom insight model_info get_variance print_color find_random find_random_slopes is_multivariate
 #' @export
-icc <- function(model, ...) {
-  UseMethod("icc")
-}
+icc <- function(model, by_group = FALSE) {
+  if (insight::is_multivariate(model)) {
+    if (inherits(model, "brmsfit")) {
+      return(variance_decomposition(model))
+    } else {
+      insight::print_color("Multiple response models not yet supported. You may use 'performance::variance_decomposition()'.\n", "red")
+      return(NULL)
+    }
+  }
 
-
-#' @importFrom utils combn
-#' @importFrom insight find_random find_random_slopes
-#' @rdname icc
-#' @export
-icc.default <- function(model, by_group = FALSE, ...) {
   if (!insight::model_info(model)$is_mixed) {
     warning("'model' has no random effects.", call. = FALSE)
     return(NULL)
@@ -213,9 +219,14 @@ icc.default <- function(model, by_group = FALSE, ...) {
 #' @importFrom bayestestR ci
 #' @importFrom insight is_multivariate find_response model_info
 #' @importFrom stats quantile var
+#' @inheritParams icc
 #' @rdname icc
 #' @export
-icc.brmsfit <- function(model, re.form = NULL, robust = TRUE, ci = .95, ...) {
+variance_decomposition <- function(model, re_formula = NULL, robust = TRUE, ci = .95) {
+  if (!inherits(model, "brmsfit")) {
+    stop("Only models from package 'brms' are supported.")
+  }
+
   mi <- insight::model_info(model)
 
   # for multivariate response models, we need a more complicated check...
@@ -236,10 +247,10 @@ icc.brmsfit <- function(model, re.form = NULL, robust = TRUE, ci = .95, ...) {
     stop("Package `brms` needed for this function to work. Please install it.", call. = FALSE)
   }
 
-  PPD <- brms::posterior_predict(model, re.form = re.form, summary = FALSE)
+  PPD <- brms::posterior_predict(model, re_formula = re_formula, summary = FALSE)
   var_total <- apply(PPD, MARGIN = 1, FUN = stats::var)
 
-  PPD_0 <- brms::posterior_predict(model, re.form = NA, summary = FALSE)
+  PPD_0 <- brms::posterior_predict(model, re_formula = NA, summary = FALSE)
   var_rand_intercept <- apply(PPD_0, MARGIN = 1, FUN = stats::var)
 
   if (robust) {
@@ -267,7 +278,7 @@ icc.brmsfit <- function(model, re.form = NULL, robust = TRUE, ci = .95, ...) {
   attr(result, "ci.var_residual") <- bayestestR::ci(var_residual, ci = ci)
   attr(result, "ci.var_total") <- bayestestR::ci(var_total, ci = ci)
   attr(result, "ci") <- ci
-  attr(result, "re.form") <- re.form
+  attr(result, "re.form") <- re_formula
   attr(result, "ranef") <- model$ranef$group[1]
 
   # remove data

@@ -2,46 +2,45 @@
 % Please edit documentation in R/icc.R
 \name{icc}
 \alias{icc}
-\alias{icc.default}
-\alias{icc.brmsfit}
+\alias{variance_decomposition}
 \title{Intraclass Correlation Coefficient (ICC)}
 \usage{
-icc(model, ...)
+icc(model, by_group = FALSE)
 
-\method{icc}{default}(model, by_group = FALSE, ...)
-
-\method{icc}{brmsfit}(model, re.form = NULL, robust = TRUE, ci = 0.95, ...)
+variance_decomposition(model, re_formula = NULL, robust = TRUE, ci = 0.95)
 }
 \arguments{
 \item{model}{A (Bayesian) mixed effects model.}
 
-\item{...}{Currently not used.}
-
 \item{by_group}{Logical, if \code{TRUE}, \code{icc()} returns the variance
-components for each random-effects level (if there are multiple levels).}
+components for each random-effects level (if there are multiple levels).
+See 'Details'.}
 
-\item{re.form}{Formula containing group-level effects to be considered in
+\item{re_formula}{Formula containing group-level effects to be considered in
 the prediction. If \code{NULL} (default), include all group-level effects.
 Else, for instance for nested models, name a specific group-level effect
-to calculate the variance decomposition for this group-level.}
+to calculate the variance decomposition for this group-level. See 'Details'
+and \code{?brms::posterior_predict}.}
 
 \item{robust}{Logical, if \code{TRUE}, the median instead of mean is used to
 calculate the central tendency of the variances.}
 
-\item{ci}{The Credible Interval level.}
+\item{ci}{Credible interval level.}
 }
 \value{
-A list with two values, the adjusted and conditional ICC. For models
-  of class \code{brmsfit}, a list with two values, the decomposed ICC as well
-  as the credible intervals for this ICC.
+A list with two values, the adjusted and conditional ICC. For
+\code{variance_decomposition()}, a list with two values, the decomposed
+ICC as well as the credible intervals for this ICC.
 }
 \description{
 This function calculates the intraclass-correlation coefficient
  (ICC) - sometimes also called \emph{variance partition coefficient}
  (VPC) - for mixed effects models. The ICC can be calculated for all models
  supported by \code{insight::get_variance()}. For models fitted with
- the \pkg{brms}-package, a variance decomposition based on the posterior
- predictive distribution is calculated (see 'Details').
+ the \pkg{brms}-package, \code{icc()} might fail due to the large variety
+ of models and families supported by the \pkg{brms}-package. In such cases,
+ an alternative to the ICC is the \code{variance_decomposition()}, which is
+ based on the posterior predictive distribution (see 'Details').
 }
 \details{
 \subsection{Interpretation}{
@@ -87,18 +86,21 @@ This function calculates the intraclass-correlation coefficient
  variance of the model. For mixed models with a simple random intercept,
  this is identical to the classical (adjusted) ICC.
  }
- \subsection{ICC for brms-models}{
- If \code{model} is of class \code{brmsfit}, \code{icc()} calculates a
- variance decomposition based on the posterior predictive distribution. In
- this case, first, the draws from the posterior predictive distribution
- \emph{not conditioned} on group-level terms (\code{posterior_predict(..., re.form = NA)})
- are calculated as well as draws from this distribution \emph{conditioned}
- on \emph{all random effects} (by default, unless specified else in \code{re.form})
- are taken. Then, second, the variances for each of these draws are calculated.
- The "ICC" is then the ratio between these two variances. This is the recommended
- way to analyse random-effect-variances for non-Gaussian models. It is then possible
+ \subsection{Variance decomposition for brms-models}{
+ If \code{model} is of class \code{brmsfit}, \code{icc()} might fail due to
+ the large variety of models and families supported by the \pkg{brms} package.
+ In such cases, \code{variance_decomposition()} is an alternative ICC measure.
+ The function calculates a variance decomposition based on the posterior
+ predictive distribution. In this case, first, the draws from the posterior
+ predictive distribution \emph{not conditioned} on group-level terms
+ (\code{posterior_predict(..., re_formula = NA)}) are calculated as well as
+ draws from this distribution \emph{conditioned} on \emph{all random effects}
+ (by default, unless specified else in \code{re_formula}) are taken. Then,
+ second, the variances for each of these draws are calculated. The "ICC"
+ is then the ratio between these two variances. This is the recommended way
+ to analyse random-effect-variances for non-Gaussian models. It is then possible
  to compare variances across models, also by specifying different group-level
- terms via the \code{re.form}-argument.
+ terms via the \code{re_formula}-argument.
  \cr \cr
  Sometimes, when the variance of the posterior predictive distribution is
  very large, the variance ratio in the output makes no sense, e.g. because

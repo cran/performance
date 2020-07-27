@@ -1,7 +1,7 @@
 Package: performance
 Type: Package
 Title: Assessment of Regression Models Performance
-Version: 0.4.7
+Version: 0.4.8
 Authors@R: c(
 	person("Daniel", 
 		"Lüdecke", 
@@ -41,18 +41,18 @@ Suggests: AER, betareg, bigutilsr, brms, covr, cplm, dbscan, fixest,
         forecast, glmmTMB, ICS, ICSOutlier, lavaan, lme4, loo, Matrix,
         MASS, metafor, mlogit, nlme, ordinal, parallel, parameters (>=
         0.5.0), pscl, psych, randomForest, rmarkdown, rstanarm,
-        rstantools, see (>= 0.4.0), survey, survival, solitude,
-        testthat, tweedie, VGAM, spelling
+        rstantools, see (>= 0.4.0), survey, survival, testthat,
+        tweedie, VGAM, spelling
 License: GPL-3
 Encoding: UTF-8
 LazyData: true
-RoxygenNote: 7.1.0
+RoxygenNote: 7.1.1
 Language: en-US
 NeedsCompilation: no
-Packaged: 2020-06-14 08:27:21 UTC; Daniel
+Packaged: 2020-07-26 22:59:08 UTC; Daniel
 Author: Daniel Lüdecke [aut, cre] (<https://orcid.org/0000-0002-8895-3206>),
   Dominique Makowski [aut, ctb] (<https://orcid.org/0000-0001-5375-9967>),
   Philip Waggoner [aut, ctb] (<https://orcid.org/0000-0002-7825-7573>),
   Indrajeet Patil [aut, ctb] (<https://orcid.org/0000-0003-1995-6531>)
 Repository: CRAN
-Date/Publication: 2020-06-14 14:40:07 UTC
+Date/Publication: 2020-07-27 05:10:17 UTC
