@@ -113,7 +113,7 @@
 #'   for (i in 1:5) {
 #'     filter_group <- sleepstudy$grp == i
 #'     sleepstudy$subgrp[filter_group] <-
-#'     sample(1:30, size = sum(filter_group), replace = TRUE)
+#'       sample(1:30, size = sum(filter_group), replace = TRUE)
 #'   }
 #'   model <- lmer(
 #'     Reaction ~ Days + (1 | grp / subgrp) + (1 | Subject),
@@ -124,6 +124,12 @@
 #' @importFrom insight model_info get_variance print_color find_random find_random_slopes is_multivariate
 #' @export
 icc <- function(model, by_group = FALSE) {
+
+  # special handling for smicd::semLme()
+  if (all(inherits(model, c("sem", "lme")))) {
+    return(model$icc)
+  }
+
   if (insight::is_multivariate(model)) {
     if (inherits(model, "brmsfit")) {
       return(variance_decomposition(model))
@@ -174,13 +180,11 @@ icc <- function(model, by_group = FALSE) {
       warning("Model contains random slopes. Cannot compute accurate ICCs by group factors.", call. = FALSE)
     }
 
-    group_names <- insight::find_random(model, split_nested = TRUE, flatten = TRUE)
-
     # icc per group factor with reference to overall model
     icc_overall <- vars$var.intercept / (vars$var.random + vars$var.residual)
 
     out <- data.frame(
-      Group = group_names,
+      Group = names(icc_overall),
       ICC = unname(icc_overall),
       stringsAsFactors = FALSE
     )
@@ -219,10 +223,11 @@ icc <- function(model, by_group = FALSE) {
 #' @importFrom bayestestR ci
 #' @importFrom insight is_multivariate find_response model_info
 #' @importFrom stats quantile var
+#' @param ... Arguments passed down to \code{\link[brms:posterior_predict]{posterior_predict()}}.
 #' @inheritParams icc
 #' @rdname icc
 #' @export
-variance_decomposition <- function(model, re_formula = NULL, robust = TRUE, ci = .95) {
+variance_decomposition <- function(model, re_formula = NULL, robust = TRUE, ci = .95, ...) {
   if (!inherits(model, "brmsfit")) {
     stop("Only models from package 'brms' are supported.")
   }
@@ -247,10 +252,10 @@ variance_decomposition <- function(model, re_formula = NULL, robust = TRUE, ci =
     stop("Package `brms` needed for this function to work. Please install it.", call. = FALSE)
   }
 
-  PPD <- brms::posterior_predict(model, re_formula = re_formula, summary = FALSE)
+  PPD <- brms::posterior_predict(model, re_formula = re_formula, summary = FALSE, ...)
   var_total <- apply(PPD, MARGIN = 1, FUN = stats::var)
 
-  PPD_0 <- brms::posterior_predict(model, re_formula = NA, summary = FALSE)
+  PPD_0 <- brms::posterior_predict(model, re_formula = NA, summary = FALSE, ...)
   var_rand_intercept <- apply(PPD_0, MARGIN = 1, FUN = stats::var)
 
   if (robust) {

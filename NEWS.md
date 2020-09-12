@@ -1,3 +1,22 @@
+# performance 0.5.0
+
+## General
+
+* `r2()` and `icc()` support `semLME` models (package *smicd*).
+* `check_heteroscedasticity()` should now also work with zero-inflated mixed models from *glmmTMB* and *GLMMadpative*.
+* `check_outliers()` now returns a logical vector. Original numerical vector is still accessible via `as.numeric()`.
+
+## New functions
+
+* `pp_check()` to compute posterior predictive checks for frequentist models.
+
+## Bug fixes
+
+* Fixed issue with incorrect labeling of groups from `icc()` when `by_group = TRUE`.
+* Fixed issue in `check_heteroscedasticity()` for mixed models where sigma could not be calculated in a straightforward way.
+* Fixed issues in `check_zeroinflation()` for `MASS::glm.nb()`.
+* Fixed CRAN check issues.
+
 # performance 0.4.8
 
 ## General

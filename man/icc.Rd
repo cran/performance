@@ -7,7 +7,7 @@
 \usage{
 icc(model, by_group = FALSE)
 
-variance_decomposition(model, re_formula = NULL, robust = TRUE, ci = 0.95)
+variance_decomposition(model, re_formula = NULL, robust = TRUE, ci = 0.95, ...)
 }
 \arguments{
 \item{model}{A (Bayesian) mixed effects model.}
@@ -26,6 +26,8 @@ and \code{?brms::posterior_predict}.}
 calculate the central tendency of the variances.}
 
 \item{ci}{Credible interval level.}
+
+\item{...}{Arguments passed down to \code{\link[brms:posterior_predict]{posterior_predict()}}.}
 }
 \value{
 A list with two values, the adjusted and conditional ICC. For
@@ -122,7 +124,7 @@ if (require("lme4")) {
   for (i in 1:5) {
     filter_group <- sleepstudy$grp == i
     sleepstudy$subgrp[filter_group] <-
-    sample(1:30, size = sum(filter_group), replace = TRUE)
+      sample(1:30, size = sum(filter_group), replace = TRUE)
   }
   model <- lmer(
     Reaction ~ Days + (1 | grp / subgrp) + (1 | Subject),
