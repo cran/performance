@@ -6,8 +6,7 @@
 #'
 #' @param ... Multiple model objects (also of different classes).
 #' @param metrics Can be \code{"all"}, \code{"common"} or a character vector of metrics to be computed. See related \code{\link[=model_performance]{documentation}} of object's class for details.
-#' @param rank Logical, if \code{TRUE}, models are ranked according to "best overall
-#'   model performance". See 'Details'.
+#' @param rank Logical, if \code{TRUE}, models are ranked according to 'best' overall model performance. See 'Details'.
 #' @param bayesfactor Logical, if \code{TRUE}, a Bayes factor for model comparisons is possibly returned. See 'Details'.
 #'
 #' @return A data frame (with one row per model) and one column per "index" (see \code{metrics}).
@@ -74,7 +73,8 @@ compare_performance <- function(..., metrics = "all", rank = FALSE, bayesfactor 
 
   m <- mapply(function(.x, .y) {
     dat <- model_performance(.x, metrics = metrics, verbose = FALSE)
-    cbind(data.frame(Model = as.character(.y), Type = class(.x)[1], stringsAsFactors = FALSE), dat)
+    model_name <- gsub("\"", "", .safe_deparse(.y), fixed = TRUE)
+    cbind(data.frame(Model = model_name, Type = class(.x)[1], stringsAsFactors = FALSE), dat)
   }, objects, object_names, SIMPLIFY = FALSE)
 
 
@@ -139,8 +139,13 @@ compare_performance <- function(..., metrics = "all", rank = FALSE, bayesfactor 
     i
   })
 
+  # don't rank with BF when there is also BIC (same information)
+  if ("BF" %in% colnames(out) && "BIC" %in% colnames(out)) {
+    out$BF <- NULL
+  }
+
   # recode some indices, so higher values = better fit
-  for (i in c("AIC", "BIC", "RMSE")) {
+  for (i in c("AIC", "BIC", "RMSE", "Sigma")) {
     if (i %in% colnames(out)) {
       out[[i]] <- 1 - out[[i]]
     }

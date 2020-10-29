@@ -1,3 +1,25 @@
+# performance 0.5.1
+
+## Breaking changes
+
+* Column names for `model_performance()` and `compare_performance()` were changed to be in line with the _easystats_ naming convention: `LOGLOSS` is now `Log_loss`, `SCORE_LOG` is `Score_log` and `SCORE_SPHERICAL` is now `Score_spherical`.
+
+## New functions
+* `r2_posterior()` for Bayesian models to obtain posterior distributions of R-squared.
+
+## Changes to functions
+
+* `r2_bayes()` works with Bayesian models from `BayesFactor` ( #143 ).
+* `model_performance()` works with Bayesian models from `BayesFactor` ( #150 ).
+* `model_performance()` now also includes the residual standard deviation.
+* Improved formatting for Bayes factors in `compare_performance()`.
+* `compare_performance()` with `rank = TRUE` doesn't use the `BF` values when `BIC` are present, to prevent "double-dipping" of the BIC values (#144).
+* The `method` argument in `check_homogeneity()` gains a `"levene"` option, to use Levene's Test for homogeneity.
+
+## Bug fixes
+
+* Fix bug in `compare_performance()` when `...` arguments were function calls to regression objects, instead of direct function calls.
+
 # performance 0.5.0
 
 ## General

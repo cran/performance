@@ -2,18 +2,33 @@
 % Please edit documentation in R/model_performance.bayesian.R
 \name{model_performance.stanreg}
 \alias{model_performance.stanreg}
+\alias{model_performance.BFBayesFactor}
 \title{Performance of Bayesian Models}
 \usage{
 \method{model_performance}{stanreg}(model, metrics = "all", verbose = TRUE, ...)
+
+\method{model_performance}{BFBayesFactor}(
+  model,
+  metrics = "all",
+  verbose = TRUE,
+  average = FALSE,
+  prior_odds = NULL,
+  ...
+)
 }
 \arguments{
 \item{model}{Object of class \code{stanreg} or \code{brmsfit}.}
 
-\item{metrics}{Can be \code{"all"}, \code{"common"} or a character vector of metrics to be computed (some of \code{c("LOOIC", "WAIC", "R2", "R2_adj", "RMSE", "LOGLOSS", "SCORE")}). \code{"common"} will compute LOOIC, WAIC, R2 and RMSE.}
+\item{metrics}{Can be \code{"all"}, \code{"common"} or a character vector of metrics to be computed (some of \code{c("LOOIC", "WAIC", "R2", "R2_adj", "RMSE", "SIGMA", "LOGLOSS", "SCORE")}). \code{"common"} will compute LOOIC, WAIC, R2 and RMSE.}
 
 \item{verbose}{Toggle off warnings.}
 
 \item{...}{Arguments passed to or from other methods.}
+
+\item{average}{Compute model-averaged index? See
+\code{\link[bayestestR:weighted_posteriors]{bayestestR::weighted_posteriors()}}.}
+
+\item{prior_odds}{Optional vector of prior odds for the models compared to the first model (or the denominator, for \code{BFBayesFactor} objects). For \code{data.frame}s, this will be used as the basis of weighting.}
 }
 \value{
 A data frame (with one row) and one column per "index" (see \code{metrics}).
@@ -30,6 +45,7 @@ Depending on \code{model}, following indices are computed:
   \item{\strong{R2}} {r-squared value, see \code{\link{r2}}}
   \item{\strong{R2_LOO_adjusted}} {adjusted r-squared, see \code{\link{r2}}}
   \item{\strong{RMSE}} {root mean squared error, see \code{\link{performance_rmse}}}
+  \item{\strong{SIGMA}} {residual standard deviation, see \code{\link[insight:get_sigma]{get_sigma()}}}
   \item{\strong{LOGLOSS}} {Log-loss, see \code{\link{performance_logloss}}}
   \item{\strong{SCORE_LOG}} {score of logarithmic proper scoring rule, see \code{\link{performance_score}}}
   \item{\strong{SCORE_SPHERICAL}} {score of spherical proper scoring rule, see \code{\link{performance_score}}}
@@ -49,6 +65,15 @@ if (require("rstanarm")) {
     refresh = 0
   )
   model_performance(model)
+}
+
+if (require("BayesFactor")) {
+  model <- generalTestBF(carb ~ am + mpg, mtcars)
+
+  model_performance(model)
+  model_performance(model[3])
+
+  model_performance(model, average = TRUE)
 }
 }
 \references{

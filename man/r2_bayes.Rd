@@ -2,17 +2,37 @@
 % Please edit documentation in R/r2_bayes.R
 \name{r2_bayes}
 \alias{r2_bayes}
+\alias{r2_posterior}
+\alias{r2_posterior.brmsfit}
+\alias{r2_posterior.stanreg}
+\alias{r2_posterior.BFBayesFactor}
 \title{Bayesian R2}
 \usage{
-r2_bayes(model, robust = TRUE, ci = 0.89)
+r2_bayes(model, robust = TRUE, ci = 0.89, ...)
+
+r2_posterior(model, ...)
+
+\method{r2_posterior}{brmsfit}(model, ...)
+
+\method{r2_posterior}{stanreg}(model, ...)
+
+\method{r2_posterior}{BFBayesFactor}(model, average = FALSE, prior_odds = NULL, ...)
 }
 \arguments{
-\item{model}{A Bayesian regression model.}
+\item{model}{A Bayesian regression model (from \code{brms}, \code{rstanarm},
+\code{BayesFactor}, etc).}
 
 \item{robust}{Logical, if \code{TRUE}, the median instead of mean is used to
 calculate the central tendency of the variances.}
 
 \item{ci}{Value or vector of probability of the CI (between 0 and 1) to be estimated.}
+
+\item{...}{Arguments passed to \code{r2_posterior()}.}
+
+\item{average}{Compute model-averaged index? See
+\code{\link[bayestestR:weighted_posteriors]{bayestestR::weighted_posteriors()}}.}
+
+\item{prior_odds}{Optional vector of prior odds for the models compared to the first model (or the denominator, for \code{BFBayesFactor} objects). For \code{data.frame}s, this will be used as the basis of weighting.}
 }
 \value{
 A list with the Bayesian R2 value. For mixed models, a list with the
@@ -22,6 +42,8 @@ A list with the Bayesian R2 value. For mixed models, a list with the
 \description{
 Compute R2 for Bayesian models. For mixed models (including a random part),
 it additionally computes the R2 related to the fixed effects only (marginal R2).
+While \code{r2_bayes()} returns a single R2 value, \code{r2_posterior()} returns
+a posterior sample of Bayesian R2 values.
 }
 \details{
 \code{r2_bayes()} returns an "unadjusted" R2 value. See \code{\link{r2_loo}}
@@ -31,6 +53,9 @@ it additionally computes the R2 related to the fixed effects only (marginal R2).
   For mixed models, the conditional and marginal R2 are returned. The marginal
   R2 considers only the variance of the fixed effects, while the conditional
   R2 takes both the fixed and random effects into account.
+  \cr \cr
+  \code{r2_posterior()} is the actual workhorse for \code{r2_bayes()} and
+  returns a posterior sample of Bayesian R2 values.
 }
 \examples{
 library(performance)
@@ -47,7 +72,31 @@ if (require("rstanarm")) {
   )
   r2_bayes(model)
 }
+
+
 \dontrun{
+if (require("BayesFactor")) {
+  data(mtcars)
+
+  BFM <- generalTestBF(mpg ~ qsec + gear, data = mtcars, progress = FALSE)
+  FM <- lm(mpg ~ qsec + gear, data = mtcars)
+
+  r2_bayes(FM)
+  r2_bayes(BFM[3])
+  r2_bayes(BFM, average = TRUE) # across all models
+
+
+  # with random effects:
+  mtcars$gear <- factor(mtcars$gear)
+  model <- lmBF(
+    mpg ~ hp + cyl + gear + gear:wt,
+    mtcars,
+    progress = FALSE,
+    whichRandom = c("gear", "gear:wt")
+  )
+  r2_bayes(model)
+}
+
 if (require("brms")) {
   model <- brms::brm(mpg ~ wt + cyl, data = mtcars)
   r2_bayes(model)
