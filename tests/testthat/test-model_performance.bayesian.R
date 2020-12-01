@@ -43,9 +43,46 @@ if (require("testthat") && require("performance") && require("rstanarm") && requ
       expect_equal(perf$ELPD, -70.40493, tolerance = 1e-3)
 
       model <- insight::download_model("brms_ordinal_1")
-      perf <- model_performance(model)
+      perf <- suppressWarnings(model_performance(model))
       expect_equal(perf$R2, 0.8760015, tolerance = 1e-3)
       expect_equal(perf$ELPD, -11.65433, tolerance = 1e-3)
     })
   }
+}
+
+if (require("testthat") && require("performance") && require("BayesFactor") && packageVersion("insight") > "0.10.0") {
+  test_that("model_performance.BFBayesFactor", {
+    mod <- ttestBF(mtcars$wt, mu = 3)
+    expect_warning(p <- model_performance(mod))
+    expect_null(p)
+
+    mod <- ttestBF(mtcars$wt, factor(mtcars$am))
+    expect_warning(p <- model_performance(mod))
+    expect_null(p)
+
+    mods <- contingencyTableBF(matrix(1:4, 2), sampleType = "indepMulti", fixedMargin = "cols")
+    expect_warning(p <- model_performance(mod))
+    expect_null(p)
+
+    mod <- correlationBF(mtcars$wt, mtcars$am)
+    expect_warning(p <- model_performance(mod))
+    expect_null(p)
+
+    mod <- proportionBF(y = 15, N = 25, p = .5)
+    expect_warning(p <- model_performance(mod))
+    expect_null(p)
+
+    t <- c(-.15, 2.39, 2.42, 2.43, -.15, 2.39, 2.42, 2.43)
+    N <- c(100, 150, 97, 99, 99, 97, 100, 150)
+    mod <- meta.ttestBF(t, N)
+    expect_warning(p <- model_performance(mod))
+    expect_null(p)
+
+
+    mod <- regressionBF(mpg ~ cyl , mtcars, progress = FALSE)
+    modF <- lm(mpg ~ cyl , mtcars)
+    p <- model_performance(mod)
+    expect_equal(p$R2, unname(r2(modF)[[1]]), tolerance = 0.05)
+    expect_equal(p$Sigma, sigma(modF), tolerance = 0.05)
+  })
 }

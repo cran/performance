@@ -12,6 +12,7 @@
 #'   calculate the central tendency of the variances.
 #' @param ci Value or vector of probability of the CI (between 0 and 1) to be estimated.
 #' @param ... Arguments passed to \code{r2_posterior()}.
+#' @inheritParams model_performance.lm
 #'
 #' @return A list with the Bayesian R2 value. For mixed models, a list with the
 #'   Bayesian R2 value and the marginal Bayesian R2 value. The standard errors
@@ -82,8 +83,8 @@
 #' @importFrom stats median mad sd
 #' @importFrom bayestestR ci hdi point_estimate
 #' @export
-r2_bayes <- function(model, robust = TRUE, ci = .89, ...) {
-  r2_bayesian <- r2_posterior(model, ...)
+r2_bayes <- function(model, robust = TRUE, ci = .89, verbose = TRUE, ...) {
+  r2_bayesian <- r2_posterior(model, verbose = verbose, ...)
 
   if (is.null(r2_bayesian)) {
     return(NULL)
@@ -118,7 +119,7 @@ r2_posterior <- function(model, ...){
 
 #' @export
 #' @rdname r2_bayes
-r2_posterior.brmsfit <- function(model, ...) {
+r2_posterior.brmsfit <- function(model, verbose = TRUE, ...) {
   if (!requireNamespace("rstantools", quietly = TRUE)) {
     stop("Package `rstantools` needed for this function to work. Please install it.")
   }
@@ -185,6 +186,15 @@ r2_posterior.brmsfit <- function(model, ...) {
 #' @rdname r2_bayes
 r2_posterior.stanreg <- r2_posterior.brmsfit
 
+#' @export
+r2_posterior.stanmvreg <- function(model, verbose = TRUE, ...) {
+  if (isTRUE(verbose)) {
+    warning("Models of class 'stanmvreg' not yet supported.", call. = FALSE)
+  }
+  NULL
+}
+
+
 #' @param average Compute model-averaged index? See
 #'   \code{\link[bayestestR:weighted_posteriors]{bayestestR::weighted_posteriors()}}.
 #' @inheritParams bayestestR::weighted_posteriors
@@ -195,6 +205,12 @@ r2_posterior.stanreg <- r2_posterior.brmsfit
 #' @export
 #' @rdname r2_bayes
 r2_posterior.BFBayesFactor <- function(model, average = FALSE, prior_odds = NULL, ...){
+  mi <- insight::model_info(model)
+  if (!mi$is_linear || mi$is_correlation || mi$is_ttest || mi$is_binomial || mi$is_meta) {
+    warning("Can produce R2 only for linear models.", call. = FALSE)
+    return(NULL)
+  }
+
   if (average) {
     return(.r2_posterior_model_average(model, prior_odds = prior_odds))
   }

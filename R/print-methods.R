@@ -1,67 +1,27 @@
-#' @importFrom insight format_table format_p
+#' @importFrom insight export_table format_p
 #' @export
 print.compare_performance <- function(x, digits = 3, ...) {
-  orig_x <- x
-  insight::print_color("# Comparison of Model Performance Indices\n\n", "blue")
+  table_caption <- c("# Comparison of Model Performance Indices", "blue")
+  formatted_table <- format(x = x, digits = digits, format = "text", ...)
 
-  # if we have ranking, add score and remove incomplete indices in print
-  if ("Performance_Score" %in% colnames(x)) {
-    x$Performance_Score <- sprintf("%.2f%%", 100 * x$Performance_Score)
-    x <- x[!sapply(x, anyNA)]
+  if ("Performance_Score" %in% colnames(formatted_table)) {
+    footer <- c(sprintf("\nModel %s (of class %s) performed best with an overall performance score of %s.", formatted_table$Model[1], formatted_table$Type[1], formatted_table$Performance_Score[1]), "yellow")
+  } else {
+    footer <- NULL
   }
 
-  # format p-values for meta-analysis
-  if ("p_CochransQ" %in% colnames(x)) {
-    x$p_CochransQ <- insight::format_p(x$p_CochransQ)
-  }
-  if ("p_Omnibus" %in% colnames(x)) {
-    x$p_Omnibus <- insight::format_p(x$p_Omnibus)
-  }
-  if ("BF" %in% colnames(x)) {
-    x$BF[is.na(x$BF)] <- 1
-    x$BF <- insight::format_bf(x$BF)
-  }
-
-  x[] <- lapply(x, function(i) {
-    if (is.numeric(i)) {
-      round(i, digits = digits)
-    } else {
-      i
-    }
-  })
-
-  cat(insight::format_table(x))
-
-  if ("Performance_Score" %in% colnames(x)) {
-    insight::print_color(sprintf("\nModel %s (of class %s) performed best with an overall performance score of %s.\n", x$Model[1], x$Type[1], x$Performance_Score[1]), "yellow")
-  }
-
-  invisible(orig_x)
+  cat(insight::export_table(x = formatted_table, digits = digits, format = "text", caption = table_caption, footer = footer, ...))
+  invisible(x)
 }
 
 
 
-#' @importFrom insight format_table format_p
+#' @importFrom insight export_table format_p
 #' @export
 print.performance_model <- function(x, digits = 3, ...) {
-  orig_x <- x
-  insight::print_color("# Indices of model performance\n\n", "blue")
-
-  # format p-values for meta-analysis
-  if ("p_CochransQ" %in% colnames(x)) {
-    x$p_CochransQ <- insight::format_p(x$p_CochransQ)
-  }
-  if ("p_Omnibus" %in% colnames(x)) {
-    x$p_Omnibus <- insight::format_p(x$p_Omnibus)
-  }
-
-  x[] <- lapply(x, function(i) {
-    if (is.numeric(i)) i <- round(i, digits)
-    i
-  })
-
-  cat(insight::format_table(x))
-  invisible(orig_x)
+  formatted_table <- format(x = x, digits = digits, format = "text", ...)
+  cat(insight::export_table(x = formatted_table, digits = digits, format = "text", caption = c("# Indices of model performance", "blue"), ...))
+  invisible(x)
 }
 
 
@@ -351,7 +311,7 @@ print.icc <- function(x, digits = 3, ...) {
 #' @export
 print.icc_by_group <- function(x, digits = 3, ...) {
   insight::print_color("# ICC by Group\n\n", "blue")
-  cat(insight::format_table(x, digits = digits))
+  cat(insight::export_table(x, digits = digits))
   invisible(x)
 }
 
@@ -361,7 +321,7 @@ print.icc_by_group <- function(x, digits = 3, ...) {
 #' @export
 print.r2_nakagawa_by_group <- function(x, digits = 3, ...) {
   insight::print_color("# Explained Variance by Level\n\n", "blue")
-  cat(insight::format_table(x, digits = digits))
+  cat(insight::export_table(x, digits = digits))
   cat("\n")
   invisible(x)
 }
@@ -641,7 +601,7 @@ print.check_collinearity <- function(x, ...) {
 
 
 
-#' @importFrom insight format_table print_color format_p
+#' @importFrom insight export_table print_color format_p
 #' @export
 print.performance_lrt <- function(x, digits = 2, ...) {
   insight::print_color("# Likelihood-Ratio-Test for Model Comparison\n\n", "blue")
@@ -651,7 +611,7 @@ print.performance_lrt <- function(x, digits = 2, ...) {
   if ("BIC" %in% colnames(x)) x$BIC <- round(x$BIC)
   x$p <- insight::format_p(x$p, name = NULL)
 
-  cat(insight::format_table(x, digits = digits))
+  cat(insight::export_table(x, digits = digits))
 
   if (sum(x$p < .05, na.rm = TRUE) <= 1) {
     best <- which(x$p < .05)
@@ -664,23 +624,62 @@ print.performance_lrt <- function(x, digits = 2, ...) {
 
 
 
-#' @importFrom insight print_color format_table
+#' @importFrom insight print_color export_table
 #' @export
 print.check_itemscale <- function(x, digits = 2, ...) {
   insight::print_color("# Description of (Sub-)Scales\n", "blue")
 
-  for (i in 1:length(x)) {
-    insight::print_color(sprintf("\nComponent %i\n\n", i), "red")
-    out <- x[[i]]
-    out[["Missings"]] <- sprintf("%.*f%%", digits, 100 * out[["Missings"]])
-    out[["Mean"]] <- sprintf("%.*f", digits, out[["Mean"]])
-    out[["SD"]] <- sprintf("%.*f", digits, out[["SD"]])
+  cat(insight::export_table(
+    lapply(1:length(x), function(i) {
+      out <- x[[i]]
+      attr(out, "table_caption") <- c(sprintf("Component %i", i), "red")
+      attr(out, "table_footer") <- c(sprintf("Mean inter-item-correlation = %.3f  Cronbach's alpha = %.3f",
+                                             attributes(out)$item_intercorrelation,
+                                             attributes(out)$cronbachs_alpha), "yellow")
 
-    cat(insight::format_table(out, missing = "<NA>"))
+      out
+    }),
+    digits = digits,
+    format = "text",
+    missing = "<NA>",
+    zap_small = TRUE
+  ))
+}
 
-    insight::print_color(sprintf(
-      "\nMean inter-item-correlation = %.3f  Cronbach's alpha = %.3f\n\n",
-      attributes(out)$item_intercorrelation, attributes(out)$cronbachs_alpha
-    ), "yellow")
+
+
+
+
+
+# helper -------------------------------
+
+#' @importFrom insight format_value
+.format_df_columns <- function(x) {
+  # generic df
+  if ("df" %in% names(x)) x$df <- insight::format_value(x$df, protect_integers = TRUE)
+  # residual df
+  if ("df_residual" %in% names(x)) x$df_residual <- insight::format_value(x$df_residual, protect_integers = TRUE)
+  names(x)[names(x) == "df_residual"] <- "df"
+  # df for errors
+  if ("df_error" %in% names(x)) x$df_error <- insight::format_value(x$df_error, protect_integers = TRUE)
+  names(x)[names(x) == "df_error"] <- "df"
+  # denominator and numerator df
+  if ("df_num" %in% names(x)) x$df_num <- insight::format_value(x$df_num, protect_integers = TRUE)
+  if ("df_denom" %in% names(x)) x$df_denom <- insight::format_value(x$df_denom, protect_integers = TRUE)
+  x
+}
+
+
+#' @importFrom stats na.omit
+.format_freq_stats <- function(x) {
+  stats <- "CochransQ"
+  if (stats %in% names(x) && "df" %in% names(x)) {
+    df <- stats::na.omit(unique(x$df))
+    if (length(df) == 1 && !all(is.infinite(df))) {
+      names(x)[names(x) == stats] <- paste0(stats, "(", df, ")")
+      x$df <- NULL
+    }
   }
+
+  x
 }

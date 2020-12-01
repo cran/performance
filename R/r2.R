@@ -6,6 +6,7 @@
 #'
 #' @param model A statistical model.
 #' @param ... Arguments passed down to the related r2-methods.
+#' @inheritParams r2_nakagawa
 #'
 #' @return Returns a list containing values related to the most appropriate R2
 #'   for the given model. See the list below:
@@ -44,8 +45,10 @@ r2 <- function(model, ...) {
 
 #' @importFrom insight print_color
 #' @export
-r2.default <- function(model, ...) {
-  insight::print_color(sprintf("'r2()' does not support models of class '%s'.\n", class(model)[1]), "red")
+r2.default <- function(model, verbose = TRUE, ...) {
+  if (isTRUE(verbose)) {
+    insight::print_color(sprintf("'r2()' does not support models of class '%s'.\n", class(model)[1]), "red")
+  }
   return(NA)
 }
 
@@ -291,9 +294,10 @@ r2.zeroinfl <- r2.hurdle
 # Nakagawa R2 ----------------------
 
 
+#' @rdname r2
 #' @export
-r2.merMod <- function(model, ...) {
-  r2_nakagawa(model, ...)
+r2.merMod <- function(model, tolerance = 1e-5, ...) {
+  r2_nakagawa(model, tolerance = tolerance, ...)
 }
 
 #' @export
@@ -322,8 +326,8 @@ r2.rlmerMod <- r2.merMod
 
 
 #' @export
-r2.wbm <- function(model, ...) {
-  out <- r2_nakagawa(model)
+r2.wbm <- function(model, tolerance = 1e-5, ...) {
+  out <- r2_nakagawa(model, tolerance = tolerance)
 
   if (is.null(out) || is.na(out)) {
     s <- summary(model)
@@ -532,7 +536,7 @@ r2.bigglm <- function(model, ...) {
 #' @export
 r2.biglm <- function(model, ...) {
   df.int <- ifelse(insight::has_intercept(model), 1, 0)
-  n <- insight::n_obs(model)
+  n <- suppressWarnings(insight::n_obs(model))
 
   rsq <- summary(model)$rsq
   adj.rsq <- 1 - (1 - rsq) * ((n - df.int) / model$df.resid)

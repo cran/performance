@@ -8,13 +8,13 @@
 \alias{r2_posterior.BFBayesFactor}
 \title{Bayesian R2}
 \usage{
-r2_bayes(model, robust = TRUE, ci = 0.89, ...)
+r2_bayes(model, robust = TRUE, ci = 0.89, verbose = TRUE, ...)
 
 r2_posterior(model, ...)
 
-\method{r2_posterior}{brmsfit}(model, ...)
+\method{r2_posterior}{brmsfit}(model, verbose = TRUE, ...)
 
-\method{r2_posterior}{stanreg}(model, ...)
+\method{r2_posterior}{stanreg}(model, verbose = TRUE, ...)
 
 \method{r2_posterior}{BFBayesFactor}(model, average = FALSE, prior_odds = NULL, ...)
 }
@@ -26,6 +26,8 @@ r2_posterior(model, ...)
 calculate the central tendency of the variances.}
 
 \item{ci}{Value or vector of probability of the CI (between 0 and 1) to be estimated.}
+
+\item{verbose}{Toggle off warnings.}
 
 \item{...}{Arguments passed to \code{r2_posterior()}.}
 

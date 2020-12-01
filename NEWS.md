@@ -1,3 +1,34 @@
+# performance 0.6.0
+
+## General
+
+* `model_performance()` now supports `margins`, `gamlss`, `stanmvreg` and `semLme`.
+
+## New functions
+
+* `r2_somers()`, to compute Somers' Dxy rank-correlation as R2-measure for logistic regression models.
+* `display()`, to print output from package-functions into different formats. `print_md()` is an alias for `display(format = "markdown")`.
+
+## Changes to functions
+
+### `model_performance()`
+
+* `model_performance()` is now more robust and doesn't fail if an index could not be computed. Instead, it returns all indices that were possible to calculate.
+* `model_performance()` gains a default-method that catches all model objects not previously supported. If model object is also not supported by the default-method, a warning is given.
+* `model_performance()` for metafor-models now includes the degrees of freedom for Cochran's Q.
+
+### Other functions
+
+* `performance_mse()` and `performance_rmse()` now always try to return the (R)MSE on the response scale.
+* `performance_accuracy()` now accepts all types of linear or logistic regression models, even if these are not of class `lm` or `glm`.
+* `performance_roc()` now accepts all types of logistic regression models, even if these are not of class `glm`.
+* `r2()` for mixed models and `r2_nakagawa()` gain a `tolerance`-argument, to set the tolerance level for singularity checks when computing random effect variances for the conditional r-squared.
+  
+## Bug fixes
+
+* Fixed issue in `icc()` introduced in the last update that make `lme`-models fail.
+* Fixed issue in `performance_roc()` for models with factors as response.
+
 # performance 0.5.1
 
 ## Breaking changes

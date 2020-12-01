@@ -19,7 +19,7 @@
 #' m <- lm(mpg ~ hp + gear, data = mtcars)
 #' performance_mse(m)
 #' @importFrom insight print_color
-#' @importFrom stats residuals
+#' @importFrom stats residuals predict
 #' @export
 performance_mse <- function(model, ...) {
   UseMethod("performance_mse")
@@ -35,16 +35,31 @@ mse <- performance_mse
 performance_mse.default <- function(model, verbose = TRUE, ...) {
   res <- tryCatch(
     {
-      if (inherits(model, c("vgam", "vglm"))) {
-        model@residuals
-      } else {
-        stats::residuals(model)
-      }
+      pred <- stats::predict(model, type = "response")
+      observed <- .factor_to_numeric(insight::get_response(model))
+      observed - pred
     },
     error = function(e) {
       NULL
     }
   )
+
+  if (is.null(res)) {
+    res <- tryCatch(
+      {
+        if (inherits(model, c("vgam", "vglm"))) {
+          model@residuals
+        } else if (inherits(model, "coxph")) {
+          stats::residuals(model)
+        } else {
+          stats::residuals(model, type = "response")
+        }
+      },
+      error = function(e) {
+        NULL
+      }
+    )
+  }
 
   if (is.null(res) || all(is.na(res))) {
     if (verbose) insight::print_color("Can't extract residuals from model.\n", "red")
@@ -60,8 +75,8 @@ performance_mse.default <- function(model, verbose = TRUE, ...) {
 # mfx models -------------------------------
 
 #' @export
-performance_mse.logitor <- function(model, ...) {
-  performance_mse(model$fit, ...)
+performance_mse.logitor <- function(model, verbose = TRUE, ...) {
+  performance_mse(model$fit, verbose = verbose, ...)
 }
 
 #' @export
@@ -87,3 +102,29 @@ performance_mse.betaor <- performance_mse.logitor
 
 #' @export
 performance_mse.betamfx <- performance_mse.logitor
+
+
+
+
+# other models --------------------------
+
+#' @export
+performance_mse.slm <- function(model, verbose = TRUE, ...) {
+  res <- tryCatch(
+    {
+      junk <- utils::capture.output(pred <- stats::predict(model, type = "response"))
+      observed <- .factor_to_numeric(insight::get_response(model))
+      observed - pred
+    },
+    error = function(e) {
+      NULL
+    }
+  )
+
+  if (is.null(res) || all(is.na(res))) {
+    if (verbose) insight::print_color("Can't extract residuals from model.\n", "red")
+    return(NA)
+  }
+
+  mean(res^2, na.rm = T)
+}

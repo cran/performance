@@ -50,6 +50,7 @@ cronbachs_alpha.data.frame <- function(x) {
 
 #' @export
 cronbachs_alpha.parameters_pca <- function(x) {
+  ## TODO change to data_name once parameters 0.10.0 is on CRAN
   pca_data <- attr(x, "data")
 
   if (is.null(pca_data)) {
