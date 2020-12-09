@@ -20,12 +20,24 @@
 #'   the denominator model. The \emph{first} model is used as denominator model,
 #'   and its Bayes factor is set to \code{NA} to indicate the reference model.
 #'   }
+#'   \subsection{Likelihood-Ratio Test}{
+#'   If possible, \code{compare_performance()} conducts a likelihood-ratio test
+#'   (see \code{\link{performance_lrt}}) and adds a column with the p-values
+#'   from that test to the output. Thus, when a \code{"p"}-column is included,
+#'   this refers to the likelihood-ratio test.
+#'   }
 #'   \subsection{Ranking Models}{
 #'   When \code{rank = TRUE}, a new column \code{Performance_Score} is returned. This
 #'   score ranges from 0\% to 100\%, higher values indicating better model performance.
-#'   Calculation is based on normalizing all indices (i.e. rescaling them to a
+#'   Note that all score value do not necessarily sum up to 100\%. Rather,
+#'   calculation is based on normalizing all indices (i.e. rescaling them to a
 #'   range from 0 to 1), and taking the mean value of all indices for each model.
 #'   This is a rather quick heuristic, but might be helpful as exploratory index.
+#'   \cr \cr
+#'   When comparing frequentist models, both BIC and Bayes factor can be available.
+#'   In such cases, since Bayes factor and BIC hold the same information (i.e.
+#'   \code{cor(-$BIC, BF, method = "spearman")} is 1), the Bayes factor is ignored
+#'   for the performance-score during ranking.
 #'   \cr \cr
 #'   In particular when models are of different types (e.g. mixed models, classical
 #'   linear models, logistic regression, ...), not all indices will be computed
@@ -78,6 +90,17 @@ compare_performance <- function(..., metrics = "all", rank = FALSE, bayesfactor 
   }, objects, object_names, SIMPLIFY = FALSE)
 
 
+  # likelihood ratio tests
+  LRTs <- tryCatch(
+    {
+      performance_lrt(...)
+    },
+    error = function(e) {
+      NULL
+    }
+  )
+
+
   # check for identical model class, for bayesfactor
   if (isTRUE(bayesfactor)) {
     BFs <- tryCatch(
@@ -97,6 +120,12 @@ compare_performance <- function(..., metrics = "all", rank = FALSE, bayesfactor 
   if (!is.null(BFs)) {
     dfs$BF <- BFs$BF
     dfs$BF[dfs$Model == object_names[1]] <- NA
+  }
+
+  if (!is.null(LRTs)) {
+    LRTs$Df <- NULL
+    LRTs$Model <- sapply(object_names, deparse)
+    dfs <- merge(dfs, LRTs, all = TRUE, sort = FALSE)
   }
 
   # check if all models were fit from same data
@@ -130,6 +159,8 @@ compare_performance <- function(..., metrics = "all", rank = FALSE, bayesfactor 
   # don't include test statistic in ranking
   x$p_CochransQ <- NULL
   x$p_Omnibus <- NULL
+  x$p <- NULL
+  x$p_LRT <- NULL
 
   out <- x
 
@@ -141,6 +172,9 @@ compare_performance <- function(..., metrics = "all", rank = FALSE, bayesfactor 
 
   # don't rank with BF when there is also BIC (same information)
   if ("BF" %in% colnames(out) && "BIC" %in% colnames(out)) {
+    if (isTRUE(verbose)) {
+      message("Bayes factor is based on BIC approximation, thus BF and BIC hold the same information. Ignoring BF for performance-score.")
+    }
     out$BF <- NULL
   }
 

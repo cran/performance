@@ -1,3 +1,13 @@
+# performance 0.6.1
+
+## General
+
+* `check_collinearity()` gains a `verbose` argument, to toggle warnings and messages.
+
+## Bug fixes
+
+* Fixed examples, now using suggested packages only conditionally.
+
 # performance 0.6.0
 
 ## General

@@ -1,7 +1,7 @@
 Package: performance
 Type: Package
 Title: Assessment of Regression Models Performance
-Version: 0.6.0
+Version: 0.6.1
 Authors@R: c(
 	person("Daniel", 
 		"Lüdecke", 
@@ -57,7 +57,7 @@ Config/testthat/edition: 3
 Config/testthat/parallel: true
 Config/testthat/start-first: watcher, parallel*
 NeedsCompilation: no
-Packaged: 2020-12-01 16:09:42 UTC; mail
+Packaged: 2020-12-09 13:19:38 UTC; Daniel
 Author: Daniel Lüdecke [aut, cre] (<https://orcid.org/0000-0002-8895-3206>),
   Dominique Makowski [aut, ctb] (<https://orcid.org/0000-0001-5375-9967>),
   Philip Waggoner [aut, ctb] (<https://orcid.org/0000-0002-7825-7573>),
@@ -65,4 +65,4 @@ Author: Daniel Lüdecke [aut, cre] (<https://orcid.org/0000-0002-8895-3206>),
   Mattan S. Ben-Shachar [aut, ctb]
     (<https://orcid.org/0000-0002-4287-4801>)
 Repository: CRAN
-Date/Publication: 2020-12-01 17:50:02 UTC
+Date/Publication: 2020-12-09 17:30:02 UTC
