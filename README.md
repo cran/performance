@@ -1,10 +1,11 @@
 
 # performance <img src='man/figures/logo.png' align="right" height="139" />
 
-[![CRAN](http://www.r-pkg.org/badges/version/performance)](https://cran.r-project.org/package=performance)
+[![publication](https://img.shields.io/badge/Cite-Unpublished-yellow)](https://github.com/easystats/performance/blob/master/inst/CITATION)
 [![downloads](http://cranlogs.r-pkg.org/badges/performance)](https://cran.r-project.org/package=performance)
+[![total](https://cranlogs.r-pkg.org/badges/grand-total/performance)](https://cranlogs.r-pkg.org/)
 
-***Test if your model is a good model\!***
+***Test if your model is a good model!***
 
 The primary goal of the **performance** package is to provide utilities
 for computing **indices of model quality** and **goodness of fit**. This
@@ -15,28 +16,36 @@ singularity.
 
 ## Installation
 
-Run the following:
+[![CRAN](http://www.r-pkg.org/badges/version/performance)](https://cran.r-project.org/package=performance)
+[![R
+check](https://github.com/easystats/performance/workflows/R-check/badge.svg?branch=master)](https://github.com/easystats/performance/actions)
+
+Run the following to install the stable release of **performance** from
+CRAN:
 
 ``` r
 install.packages("performance")
 ```
 
+Or this one to install the latest development version:
+
 ``` r
-library("performance")
+install.packages("remotes")
+remotes::install_github("easystats/performance")
 ```
 
-# Examples
+## Documentation
 
 [![Documentation](https://img.shields.io/badge/documentation-performance-orange.svg?colorB=E91E63)](https://easystats.github.io/performance/)
-[![Features](https://img.shields.io/badge/features-performance-orange.svg?colorB=2196F3)](https://easystats.github.io/performance/reference/index.html)
 [![Blog](https://img.shields.io/badge/blog-easystats-orange.svg?colorB=FF9800)](https://easystats.github.io/blog/posts/)
+[![Features](https://img.shields.io/badge/features-performance-orange.svg?colorB=2196F3)](https://easystats.github.io/performance/reference/index.html)
 
 There is a nice introduction into the package on
 [youtube](https://www.youtube.com/watch?v=EPIxQ5i5oxs).
 
-## Assessing model quality
+### Assessing model quality
 
-### R-squared
+#### R-squared
 
 **performance** has a generic `r2()` function, which computes the
 r-squared for many different models, including mixed effects and
@@ -93,7 +102,7 @@ r2(model)
 #> # Bayesian R2 with Standard Error
 #> 
 #>   Conditional R2: 0.953 (89% CI [0.944, 0.962])
-#>      Marginal R2: 0.823 (89% CI [0.740, 0.885])
+#>      Marginal R2: 0.825 (89% CI [0.748, 0.891])
 
 library(lme4)
 model <- lmer(Reaction ~ Days + (1 + Days | Subject), data = sleepstudy)
@@ -104,7 +113,7 @@ r2(model)
 #>      Marginal R2: 0.279
 ```
 
-### Intraclass Correlation Coefficient (ICC)
+#### Intraclass Correlation Coefficient (ICC)
 
 Similar to R-squared, the ICC provides information on the explained
 variance and can be interpreted as “the proportion of the variance
@@ -139,9 +148,9 @@ icc(model)
 #>   Conditional ICC: 0.771
 ```
 
-## Model diagnostics
+### Model diagnostics
 
-### Check for overdispersion
+#### Check for overdispersion
 
 Overdispersion occurs when the observed variance in the data is higher
 than the expected variance from the model assumption (for Poisson,
@@ -167,7 +176,7 @@ Overdispersion can be fixed by either modelling the dispersion parameter
 distributional family \[like Quasi-Poisson, or negative binomial, see
 (Gelman and Hill 2007).
 
-### Check for zero-inflation
+#### Check for zero-inflation
 
 Zero-inflation (in (Quasi-)Poisson models) is indicated when the amount
 of observed zeros is larger than the amount of predicted zeros, so the
@@ -188,7 +197,7 @@ check_zeroinflation(model)
 #> Model is underfitting zeros (probable zero-inflation).
 ```
 
-### Check for singular model fits
+#### Check for singular model fits
 
 A “singular” model fit means that some dimensions of the
 variance-covariance matrix have been estimated as exactly zero. This
@@ -222,7 +231,7 @@ check_singularity(model)
 Remedies to cure issues with singular fits can be found
 [here](https://easystats.github.io/performance/reference/check_singularity.html).
 
-### Comprehensive visualization of model checks
+#### Comprehensive visualization of model checks
 
 **performance** provides many functions to check model assumptions, like
 `check_collinearity()`, `check_normality()` or
@@ -236,13 +245,13 @@ check_model(model)
 
 ![](man/figures/unnamed-chunk-13-1.png)<!-- -->
 
-## Model performance summaries
+### Model performance summaries
 
 `model_performance()` computes indices of model performance for
 regression models. Depending on the model object, typical indices might
 be r-squared, AIC, BIC, RMSE, ICC or LOOIC.
 
-### Linear model
+#### Linear model
 
 ``` r
 m1 <- lm(mpg ~ wt + cyl, data = mtcars)
@@ -254,7 +263,7 @@ model_performance(m1)
 #> 156.01 | 161.87 | 0.83 |      0.82 | 2.44 |  2.57
 ```
 
-### Logistic regression
+#### Logistic regression
 
 ``` r
 m2 <- glm(vs ~ wt + mpg, data = mtcars, family = "binomial")
@@ -266,7 +275,7 @@ model_performance(m2)
 #> 31.30 | 35.70 |      0.48 | 0.36 |  0.93 |     0.40 |    -14.90 |            0.09 | 0.74
 ```
 
-### Linear mixed model
+#### Linear mixed model
 
 ``` r
 library(lme4)
@@ -279,7 +288,7 @@ model_performance(m3)
 #> 1755.63 | 1774.79 |       0.80 |       0.28 | 0.72 | 23.44 | 25.59
 ```
 
-## Models comparison
+### Models comparison
 
 The `compare_performance()` function can be used to compare the
 performance and quality of several models (including models of different
@@ -302,7 +311,7 @@ compare_performance(m1, m2, m3, m4)
 #> m4    |     glm |   56.76 |   57.75 |  3.04 |  1.13 |     -2.60 |            0.32 |      |           |           |          |      |            |            |      |            0.66
 ```
 
-### General index of model performance
+#### General index of model performance
 
 One can also easily compute and a [**composite
 index**](https://easystats.github.io/performance/reference/compare_performance.html#details)
@@ -320,7 +329,7 @@ compare_performance(m1, m2, m3, m4, rank = TRUE)
 #> m3    | lmerMod | 1755.63 | 1774.79 | 23.44 | 25.59 |             0.00%
 ```
 
-### Visualisation of indices of models’ performance
+#### Visualisation of indices of models’ performance
 
 Finally, we provide convenient visualisation (the `see` package must be
 installed).
@@ -331,33 +340,30 @@ plot(compare_performance(m1, m2, m4, rank = TRUE))
 
 ![](man/figures/unnamed-chunk-19-1.png)<!-- -->
 
-### Comparing models with the Bayes Factor
+### Testing models
 
-For some models (for instance, frequentist linear models), the
-`compare_performance()` function will compute the **Bayes factor (BF)**,
-testing if each model is better than the first one (which is used as a
-ground reference).
+`test_performance()` carries out the most relevant and appropriate tests
+based on the input (for instance, whether the models are nested or not).
 
 ``` r
 m1 <- lm(Sepal.Length ~ Petal.Length, data = iris)
 m2 <- lm(Sepal.Length ~ Petal.Length + Petal.Width, data = iris)
 m3 <- lm(Sepal.Length ~ Petal.Length * Petal.Width, data = iris)
 
-compare_performance(m1, m2, m3)
-#> # Comparison of Model Performance Indices
-#> 
-#> Model | Type |    AIC |    BIC |   R2 | R2 (adj.) | RMSE | Sigma |     BF
-#> -------------------------------------------------------------------------
-#> m1    |   lm | 160.04 | 169.07 | 0.76 |      0.76 | 0.40 |  0.41 |   1.00
-#> m2    |   lm | 158.05 | 170.09 | 0.77 |      0.76 | 0.40 |  0.40 |  0.601
-#> m3    |   lm | 130.70 | 145.75 | 0.81 |      0.80 | 0.36 |  0.37 | > 1000
+test_performance(m1, m2, m3)
+#> Name | Model |     BF | Omega2 | p (Omega2) |    LR | p (LR)
+#> ------------------------------------------------------------
+#> m1   |    lm |        |        |            |       |       
+#> m2   |    lm |  0.601 |   0.03 |      0.062 |  3.99 |  0.057
+#> m3   |    lm | > 1000 |   0.16 |     < .001 | 29.35 | < .001
+#> Models were detected as nested. Each model is compared to the one below.
 ```
 
-# References
+## References
 
-<div id="refs" class="references hanging-indent">
+<div id="refs" class="references csl-bib-body hanging-indent">
 
-<div id="ref-gelman_data_2007">
+<div id="ref-gelman_data_2007" class="csl-entry">
 
 Gelman, Andrew, and Jennifer Hill. 2007. *Data Analysis Using Regression
 and Multilevel/Hierarchical Models*. Analytical Methods for Social
@@ -365,14 +371,14 @@ Research. Cambridge ; New York: Cambridge University Press.
 
 </div>
 
-<div id="ref-hox_multilevel_2010">
+<div id="ref-hox_multilevel_2010" class="csl-entry">
 
 Hox, J. J. 2010. *Multilevel Analysis: Techniques and Applications*. 2nd
 ed. Quantitative Methodology Series. New York: Routledge.
 
 </div>
 
-<div id="ref-johnson_extension_2014">
+<div id="ref-johnson_extension_2014" class="csl-entry">
 
 Johnson, Paul C. D. 2014. “Extension of Nakagawa & Schielzeth’s R2 GLMM
 to Random Slopes Models.” Edited by Robert B. O’Hara. *Methods in
@@ -381,12 +387,12 @@ Ecology and Evolution* 5 (9): 944–46.
 
 </div>
 
-<div id="ref-nakagawa_coefficient_2017">
+<div id="ref-nakagawa_coefficient_2017" class="csl-entry">
 
 Nakagawa, Shinichi, Paul C. D. Johnson, and Holger Schielzeth. 2017.
 “The Coefficient of Determination R2 and Intra-Class Correlation
 Coefficient from Generalized Linear Mixed-Effects Models Revisited and
-Expanded.” *Journal of the Royal Society Interface* 14 (134): 20170213.
+Expanded.” *Journal of The Royal Society Interface* 14 (134): 20170213.
 <https://doi.org/10.1098/rsif.2017.0213>.
 
 </div>

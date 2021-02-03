@@ -8,18 +8,18 @@ if (require("testthat") && require("performance")) {
   test_that("compare_performance", {
     expect_equal(
       colnames(compare_performance(lm1, lm2, lm3)),
-      c("Model", "Type", "AIC", "BIC", "R2", "R2_adjusted", "RMSE", "Sigma", "BF", "p")
+      c("Name", "Model", "AIC", "BIC", "R2", "R2_adjusted", "RMSE", "Sigma")
     )
 
     expect_warning(
       expect_equal(
         colnames(compare_performance(lm1, lm2, lm3, lm4)),
-        c("Model", "Type", "AIC", "BIC", "R2", "R2_adjusted", "RMSE", "Sigma")
+        c("Name", "Model", "AIC", "BIC", "R2", "R2_adjusted", "RMSE", "Sigma")
       )
     )
     expect_equal(
       colnames(compare_performance(lm1, lm2, lm3, lm4, verbose = FALSE)),
-      c("Model", "Type", "AIC", "BIC", "R2", "R2_adjusted", "RMSE", "Sigma")
+      c("Name", "Model", "AIC", "BIC", "R2", "R2_adjusted", "RMSE", "Sigma")
     )
   })
 }

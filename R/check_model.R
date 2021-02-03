@@ -22,7 +22,10 @@
 #' @return The data frame that is used for plotting.
 #'
 #' @note This function just prepares the data for plotting. To create the plots,
-#' \CRANpkg{see} needs to be installed.
+#' \CRANpkg{see} needs to be installed. Furthermore, this function suppresses
+#' all possible warnings. In case you observe suspicious plots, please refer to
+#' the dedicated functions (like \code{check_collinearity()}, \code{check_normality()}
+#' etc.) to get informative messages and warnings.
 #'
 #' @examples
 #' \dontrun{
@@ -116,7 +119,7 @@ check_model.default <- function(x, dot_size = 2, line_size = .8, panel = TRUE, c
     # check if brms can be loaded
 
     if (!requireNamespace("brms", quietly = TRUE)) {
-      stop("Package `brms` needs to be loaded first!", call. = F)
+      stop("Package `brms` needs to be loaded first!", call. = FALSE)
     }
 
     # check if prior sample are available
@@ -137,7 +140,7 @@ check_model.default <- function(x, dot_size = 2, line_size = .8, panel = TRUE, c
 
     # check if rstanarm can be loaded
     if (!requireNamespace("rstanarm", quietly = TRUE)) {
-      stop("Package `rstanarm` needs to be loaded first!", call. = F)
+      stop("Package `rstanarm` needs to be loaded first!", call. = FALSE)
     }
 
 

@@ -11,7 +11,7 @@
 #' \code{"fligner"} for the Fligner-Killeen test (rank-based, non-parametric test),
 #' or \code{"auto"}. In the latter case, Bartlett test is used if the model response
 #' is normal distributed, else Fligner-Killeen test is used.
-#' @param ... Arguments passed down to \code{\link[car:leveneTest]{car::leveneTest()}}.
+#' @param ... Arguments passed down to \code{car::leveneTest()}.
 #'
 #' @return Invisibly returns the p-value of the test statistics. A p-value
 #' < 0.05 indicates a significant difference in the variance between the groups.
@@ -28,7 +28,7 @@
 #'   plot(result)
 #' }
 #' @importFrom stats fligner.test bartlett.test shapiro.test
-#' @importFrom insight find_response find_predictors get_data get_response
+#' @importFrom insight find_response find_predictors get_data get_residuals
 #' @export
 check_homogeneity <- function(x, method = c("bartlett", "fligner", "levene", "auto"), ...) {
   UseMethod("check_homogeneity")
@@ -42,6 +42,12 @@ check_homogeneity.default <- function(x, method = c("bartlett", "fligner", "leve
   resp <- insight::find_response(x)
   pred <- insight::find_predictors(x, component = "conditional", flatten = TRUE)
 
+  # edge case, whitespace in name, so surround with backticks
+  ws_pred <- pred != make.names(pred)
+  if (any(ws_pred)) {
+    pred[ws_pred] <- paste0("`", pred[ws_pred], "`")
+  }
+
   if (length(pred) > 1) {
     pred <- paste0("interaction(", paste0(pred, collapse = ", "), ")", collapse = "")
   }
@@ -51,7 +57,7 @@ check_homogeneity.default <- function(x, method = c("bartlett", "fligner", "leve
   if (method == "auto") {
     check <- tryCatch(
       {
-        stats::shapiro.test(insight::get_response(x))$p.value
+        stats::shapiro.test(insight::get_residuals(x))$p.value
       },
       error = function(e) {
         NULL

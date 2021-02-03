@@ -1,3 +1,47 @@
+# performance 0.7.0
+
+## General
+
+* Roll-back R dependency to R >= 3.4.
+
+## Breaking Changes
+
+* `compare_performance()` doesn't return the models' Bayes Factors, now returned by `test_performance()` and `test_bf()`.
+
+## New functions to test or compare models
+
+* `test_vuong()`, to compare models using Vuong's (1989) Test.
+* `test_bf()`, to compare models using Bayes factors.
+* `test_likelihoodratio()` as an alias for `performance_lrt()`.
+* `test_wald()`, as a rough approximation for the LRT.
+* `test_performance()`, to run the most relevant and appropriate tests based on the input.
+
+## Changes to functions
+
+### `performance_lrt()`
+
+* `performance_lrt()` get an alias `test_likelihoodratio()`.
+* Does not return AIC/BIC now (as they are not related to LRT *per se* and can be easily obtained with other functions).
+* Now contains a column with the difference in degrees of freedom between models.
+* Fixed column names for consistency.
+
+### `model_performance()`
+
+* Added more diagnostics to models of class `ivreg`.
+
+### Other functions
+
+* Revised computation of `performance_mse()`, to ensure that it's always based on response residuals.
+* `performance_aic()` is now more robust.
+
+## Bug fixes
+
+* Fixed issue in `icc()` and `variance_decomposition()` for multivariate response models, where not all model parts contained random effects.
+* Fixed issue in `compare_performance()` with duplicated rows.
+* `check_collinearity()` no longer breaks for models with rank deficient model matrix, but gives a warning instead.
+* Fixed issue in `check_homogeneity()` for `method = "auto"`, which wrongly tested the response variable, not the residuals.
+* Fixed issue in `check_homogeneity()` for edge cases where predictor had non-syntactic names.
+
 # performance 0.6.1
 
 ## General
@@ -33,7 +77,7 @@
 * `performance_accuracy()` now accepts all types of linear or logistic regression models, even if these are not of class `lm` or `glm`.
 * `performance_roc()` now accepts all types of logistic regression models, even if these are not of class `glm`.
 * `r2()` for mixed models and `r2_nakagawa()` gain a `tolerance`-argument, to set the tolerance level for singularity checks when computing random effect variances for the conditional r-squared.
-  
+
 ## Bug fixes
 
 * Fixed issue in `icc()` introduced in the last update that make `lme`-models fail.

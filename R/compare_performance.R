@@ -7,37 +7,18 @@
 #' @param ... Multiple model objects (also of different classes).
 #' @param metrics Can be \code{"all"}, \code{"common"} or a character vector of metrics to be computed. See related \code{\link[=model_performance]{documentation}} of object's class for details.
 #' @param rank Logical, if \code{TRUE}, models are ranked according to 'best' overall model performance. See 'Details'.
-#' @param bayesfactor Logical, if \code{TRUE}, a Bayes factor for model comparisons is possibly returned. See 'Details'.
 #'
 #' @return A data frame (with one row per model) and one column per "index" (see \code{metrics}).
 #'
 #' @note There is also a \href{https://easystats.github.io/see/articles/performance.html}{\code{plot()}-method} implemented in the \href{https://easystats.github.io/see/}{\pkg{see}-package}.
 #'
-#' @details \subsection{Bayes factor for Model Comparison}{
-#'   If all models were fit from the same data, \code{compare_performance()}
-#'   returns an additional column named \code{BF}, which shows the Bayes factor
-#'   (see \code{bayestestR::bayesfactor_models()}) for each model against
-#'   the denominator model. The \emph{first} model is used as denominator model,
-#'   and its Bayes factor is set to \code{NA} to indicate the reference model.
-#'   }
-#'   \subsection{Likelihood-Ratio Test}{
-#'   If possible, \code{compare_performance()} conducts a likelihood-ratio test
-#'   (see \code{\link{performance_lrt}}) and adds a column with the p-values
-#'   from that test to the output. Thus, when a \code{"p"}-column is included,
-#'   this refers to the likelihood-ratio test.
-#'   }
-#'   \subsection{Ranking Models}{
+#' @details \subsection{Ranking Models}{
 #'   When \code{rank = TRUE}, a new column \code{Performance_Score} is returned. This
 #'   score ranges from 0\% to 100\%, higher values indicating better model performance.
 #'   Note that all score value do not necessarily sum up to 100\%. Rather,
 #'   calculation is based on normalizing all indices (i.e. rescaling them to a
 #'   range from 0 to 1), and taking the mean value of all indices for each model.
 #'   This is a rather quick heuristic, but might be helpful as exploratory index.
-#'   \cr \cr
-#'   When comparing frequentist models, both BIC and Bayes factor can be available.
-#'   In such cases, since Bayes factor and BIC hold the same information (i.e.
-#'   \code{cor(-$BIC, BF, method = "spearman")} is 1), the Bayes factor is ignored
-#'   for the performance-score during ranking.
 #'   \cr \cr
 #'   In particular when models are of different types (e.g. mixed models, classical
 #'   linear models, logistic regression, ...), not all indices will be computed
@@ -54,6 +35,13 @@
 #'   }
 #'
 #' @examples
+#' data(iris)
+#' lm1 <- lm(Sepal.Length ~ Species, data = iris)
+#' lm2 <- lm(Sepal.Length ~ Species + Petal.Length, data = iris)
+#' lm3 <- lm(Sepal.Length ~ Species * Petal.Length, data = iris)
+#' compare_performance(lm1, lm2, lm3)
+#' compare_performance(lm1, lm2, lm3, rank = TRUE)
+#'
 #' if (require("lme4")) {
 #'   m1 <- lm(mpg ~ wt + cyl, data = mtcars)
 #'   m2 <- glm(vs ~ wt + mpg, data = mtcars, family = "binomial")
@@ -61,17 +49,11 @@
 #'   compare_performance(m1, m2, m3)
 #' }
 #'
-#' data(iris)
-#' lm1 <- lm(Sepal.Length ~ Species, data = iris)
-#' lm2 <- lm(Sepal.Length ~ Species + Petal.Length, data = iris)
-#' lm3 <- lm(Sepal.Length ~ Species * Petal.Length, data = iris)
-#' compare_performance(lm1, lm2, lm3)
-#' compare_performance(lm1, lm2, lm3, rank = TRUE)
 #' @importFrom insight is_model_supported all_models_equal get_response
 #' @importFrom bayestestR bayesfactor_models
 #' @inheritParams model_performance.lm
 #' @export
-compare_performance <- function(..., metrics = "all", rank = FALSE, bayesfactor = TRUE, verbose = TRUE) {
+compare_performance <- function(..., metrics = "all", rank = FALSE,verbose = TRUE) {
   objects <- list(...)
   object_names <- match.call(expand.dots = FALSE)$`...`
 
@@ -86,47 +68,10 @@ compare_performance <- function(..., metrics = "all", rank = FALSE, bayesfactor 
   m <- mapply(function(.x, .y) {
     dat <- model_performance(.x, metrics = metrics, verbose = FALSE)
     model_name <- gsub("\"", "", .safe_deparse(.y), fixed = TRUE)
-    cbind(data.frame(Model = model_name, Type = class(.x)[1], stringsAsFactors = FALSE), dat)
+    cbind(data.frame(Name = model_name, Model = class(.x)[1], stringsAsFactors = FALSE), dat)
   }, objects, object_names, SIMPLIFY = FALSE)
 
-
-  # likelihood ratio tests
-  LRTs <- tryCatch(
-    {
-      performance_lrt(...)
-    },
-    error = function(e) {
-      NULL
-    }
-  )
-
-
-  # check for identical model class, for bayesfactor
-  if (isTRUE(bayesfactor)) {
-    BFs <- tryCatch(
-      {
-        bayestestR::bayesfactor_models(..., denominator = 1, verbose = FALSE)
-      },
-      error = function(e) {
-        NULL
-      }
-    )
-  } else {
-    BFs <- NULL
-  }
-
   dfs <- Reduce(function(x, y) merge(x, y, all = TRUE, sort = FALSE), m)
-
-  if (!is.null(BFs)) {
-    dfs$BF <- BFs$BF
-    dfs$BF[dfs$Model == object_names[1]] <- NA
-  }
-
-  if (!is.null(LRTs)) {
-    LRTs$Df <- NULL
-    LRTs$Model <- sapply(object_names, deparse)
-    dfs <- merge(dfs, LRTs, all = TRUE, sort = FALSE)
-  }
 
   # check if all models were fit from same data
   resps <- lapply(objects, insight::get_response)
@@ -137,6 +82,14 @@ compare_performance <- function(..., metrics = "all", rank = FALSE, bayesfactor 
   # create "ranking" of models
   if (isTRUE(rank)) {
     dfs <- .rank_performance_indices(dfs, verbose)
+  }
+
+  # Reorder columns
+  if (all(c("BIC", "BF") %in% names(dfs))) {
+    idx1 <- grep("BIC", names(dfs))
+    idx2 <- grep("BF", names(dfs))
+    last_part <- (idx1 + 1):ncol(dfs)
+    dfs <- dfs[, c(1:idx1, idx2, last_part[last_part != idx2])]
   }
 
   # dfs[order(sapply(object_names, as.character), dfs$Model), ]

@@ -136,7 +136,7 @@ model_performance.lm <- function(model, metrics = "all", verbose = TRUE, ...) {
   }
 
   # PCP -------------
-  if (("PCP" %in% toupper(metrics)) && isTRUE(info$is_binomial) && !isTRUE(info$is_multinomial) && !isTRUE(info$is_ordinal)) {
+  if (("PCP" %in% toupper(metrics)) && isTRUE(info$is_binomial) && isFALSE(info$is_multinomial) && isFALSE(info$is_ordinal)) {
     out$PCP <- tryCatch({
       performance_pcp(model, verbose = verbose)$pcp_model
     },
@@ -197,9 +197,6 @@ model_performance.felm <- model_performance.lm
 
 #' @export
 model_performance.iv_robust <- model_performance.lm
-
-#' @export
-model_performance.ivreg <- model_performance.lm
 
 #' @export
 model_performance.multinom <- model_performance.lm
