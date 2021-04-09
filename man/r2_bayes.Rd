@@ -16,7 +16,7 @@ r2_posterior(model, ...)
 
 \method{r2_posterior}{stanreg}(model, verbose = TRUE, ...)
 
-\method{r2_posterior}{BFBayesFactor}(model, average = FALSE, prior_odds = NULL, ...)
+\method{r2_posterior}{BFBayesFactor}(model, average = FALSE, prior_odds = NULL, verbose = TRUE, ...)
 }
 \arguments{
 \item{model}{A Bayesian regression model (from \strong{brms}, \strong{rstanarm},
@@ -31,8 +31,7 @@ calculate the central tendency of the variances.}
 
 \item{...}{Arguments passed to \code{r2_posterior()}.}
 
-\item{average}{Compute model-averaged index? See
-\code{\link[bayestestR:weighted_posteriors]{bayestestR::weighted_posteriors()}}.}
+\item{average}{Compute model-averaged index? See \code{\link[bayestestR:weighted_posteriors]{bayestestR::weighted_posteriors()}}.}
 
 \item{prior_odds}{Optional vector of prior odds for the models compared to the first model (or the denominator, for \code{BFBayesFactor} objects). For \code{data.frame}s, this will be used as the basis of weighting.}
 }
@@ -49,7 +48,7 @@ a posterior sample of Bayesian R2 values.
 }
 \details{
 \code{r2_bayes()} returns an "unadjusted" R2 value. See \code{\link{r2_loo}}
-  to calculate a LOO-adjusted R2, which comes conceptionally closer to an
+  to calculate a LOO-adjusted R2, which comes conceptually closer to an
   adjusted R2 measure.
   \cr \cr
   For mixed models, the conditional and marginal R2 are returned. The marginal
@@ -74,8 +73,6 @@ if (require("rstanarm") && require("rstantools")) {
   )
   r2_bayes(model)
 }
-
-
 \dontrun{
 if (require("BayesFactor")) {
   data(mtcars)

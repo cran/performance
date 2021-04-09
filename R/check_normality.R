@@ -12,10 +12,14 @@
 #' @return Invisibly returns the p-value of the test statistics. A p-value
 #' < 0.05 indicates a significant deviation from normal distribution
 #'
-#' @note For mixed models, studentized residuals are used for the test, \emph{not} the standardized residuals. There is also a \href{https://easystats.github.io/see/articles/performance.html}{\code{plot()}-method} implemented in the \href{https://easystats.github.io/see/}{\pkg{see}-package}.
+#' @note For mixed models, studentized residuals are used for the test,
+#'   \emph{not} the standardized residuals. There is also a
+#'   \href{https://easystats.github.io/see/articles/performance.html}{\code{plot()}-method}
+#'   implemented in the
+#'   \href{https://easystats.github.io/see/}{\pkg{see}-package}.
 #'
 #' @details \code{check_normality()} calls \code{stats::shapiro.test}
-#' and checks the standardized residuals (or studentized residuals for mixed
+#' and checks the standardized residuals (or Studentized residuals for mixed
 #' models) for normal distribution. Note that this formal test almost always
 #' yields significant results for the distribution of residuals and visual
 #' inspection (e.g. Q-Q plots) are preferable.
@@ -43,8 +47,15 @@ check_normality <- function(x, ...) {
 }
 
 
+#' @importFrom insight model_info
 #' @export
 check_normality.default <- function(x, ...) {
+  # valid model?
+  if (!insight::model_info(x)$is_linear) {
+    message("Checking normality of residuals is only useful an appropriate assumption for linear models.")
+    return(NULL)
+  }
+
   # check for normality of residuals
   p.val <- .check_normality(stats::rstandard(x), x)
 
@@ -68,6 +79,12 @@ check_normality.merMod <- function(x, effects = c("fixed", "random"), ...) {
   # args
   effects <- match.arg(effects)
   info <- insight::model_info(x)
+
+  # valid model?
+  if (!info$is_linear) {
+    message("Checking normality of residuals is only useful an appropriate assumption for linear models.")
+    return(NULL)
+  }
 
   if (effects == "random") {
     if (!requireNamespace("lme4", quietly = TRUE)) {

@@ -95,7 +95,7 @@ print.check_distribution_numeric <- function(x, ...) {
 #' @export
 print.performance_roc <- function(x, ...) {
   if (length(unique(x$Model)) == 1) {
-    cat(sprintf("AUC: %.2f%%\n", 100 * bayestestR::area_under_curve(x$Specifity, x$Sensivity)))
+    cat(sprintf("AUC: %.2f%%\n", 100 * bayestestR::area_under_curve(x$Specificity, x$Sensitivity)))
   } else {
     insight::print_color("# Area under Curve\n\n", "blue")
 
@@ -107,7 +107,7 @@ print.performance_roc <- function(x, ...) {
         "  %*s: %.2f%%\n",
         max_space,
         names(dat)[i],
-        100 * bayestestR::area_under_curve(dat[[i]]$Specifity, dat[[i]]$Sensivity)
+        100 * bayestestR::area_under_curve(dat[[i]]$Specificity, dat[[i]]$Sensitivity)
       ))
     }
   }
@@ -176,9 +176,7 @@ print.looic <- function(x, digits = 2, ...) {
 print.r2_generic <- function(x, digits = 3, ...) {
   model_type <- attr(x, "model_type")
   if (!is.null(model_type)) {
-    insight::print_color(sprintf("# R2 for %s Regression\n\n", model_type), "blue")
-  } else {
-    insight::print_color("# R2\n\n", "blue")
+    insight::print_color(sprintf("# R2 for %s Regression\n", model_type), "blue")
   }
 
   if (all(c("R2_adjusted", "R2_within_adjusted") %in% names(x))) {
@@ -198,11 +196,24 @@ print.r2_generic <- function(x, digits = 3, ...) {
     collapse = "\n"
     )
   } else {
-    out <- sprintf("  R2: %.*f", digits, x$R2)
+    out <- sprintf("  %s: %.*f", names(x$R2), digits, x$R2)
   }
 
   cat(out)
   cat("\n")
+  invisible(x)
+}
+
+
+
+#' @importFrom insight print_color
+#' @export
+print.r2_pseudo <- function(x, digits = 3, ...) {
+  model_type <- attr(x, "model_type")
+  if (!is.null(model_type)) {
+    insight::print_color(sprintf("# R2 for %s Regression\n", model_type), "blue")
+  }
+  cat(sprintf("  %s: %.*f\n", names(x[[1]]), digits, x[[1]]))
   invisible(x)
 }
 
@@ -266,7 +277,7 @@ print.r2_bayes <- function(x, digits = 3, ...) {
   r2_ci <- insight::format_ci(
     attributes(x)$CI$R2_Bayes$CI_low,
     attributes(x)$CI$R2_Bayes$CI_high,
-    ci = attributes(x)$CI$R2_Bayes$CI / 100,
+    ci = attributes(x)$CI$R2_Bayes$CI,
     digits = digits
   )
   out <- sprintf("  Conditional R2: %.*f (%s)", digits, x$R2_Bayes, r2_ci)
@@ -275,7 +286,7 @@ print.r2_bayes <- function(x, digits = 3, ...) {
     r2_marginal_ci <- insight::format_ci(
       attributes(x)$CI$R2_Bayes_marginal$CI_low,
       attributes(x)$CI$R2_Bayes_marginal$CI_high,
-      ci = attributes(x)$CI$R2_Bayes_marginal$CI / 100,
+      ci = attributes(x)$CI$R2_Bayes_marginal$CI,
       digits = digits
     )
     out <- paste0(c(out, sprintf("     Marginal R2: %.*f (%s)", digits, x$R2_Bayes_marginal, r2_marginal_ci)), collapse = "\n")
@@ -571,9 +582,11 @@ print.check_collinearity <- function(x, ...) {
 
 .print_collinearity <- function(x) {
   vifs <- x$VIF
+  x$Tolerance <- 1/x$VIF
 
   x$VIF <- sprintf("%.2f", x$VIF)
   x$SE_factor <- sprintf("%.2f", x$SE_factor)
+  x$Tolerance <- sprintf("%.2f", x$Tolerance)
 
   colnames(x)[3] <- "Increased SE"
 
@@ -609,7 +622,7 @@ print.test_likelihoodratio <- function(x, digits = 2, ...) {
   if ("LogLik" %in% names(x)) {
     best <- which.max(x$LogLik)
     footer <- c(sprintf("\nModel '%s' seems to have the best model fit.\n", x$Model[best]), "yellow")
-  } else{
+  } else {
     footer <- NULL
   }
 
@@ -637,9 +650,11 @@ print.check_itemscale <- function(x, digits = 2, ...) {
     lapply(1:length(x), function(i) {
       out <- x[[i]]
       attr(out, "table_caption") <- c(sprintf("\nComponent %i", i), "red")
-      attr(out, "table_footer") <- c(sprintf("\nMean inter-item-correlation = %.3f  Cronbach's alpha = %.3f",
-                                             attributes(out)$item_intercorrelation,
-                                             attributes(out)$cronbachs_alpha), "yellow")
+      attr(out, "table_footer") <- c(sprintf(
+        "\nMean inter-item-correlation = %.3f  Cronbach's alpha = %.3f",
+        attributes(out)$item_intercorrelation,
+        attributes(out)$cronbachs_alpha
+      ), "yellow")
 
       out
     }),

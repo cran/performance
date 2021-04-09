@@ -17,10 +17,12 @@
 }
 
 
-#' @importFrom stats residuals rstudent fitted
+#' @importFrom stats residuals rstudent fitted rstandard
 .diag_qq <- function(model) {
   if (inherits(model, c("lme", "lmerMod", "merMod", "glmmTMB"))) {
     res_ <- sort(stats::residuals(model), na.last = NA)
+  } else if (inherits(model, "glm")) {
+    res_ <- sort(stats::rstandard(model, type = "pearson"), na.last = NA)
   } else {
     res_ <- tryCatch(
       {
@@ -138,6 +140,58 @@
 
 
 
+#' @importFrom stats qf influence rstandard cooks.distance
+#' @importFrom insight get_residuals get_predicted n_parameters
+.diag_influential_obs <- function(model, threshold = NULL) {
+  s <- summary(model)
+
+  if (inherits(model, "lm", which = TRUE) == 1) {
+    cook_levels <- round(stats::qf(.5, s$fstatistic[2], s$fstatistic[3]), 2)
+  } else if (!is.null(threshold)) {
+    cook_levels <- threshold
+  } else {
+    cook_levels <- c(.5, 1)
+  }
+
+  n_params <- tryCatch(
+    {
+      model$rank
+    },
+    error = function(e) {
+      insight::n_parameters(model)
+    }
+  )
+
+  infl <- stats::influence(model, do.coef = FALSE)
+  resid <- insight::get_residuals(model)
+
+  std_resid <- tryCatch(
+    {
+      stats::rstandard(model, infl)
+    },
+    error = function(e) {
+      resid
+    }
+  )
+
+  plot_data <- data.frame(
+    Hat = infl$hat,
+    Cooks_Distance = stats::cooks.distance(model, infl),
+    Fitted = insight::get_predicted(model),
+    Residuals = resid,
+    Std_Residuals = std_resid,
+    stringsAsFactors = FALSE
+  )
+  plot_data$Index <- 1:nrow(plot_data)
+  plot_data$Influential <- "OK"
+  plot_data$Influential[abs(plot_data$Cooks_Distance) >= max(cook_levels)] <- "Influential"
+
+  attr(plot_data, "cook_levels") <- cook_levels
+  attr(plot_data, "n_params") <- n_params
+  plot_data
+}
+
+
 
 #' @importFrom stats residuals fitted
 .diag_ncv <- function(model) {
@@ -177,6 +231,8 @@
           .sigma_glmmTMB_nonmixed(model, faminfo)
         }
         stats::residuals(model) / sigma
+      } else if (inherits(model, "glm")) {
+        stats::rstandard(model, type = "pearson")
       } else {
         stats::rstandard(model)
       }
@@ -205,8 +261,7 @@
     return(1)
   }
   betad <- model$fit$par["betad"]
-  switch(
-    faminfo$family,
+  switch(faminfo$family,
     gaussian = exp(0.5 * betad),
     Gamma = exp(-0.5 * betad),
     exp(betad)

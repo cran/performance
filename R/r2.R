@@ -1,8 +1,9 @@
 #' @title Compute the model's R2
 #' @name r2
 #'
-#' @description Calculate the R2 value for different model objects. Depending
-#'   on the model, R2, pseudo-R2 or marginal / adjusted R2 values are returned.
+#' @description Calculate the R2, also known as the coefficient of
+#'   determination, value for different model objects. Depending on the model,
+#'   R2, pseudo-R2, or marginal / adjusted R2 values are returned.
 #'
 #' @param model A statistical model.
 #' @param ... Arguments passed down to the related r2-methods.
@@ -18,6 +19,10 @@
 #'   \item Mixed models: \link[=r2_nakagawa]{Nakagawa's R2}
 #'   \item Bayesian models: \link[=r2_bayes]{R2 bayes}
 #' }
+#'
+#' @note If there is no \code{r2()}-method defined for the given model class,
+#'   \code{r2()} tries to return a "generic r2 value, calculated as following:
+#'   \code{1-sum((y-y_hat)^2)/sum((y-y_bar)^2))}
 #'
 #' @seealso \code{\link{r2_bayes}}, \code{\link{r2_coxsnell}}, \code{\link{r2_kullback}},
 #'   \code{\link{r2_loo}}, \code{\link{r2_mcfadden}}, \code{\link{r2_nagelkerke}},
@@ -43,13 +48,37 @@ r2 <- function(model, ...) {
 # Default models -----------------------------------------------
 
 
-#' @importFrom insight print_color
+#' @importFrom insight print_color get_response get_predicted
 #' @export
 r2.default <- function(model, verbose = TRUE, ...) {
-  if (isTRUE(verbose)) {
+  out <- tryCatch(
+    {
+      if (insight::model_info(model)$is_binomial) {
+        resp <- .recode_to_zero(insight::get_response(model))
+      } else {
+        resp <- .factor_to_numeric(insight::get_response(model))
+      }
+      mean_resp <- mean(resp, na.rm = TRUE)
+      pred <- insight::get_predicted(model, verbose = FALSE)
+      list(R2 = 1 - sum((resp - pred)^2) / sum((resp - mean_resp)^2))
+    },
+    error = function(e) {
+      NULL
+    }
+  )
+
+  if (is.na(NULL) && isTRUE(verbose)) {
     insight::print_color(sprintf("'r2()' does not support models of class '%s'.\n", class(model)[1]), "red")
   }
-  return(NA)
+
+  if (!is.null(out)) {
+    names(out$R2) <- "R2"
+    class(out) <- c("r2_generic", class(out))
+  } else {
+    out <- NA
+  }
+
+  out
 }
 
 
@@ -110,6 +139,30 @@ r2.cph <- r2.ols
 
 
 
+#' @importFrom insight get_response n_parameters
+#' @export
+r2.mhurdle <- function(model, ...) {
+  resp <- insight::get_response(model)
+  mean_resp <- mean(resp, na.rm = TRUE)
+  ftd <- model$fitted.values[, "pos", drop = TRUE] * (1 - model$fitted.values[, "zero", drop = TRUE])
+  n <- length(resp)
+  K <- insight::n_parameters(model)
+  Ko <- length(model$naive$coefficients)
+
+  out <- list(
+    R2 = 1 - sum((resp - ftd)^2) / sum((resp - mean_resp)^2),
+    R2_adjusted = 1 - (n - Ko) / (n - K) * sum((resp - ftd)^2) / sum((resp - mean_resp)^2)
+  )
+
+  names(out$R2) <- "R2"
+  names(out$R2_adjusted) <- "adjusted R2"
+
+  attr(out, "model_type") <- "Limited Dependent Variable"
+  structure(class = "r2_generic", out)
+}
+
+
+
 #' @importFrom stats summary.lm
 #' @export
 r2.aov <- function(model, ...) {
@@ -157,16 +210,26 @@ r2.mlm <- function(model, ...) {
 #' @importFrom insight model_info
 #' @export
 r2.glm <- function(model, ...) {
-  if (insight::model_info(model)$is_logit) {
-    list("R2_Tjur" = r2_tjur(model))
+  info <- insight::model_info(model)
+
+  if (info$family %in% c("gaussian", "inverse.gaussian")) {
+    out <- r2.default(model, ...)
+  } else if (info$is_logit) {
+    out <- list("R2_Tjur" = r2_tjur(model))
+    attr(out, "model_type") <- "Logistic"
+    names(out$R2_Tjur) <- "Tjur's R2"
+    class(out) <- c("r2_pseudo", class(out))
   } else {
-    list("R2_Nagelkerke" = r2_nagelkerke(model))
+    out <- list("R2_Nagelkerke" = r2_nagelkerke(model))
+    names(out$R2_Nagelkerke) <- "Nagelkerke's R2"
+    attr(out, "model_type") <- "Generalized Linear"
+    class(out) <- c("r2_pseudo", class(out))
   }
+  out
 }
 
 #' @export
 r2.glmx <- r2.glm
-
 
 
 
@@ -203,10 +266,8 @@ r2.betamfx <- r2.logitmfx
 #' @export
 r2.betaor <- r2.logitmfx
 
-
-
-
-
+#' @export
+r2.model_fit <- r2.logitmfx
 
 
 
@@ -216,7 +277,10 @@ r2.betaor <- r2.logitmfx
 
 #' @export
 r2.BBreg <- function(model, ...) {
-  list("R2_CoxSnell" = r2_coxsnell(model))
+  out <- list("R2_CoxSnell" = r2_coxsnell(model))
+  names(out$R2_CoxSnell) <- "Cox & Snell's R2"
+  class(out) <- c("r2_pseudo", class(out))
+  out
 }
 
 #' @export
@@ -228,14 +292,15 @@ r2.bayesx <- r2.BBreg
 
 
 
-
-
 # Nagelkerke R2 ----------------------
 
 
 #' @export
 r2.censReg <- function(model, ...) {
-  list("R2_Nagelkerke" = r2_nagelkerke(model))
+  out <- list("R2_Nagelkerke" = r2_nagelkerke(model))
+  names(out$R2_Nagelkerke) <- "Nagelkerke's R2"
+  class(out) <- c("r2_pseudo", class(out))
+  out
 }
 
 #' @export
@@ -295,10 +360,6 @@ r2.zerotrunc <- r2.hurdle
 
 #' @export
 r2.zeroinfl <- r2.hurdle
-
-
-
-
 
 
 # Nakagawa R2 ----------------------
@@ -381,10 +442,6 @@ r2.sem <- function(model, ...) {
 
 
 
-
-
-
-
 # Bayes R2 ------------------------
 
 
@@ -401,16 +458,15 @@ r2.stanreg <- r2.brmsfit
 r2.BFBayesFactor <- r2.brmsfit
 
 
-
-
-
-
 # Other methods ------------------------------
 
 
 #' @export
 r2.gam <- function(model, ...) {
-  s <- summary(model)
+
+  # gamlss inherits from gam, and summary.gamlss prints results automatically
+  printout <- utils::capture.output(s <- summary(model))
+
   if (!is.null(s$r.sq)) {
     list(
       R2 = c(`Adjusted R2` = s$r.sq)
@@ -426,9 +482,10 @@ r2.scam <- r2.gam
 
 #' @export
 r2.betareg <- function(model, ...) {
-  list(
-    R2 = c(`Pseudo R2` = model$pseudo.r.squared)
-  )
+  out <- list(R2 = c(`Pseudo R2` = model$pseudo.r.squared))
+  attr(out, "model_type") <- "Beta"
+  class(out) <- c("r2_generic", class(out))
+  out
 }
 
 
@@ -538,7 +595,10 @@ r2.ivreg <- function(model, ...) {
 
 #' @export
 r2.bigglm <- function(model, ...) {
-  list("R2_CoxSnell" = summary(model)$rsq)
+  out <- list("R2_CoxSnell" = summary(model)$rsq)
+  names(out$R2_CoxSnell) <- "Cox & Snell's R2"
+  class(out) <- c("r2_pseudo", class(out))
+  out
 }
 
 
@@ -584,7 +644,10 @@ r2.complmrob <- r2.lmrob
 
 #' @export
 r2.mlogit <- function(model, ...) {
-  list("R2_McFadden" = r2_mcfadden(model))
+  out <- list("R2_McFadden" = r2_mcfadden(model))
+  names(out$R2_McFadden) <- "McFadden's R2"
+  class(out) <- c("r2_pseudo", class(out))
+  out
 }
 
 
@@ -644,7 +707,10 @@ r2.svyglm <- function(model, ...) {
 
 #' @export
 r2.vglm <- function(model, ...) {
-  list("R2_McKelvey" = r2_mckelvey(model))
+  out <- list("R2_McKelvey" = r2_mckelvey(model))
+  names(out$R2_McKelvey) <- "McKelvey's R2"
+  class(out) <- c("r2_pseudo", class(out))
+  out
 }
 
 #' @export
@@ -654,5 +720,8 @@ r2.vgam <- r2.vglm
 
 #' @export
 r2.DirichletRegModel <- function(model, ...) {
-  list("R2_Nagelkerke" = r2_nagelkerke(model))
+  out <- list("R2_Nagelkerke" = r2_nagelkerke(model))
+  names(out$R2_Nagelkerke) <- "Nagelkerke's R2"
+  class(out) <- c("r2_pseudo", class(out))
+  out
 }

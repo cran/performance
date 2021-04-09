@@ -17,7 +17,8 @@
 #'    0.7 < \ifelse{html}{\out{&alpha;}}{\eqn{\alpha}{alpha}} < 0.8 is acceptable,
 #'    and everything > 0.8 is good or excellent.
 #'
-#' @references Bland, J. M., \& Altman, D. G. Statistics notes: Cronbach's alpha. BMJ 1997;314:572. 10.1136/bmj.314.7080.572
+#' @references Bland, J. M., \& Altman, D. G. Statistics notes: Cronbach's
+#'   alpha. BMJ 1997;314:572. 10.1136/bmj.314.7080.572
 #'
 #' @examples
 #' data(mtcars)
@@ -44,6 +45,13 @@ cronbachs_alpha.data.frame <- function(x) {
 
   # Compute Cronbach's Alpha
   dim(.data)[2] / (dim(.data)[2] - 1) * (1 - sum(apply(.data, 2, stats::var)) / stats::var(rowSums(.data)))
+}
+
+
+
+#' @export
+cronbachs_alpha.matrix <- function(x) {
+  cronbachs_alpha(as.data.frame(x))
 }
 
 

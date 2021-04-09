@@ -2,21 +2,28 @@
 #' @name check_model
 #'
 #' @description Visual check of model various assumptions (normality of residuals,
-#' normality of random effects, heteroscedasticity, homogeneity of variance,
+#' normality of random effects, linear relationship, homogeneity of variance,
 #' multicollinearity).
 #'
 #' @param x A model object.
-#' @param dot_size Size of dot-geoms.
-#' @param line_size Size of line-geoms.
+#' @param dot_size,line_size Size of line and dot-geoms.
 #' @param panel Logical, if \code{TRUE}, plots are arranged as panels; else,
 #' single plots for each diagnostic are returned.
 #' @param check Character vector, indicating which checks for should be performed
 #'   and plotted. May be one or more of
-#'   \code{"all", "vif", "qq", "normality", "ncv", "homogeneity", "outliers", "reqq"}.
+#'   \code{"all", "vif", "qq", "normality", "linearity", "ncv", "homogeneity", "outliers", "reqq"}.
 #'   \code{"reqq"} is a QQ-plot for random effects and only available for mixed models.
-#'   \code{"ncv"} checks for non-constant variance, i.e. for heteroscedasticity.
+#'   \code{"ncv"} is an alias for \code{"linearity"}, and checks for non-constant
+#'   variance, i.e. for heteroscedasticity, as well as the linear relationship.
 #'   By default, all possible checks are performed and plotted.
-#' @param alpha The alpha level of the confidence bands. Scalar from 0 to 1.
+#' @param alpha,dot_alpha The alpha level of the confidence bands and dot-geoms.
+#'   Scalar from 0 to 1.
+#' @param colors Character vector with color codes (hex-format). Must be of
+#'   length 3. First color is usually used for reference lines, second color
+#'   for dots, and third color for outliers or extreme values.
+#' @param theme String, indicating the name of the plot-theme. Must be in the
+#'   format \code{"package::theme_name"} (e.g. \code{"ggplot2::theme_minimal"}).
+#' @param detrend Should QQ/PP plots be detrended?
 #' @param ... Currently not used.
 #'
 #' @return The data frame that is used for plotting.
@@ -26,6 +33,24 @@
 #' all possible warnings. In case you observe suspicious plots, please refer to
 #' the dedicated functions (like \code{check_collinearity()}, \code{check_normality()}
 #' etc.) to get informative messages and warnings.
+#'
+#' @section Linearity Assumption:
+#' The plot \strong{Linearity} checks the assumption of linear
+#' relationship. However, the spread of dots also indicate possible
+#' heteroscedasticity (i.e. non-constant variance); hence, the alias \code{"ncv"}
+#' for this plot. \strong{Some caution is needed} when interpreting these plots.
+#' Although these plots are helpful to check model assumptions, they do not
+#' necessarily indicate so-called "lack of fit", e.g. missed non-linear
+#' relationships or interactions. Thus, it is always recommended to also look
+#' at \href{https://strengejacke.github.io/ggeffects/articles/introduction_partial_residuals.html}{effect plots, including partial residuals}.
+#'
+#' @section Residuals for (Generalized) Linear Models:
+#' Plots that check the normality of residuals (QQ-plot) or the homogeneity of
+#' variance use standardized Pearson's residuals for generalized linear models,
+#' and standardized residuals for linear models. The plots for the normality of
+#' residuals (with overlayed normal curve) and for the linearity assumption use
+#' the default residuals for \code{lm} and \code{glm} (which are deviance
+#' residuals for \code{glm}).
 #'
 #' @examples
 #' \dontrun{
@@ -50,7 +75,7 @@ check_model <- function(x, ...) {
 
 #' @rdname check_model
 #' @export
-check_model.default <- function(x, dot_size = 2, line_size = .8, panel = TRUE, check = "all", alpha = .2, ...) {
+check_model.default <- function(x, dot_size = 2, line_size = .8, panel = TRUE, check = "all", alpha = .2, dot_alpha = .8, colors = c("#3aaf85", "#1b6ca8", "#cd201f"), theme = "see::theme_lucid", detrend = FALSE, ...) {
   minfo <- insight::model_info(x)
 
   if (minfo$is_bayesian) {
@@ -69,9 +94,19 @@ check_model.default <- function(x, dot_size = 2, line_size = .8, panel = TRUE, c
   attr(ca, "line_size") <- line_size
   attr(ca, "check") <- check
   attr(ca, "alpha") <- alpha
-
+  attr(ca, "dot_alpha") <- dot_alpha
+  attr(ca, "detrend") <- detrend
+  attr(ca, "colors") <- colors
+  attr(ca, "theme") <- theme
   ca
 }
+
+
+#' @export
+check_model.model_fit <- function(x, dot_size = 2, line_size = .8, panel = TRUE, check = "all", alpha = .2, detrend = FALSE, ...) {
+  check_model(x$fit, dot_size = dot_size, line_size = line_size, panel = panel, check = check, alpha = alpha, detrend = detrend, ...)
+}
+
 
 
 
@@ -86,6 +121,12 @@ check_model.default <- function(x, dot_size = 2, line_size = .8, panel = TRUE, c
   dat$NCV <- .diag_ncv(model)
   dat$HOMOGENEITY <- .diag_homogeneity(model)
   dat$OUTLIERS <- check_outliers(model, method = "cook")
+  if (!is.null(dat$OUTLIERS)) {
+    threshold <- attributes(dat$OUTLIERS)$threshold$cook
+  } else {
+    threshold <- NULL
+  }
+  dat$INFLUENTIAL <- .diag_influential_obs(model, threshold = threshold)
 
   dat <- .compact_list(dat)
   class(dat) <- c("check_model", "see_check_model")
@@ -103,6 +144,12 @@ check_model.default <- function(x, dot_size = 2, line_size = .8, panel = TRUE, c
   dat$HOMOGENEITY <- .diag_homogeneity(model)
   dat$REQQ <- .diag_reqq(model, level = .95, model_info = model_info)
   dat$OUTLIERS <- check_outliers(model, method = "cook")
+  if (!is.null(dat$OUTLIERS)) {
+    threshold <- attributes(dat$OUTLIERS)$threshold$cook
+  } else {
+    threshold <- NULL
+  }
+  dat$INFLUENTIAL <- .diag_influential_obs(model, threshold = threshold)
 
   dat <- .compact_list(dat)
   class(dat) <- c("check_model", "see_check_model")

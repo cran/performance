@@ -25,8 +25,7 @@
 
 \item{...}{Arguments passed to or from other methods.}
 
-\item{average}{Compute model-averaged index? See
-\code{\link[bayestestR:weighted_posteriors]{bayestestR::weighted_posteriors()}}.}
+\item{average}{Compute model-averaged index? See \code{\link[bayestestR:weighted_posteriors]{bayestestR::weighted_posteriors()}}.}
 
 \item{prior_odds}{Optional vector of prior odds for the models compared to the first model (or the denominator, for \code{BFBayesFactor} objects). For \code{data.frame}s, this will be used as the basis of weighting.}
 }
@@ -42,8 +41,8 @@ Depending on \code{model}, following indices are computed:
   \item{\strong{ELPD}} {expected log predictive density, see \code{\link{looic}}}
   \item{\strong{LOOIC}} {leave-one-out cross-validation (LOO) information criterion, see \code{\link{looic}}}
   \item{\strong{WAIC}} {widely applicable information criterion, see \code{?loo::waic}}
-  \item{\strong{R2}} {r-squared value, see \code{\link{r2}}}
-  \item{\strong{R2_LOO_adjusted}} {adjusted r-squared, see \code{\link{r2}}}
+  \item{\strong{R2}} {r-squared value, see \code{\link{r2_bayes}}}
+  \item{\strong{R2_LOO_adjusted}} {adjusted r-squared, see \code{\link{r2_loo}}}
   \item{\strong{RMSE}} {root mean squared error, see \code{\link{performance_rmse}}}
   \item{\strong{SIGMA}} {residual standard deviation, see \code{\link[insight:get_sigma]{get_sigma()}}}
   \item{\strong{LOGLOSS}} {Log-loss, see \code{\link{performance_logloss}}}

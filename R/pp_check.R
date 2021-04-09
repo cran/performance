@@ -38,9 +38,10 @@
 #' packages (like \code{lm}, \code{merMod}, \code{glmmTMB}, ...). However, since
 #' it might be that not all model objects that have a \code{simulate()} function
 #' are covered, and those objects probably can't be passed down to the default-method,
-#' there is also a "generic" \code{posterior_predictive_check()} function, which
-#' just calls \code{pp_check.lm()}. Thus, every model object that has a
-#' \code{simulate()}-method should work with \code{posterior_predictive_check()}.
+#' there is also a "generic" \code{posterior_predictive_check()} function (and
+#' its alias \code{check_posterior_predictions()}), which just calls
+#' \code{pp_check.lm()}. Thus, every model object that has a \code{simulate()}-method
+#' should work with \code{posterior_predictive_check()}.
 #'
 #' @references \itemize{
 #'   \item Gabry, J., Simpson, D., Vehtari, A., Betancourt, M., & Gelman, A. (2019). Visualization in Bayesian workflow. Journal of the Royal Statistical Society: Series A (Statistics in Society), 182(2), 389–402. https://doi.org/10.1111/rssa.12378
@@ -50,12 +51,12 @@
 #' }
 #'
 #' @examples
-#' \dontrun{
 #' library(performance)
 #' model <- lm(Sepal.Length ~ Species * Petal.Width + Petal.Length, data = iris)
 #' if (require("ggplot2") && require("see")) {
 #'   pp_check(model)
-#' }}
+#' }
+#'
 #' @importFrom stats simulate
 #' @importFrom insight get_response
 #' @export
@@ -71,7 +72,9 @@ pp_check.lm <- function(object, iterations = 50, check_range = FALSE, re_formula
     {
       stats::simulate(object, nsim = iterations, re.form = re_formula, ...)
     },
-    error = function(e) { NULL }
+    error = function(e) {
+      NULL
+    }
   )
 
   if (is.null(out)) {
@@ -121,6 +124,10 @@ pp_check.vlm <- pp_check.lm
 #' @export
 posterior_predictive_check <- pp_check.lm
 
+#' @rdname pp_check
+#' @export
+check_posterior_predictions <- pp_check.lm
+
 
 
 
@@ -154,7 +161,7 @@ print.performance_pp_check <- function(x, verbose = TRUE, ...) {
 #' @export
 plot.performance_pp_check <- function(x, ...) {
   if (!requireNamespace("see", quietly = TRUE)) {
-    stop("Package 'see' required to plot posterior predictive checks Please install it.")
+    stop("Package 'see' required to plot posterior predictive checks. Please install it.")
   }
   NextMethod()
 }

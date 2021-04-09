@@ -17,8 +17,8 @@
 #' @note There is also a \href{https://easystats.github.io/see/articles/performance.html}{\code{plot()}-method} implemented in the \href{https://easystats.github.io/see/}{\pkg{see}-package}.
 #'
 #' @return A data frame with three columns, the x/y-coordinate pairs for the ROC
-#' curve (\code{Sensivity} and \code{Specifity}), and a column with the model
-#' name.
+#'   curve (\code{Sensitivity} and \code{Specificity}), and a column with the
+#'   model name.
 #'
 #' @examples
 #' library(bayestestR)
@@ -31,17 +31,21 @@
 #' train_data <- iris[-folds, ]
 #'
 #' model <- glm(y ~ Sepal.Length + Sepal.Width, data = train_data, family = "binomial")
-#' performance_roc(model, new_data = test_data)
+#' as.data.frame(performance_roc(model, new_data = test_data))
 #'
 #' roc <- performance_roc(model, new_data = test_data)
-#' area_under_curve(roc$Specifity, roc$Sensivity)
+#' area_under_curve(roc$Specificity, roc$Sensitivity)
 #'
 #' m1 <- glm(y ~ Sepal.Length + Sepal.Width, data = iris, family = "binomial")
 #' m2 <- glm(y ~ Sepal.Length + Petal.Width, data = iris, family = "binomial")
 #' m3 <- glm(y ~ Sepal.Length + Species, data = iris, family = "binomial")
 #' performance_roc(m1, m2, m3)
+#'
+#' # if you have \code{see} package installed, you can also plot comparison of
+#' # ROC curves for different models
+#' # if (require("see")) plot(performance_roc(m1, m2, m3))
 #' @importFrom stats predict
-#' @importFrom insight find_response get_data
+#' @importFrom insight find_response get_data is_model model_info
 #' @export
 performance_roc <- function(x, ..., predictions, new_data) {
   dots <- list(...)
@@ -51,7 +55,11 @@ performance_roc <- function(x, ..., predictions, new_data) {
     sapply(match.call(expand.dots = FALSE)$`...`, .safe_deparse)
   )
 
-  info <- insight::model_info(x)
+  if (insight::is_model(x)) {
+    info <- insight::model_info(x)
+  } else {
+    info <- NULL
+  }
 
   if (is.numeric(x) && !missing(predictions) && !is.null(predictions)) {
     .performance_roc_numeric(x, predictions)
@@ -73,12 +81,12 @@ performance_roc <- function(x, ..., predictions, new_data) {
     stop("'x' and ' predictions' must be of same length.", call. = FALSE)
   }
 
-  x <- .factor_to_numeric(x)
+  x <- .recode_to_zero(x)
   x <- x[order(predictions, decreasing = TRUE)]
 
   res <- data.frame(
-    Sensivity = c(0, cumsum(x) / sum(x), 1),
-    Specifity = c(0, cumsum(!x) / sum(!x), 1)
+    Sensitivity = c(0, cumsum(x) / sum(x), 1),
+    Specificity = c(0, cumsum(!x) / sum(!x), 1)
   )
 
   class(res) <- c("performance_roc", "see_performance_roc", "data.frame")

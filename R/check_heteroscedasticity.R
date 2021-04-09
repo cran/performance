@@ -11,6 +11,11 @@
 #'
 #' @note There is also a \href{https://easystats.github.io/see/articles/performance.html}{\code{plot()}-method} implemented in the \href{https://easystats.github.io/see/}{\pkg{see}-package}.
 #'
+#' @details This test of the hypothesis of (non-)constant error is also called
+#' \emph{Breusch-Pagan test} (\cite{1979}).
+#'
+#' @references Breusch, T. S., and Pagan, A. R. (1979) A simple test for heteroscedasticity and random coefficient variation. Econometrica 47, 1287–1294.
+#'
 #' @examples
 #' m <- lm(mpg ~ wt + cyl + gear + disp, data = mtcars)
 #' check_heteroscedasticity(m)
@@ -21,15 +26,31 @@
 #'   plot(x)
 #' }
 #' @importFrom stats residuals df.residual fitted anova pchisq
-#' @importFrom insight print_color get_df
+#' @importFrom insight print_color get_df format_p
 #' @export
 check_heteroscedasticity <- function(x, ...) {
   UseMethod("check_heteroscedasticity")
 }
 
+#' @name check_heteroscedasticity
+#' @aliases check_heteroscedasticity
+#' @export
+check_heteroskedasticity <- check_heteroscedasticity
+
 
 #' @export
 check_heteroscedasticity.default <- function(x, ...) {
+  # only for linear models
+  info <- insight::model_info(x)
+  if (!info$is_linear) {
+    msg <- "This Breusch-Pagan Test currently only works Gaussian models."
+    if (info$is_count) {
+      paste0(msg, " You may check your model for overdispersion or zero-inflation instead (see 'check_overdispersion()' and 'check_zeroinflation()').")
+    }
+    message(msg)
+    return(NULL)
+  }
+
   r <- .pearson_residuals(x)
   S.sq <- insight::get_df(x, type = "residual") * .sigma(x)^2 / sum(!is.na(r))
 
@@ -43,9 +64,9 @@ check_heteroscedasticity.default <- function(x, ...) {
   p.val <- stats::pchisq(Chisq, df = 1, lower.tail = FALSE)
 
   if (p.val < 0.05) {
-    insight::print_color(sprintf("Warning: Heteroscedasticity (non-constant error variance) detected (p = %.3f).\n", p.val), "red")
+    insight::print_color(sprintf("Warning: Heteroscedasticity (non-constant error variance) detected (%s).\n", insight::format_p(p.val)), "red")
   } else {
-    insight::print_color(sprintf("OK: Error variance appears to be homoscedastic (p = %.3f).\n", p.val), "green")
+    insight::print_color(sprintf("OK: Error variance appears to be homoscedastic (%s).\n", insight::format_p(p.val)), "green")
   }
 
   attr(p.val, "object_name") <- deparse(substitute(x), width.cutoff = 500)
@@ -63,7 +84,9 @@ check_heteroscedasticity.default <- function(x, ...) {
       estimates <- insight::get_parameters(x)$Estimate
       sqrt(insight::get_deviance(x) / (insight::n_obs(x) - sum(!is.na(estimates))))
     },
-    error = function(e) { NULL }
+    error = function(e) {
+      NULL
+    }
   )
 
   if (.is_empty_object(s)) {
@@ -80,7 +103,9 @@ check_heteroscedasticity.default <- function(x, ...) {
     {
       stats::residuals(x, type = "pearson")
     },
-    error = function(e) { NULL }
+    error = function(e) {
+      NULL
+    }
   )
 
   if (.is_empty_object(pr) && inherits(x, c("glmmTMB", "MixMod"))) {
@@ -111,8 +136,7 @@ check_heteroscedasticity.default <- function(x, ...) {
     mu <- stats::predict(model, type = "conditional")
     # sigma
     betad <- model$fit$par["betad"]
-    k <- switch(
-      faminfo$family,
+    k <- switch(faminfo$family,
       gaussian = exp(0.5 * betad),
       Gamma = exp(-0.5 * betad),
       exp(betad)

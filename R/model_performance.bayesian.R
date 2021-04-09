@@ -14,8 +14,8 @@
 #'   \item{\strong{ELPD}} {expected log predictive density, see \code{\link{looic}}}
 #'   \item{\strong{LOOIC}} {leave-one-out cross-validation (LOO) information criterion, see \code{\link{looic}}}
 #'   \item{\strong{WAIC}} {widely applicable information criterion, see \code{?loo::waic}}
-#'   \item{\strong{R2}} {r-squared value, see \code{\link{r2}}}
-#'   \item{\strong{R2_LOO_adjusted}} {adjusted r-squared, see \code{\link{r2}}}
+#'   \item{\strong{R2}} {r-squared value, see \code{\link{r2_bayes}}}
+#'   \item{\strong{R2_LOO_adjusted}} {adjusted r-squared, see \code{\link{r2_loo}}}
 #'   \item{\strong{RMSE}} {root mean squared error, see \code{\link{performance_rmse}}}
 #'   \item{\strong{SIGMA}} {residual standard deviation, see \code{\link[insight:get_sigma]{get_sigma()}}}
 #'   \item{\strong{LOGLOSS}} {Log-loss, see \code{\link{performance_logloss}}}
@@ -61,13 +61,16 @@ model_performance.stanreg <- function(model, metrics = "all", verbose = TRUE, ..
     metrics[tolower(metrics) == "log_loss"] <- "LOGLOSS"
   }
 
+  all_metrics <- c("LOOIC", "WAIC", "R2", "R2_adjusted", "RMSE", "SIGMA", "LOGLOSS", "SCORE")
+
   if (all(metrics == "all")) {
-    metrics <- c("LOOIC", "WAIC", "R2", "R2_adjusted", "RMSE", "SIGMA", "LOGLOSS", "SCORE")
+    metrics <- all_metrics
   } else if (all(metrics == "common")) {
-    metrics <- c("LOOIC", "WAIC", "R2", "R2_adjusted", "RMSE")
+    metrics <- c("LOOIC", "WAIC", "R2", "RMSE")
   }
 
-  metrics <- toupper(metrics)
+  # check for valid input
+  metrics <- toupper(.check_bad_metrics(metrics, all_metrics, verbose))
 
   algorithm <- insight::find_algorithm(model)
   if (algorithm$algorithm != "sampling") {
@@ -114,12 +117,14 @@ model_performance.stanreg <- function(model, metrics = "all", verbose = TRUE, ..
 
   # LOO-R2 ------------------
   if ("R2_ADJUSTED" %in% metrics && mi$is_linear) {
-    out$R2_adjusted <- tryCatch({
-      suppressWarnings(r2_loo(model, verbose = verbose))
-    },
-    error = function(e) {
-      NULL
-    })
+    out$R2_adjusted <- tryCatch(
+      {
+        suppressWarnings(r2_loo(model, verbose = verbose))
+      },
+      error = function(e) {
+        NULL
+      }
+    )
   }
 
   # RMSE ------------------
@@ -129,37 +134,47 @@ model_performance.stanreg <- function(model, metrics = "all", verbose = TRUE, ..
 
   # SIGMA ------------------
   if ("SIGMA" %in% metrics) {
-    out$Sigma <- tryCatch({
-      .get_sigma(model)
-    },
-    error = function(e) {
-      NULL
-    })
+    out$Sigma <- tryCatch(
+      {
+        s <- .get_sigma(model, verbose = verbose)
+        if (.is_empty_object(s)) {
+          s <- NULL
+        }
+        s
+      },
+      error = function(e) {
+        NULL
+      }
+    )
   }
 
   # LOGLOSS ------------------
   if (("LOGLOSS" %in% metrics) && mi$is_binomial) {
-    out$Log_loss <- tryCatch({
-      .logloss <- performance_logloss(model, verbose = verbose)
-      if (!is.na(.logloss)) {
-        .logloss
-      } else {
+    out$Log_loss <- tryCatch(
+      {
+        .logloss <- performance_logloss(model, verbose = verbose)
+        if (!is.na(.logloss)) {
+          .logloss
+        } else {
+          NULL
+        }
+      },
+      error = function(e) {
         NULL
       }
-    },
-    error = function(e) {
-      NULL
-    })
+    )
   }
 
   # SCORE ------------------
   if (("SCORE" %in% metrics) && (mi$is_binomial || mi$is_count)) {
-    .scoring_rules <- tryCatch({
-      performance_score(model, verbose = verbose)
-    },
-    error = function(e) {
-      NULL
-    })
+    .scoring_rules <- tryCatch(
+      {
+        performance_score(model, verbose = verbose)
+      },
+      error = function(e) {
+        NULL
+      }
+    )
     if (!is.null(.scoring_rules)) {
       if (!is.na(.scoring_rules$logarithmic)) out$Score_log <- .scoring_rules$logarithmic
       if (!is.na(.scoring_rules$spherical)) out$Score_spherical <- .scoring_rules$spherical
@@ -287,6 +302,8 @@ model_performance.BFBayesFactor <- function(model, metrics = "all", verbose = TR
   posterior_odds <- prior_odds * BFMods$BF
   posterior_odds <- posterior_odds[-1] / posterior_odds[1]
 
-  do.call(bayestestR::weighted_posteriors,
-          c(params, list(missing = 0, prior_odds = posterior_odds)))[[1]]
+  do.call(
+    bayestestR::weighted_posteriors,
+    c(params, list(missing = 0, prior_odds = posterior_odds))
+  )[[1]]
 }

@@ -4,6 +4,8 @@
 #' @description \code{check_collinearity()} checks regression models for
 #'   multicollinearity by calculating the variance inflation factor (VIF).
 #'   \code{multicollinearity()} is an alias for \code{check_collinearity()}.
+#'   (When printed, VIF are also translated to Tolerance values, where
+#'   \code{tolerance = 1/vif}.)
 #'
 #' @param x A model object (that should at least respond to \code{vcov()},
 #'  and if possible, also to \code{model.matrix()} - however, it also should
@@ -293,7 +295,7 @@ check_collinearity.zerocount <- function(x, component = c("all", "conditional", 
     class = c("check_collinearity", "see_check_collinearity", "data.frame"),
     .remove_backticks_from_parameter_names(
       data.frame(
-        Parameter = terms,
+        Term = terms,
         VIF = result,
         SE_factor = sqrt(result),
         stringsAsFactors = FALSE
@@ -301,7 +303,7 @@ check_collinearity.zerocount <- function(x, component = c("all", "conditional", 
     ),
     data = .remove_backticks_from_parameter_names(
       data.frame(
-        Parameter = terms,
+        Term = terms,
         VIF = result,
         SE_factor = sqrt(result),
         Component = component,
@@ -319,20 +321,17 @@ check_collinearity.zerocount <- function(x, component = c("all", "conditional", 
   tryCatch(
     {
       if (inherits(x, c("hurdle", "zeroinfl", "zerocount"))) {
-        assign <- switch(
-          component,
+        assign <- switch(component,
           conditional = attr(stats::model.matrix(x, model = "count"), "assign"),
           zero_inflated = attr(stats::model.matrix(x, model = "zero"), "assign")
         )
       } else if (inherits(x, "glmmTMB")) {
-        assign <- switch(
-          component,
+        assign <- switch(component,
           conditional = attr(stats::model.matrix(x), "assign"),
           zero_inflated = .zi_term_assignment(x, component)
         )
       } else if (inherits(x, "MixMod")) {
-        assign <- switch(
-          component,
+        assign <- switch(component,
           conditional = attr(stats::model.matrix(x, type = "fixed"), "assign"),
           zero_inflated = attr(stats::model.matrix(x, type = "zi_fixed"), "assign")
         )
