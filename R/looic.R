@@ -2,7 +2,9 @@
 #' @name looic
 #'
 #' @description Compute LOOIC (leave-one-out cross-validation (LOO) information
-#'   criterion) and ELPD (expected log predictive density) for Bayesian regressions.
+#'   criterion) and ELPD (expected log predictive density) for Bayesian
+#'   regressions. For LOOIC and ELPD, smaller and larger values are respectively
+#'   indicative of a better fit.
 #'
 #' @param model A Bayesian regression model.
 #' @inheritParams model_performance.lm
@@ -14,8 +16,6 @@
 #'   model <- stan_glm(mpg ~ wt + cyl, data = mtcars, chains = 1, iter = 500, refresh = 0)
 #'   looic(model)
 #' }
-#' @importFrom insight find_algorithm print_color
-#' @importFrom stats var
 #' @export
 looic <- function(model, verbose = TRUE) {
   if (!requireNamespace("loo", quietly = TRUE)) {
@@ -26,7 +26,7 @@ looic <- function(model, verbose = TRUE) {
 
   if (algorithm$algorithm != "sampling") {
     if (verbose) {
-      warning("`looic()` only available for models fit using the 'sampling' algorithm.", call. = FALSE)
+      warning(insight::format_message("`looic()` only available for models fit using the 'sampling' algorithm."), call. = FALSE)
     }
     return(NA)
   }

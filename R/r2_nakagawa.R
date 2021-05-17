@@ -40,7 +40,6 @@
 #'   r2_nakagawa(model)
 #'   r2_nakagawa(model, by_group = TRUE)
 #' }
-#' @importFrom insight get_variance print_color find_random_slopes null_model find_random
 #' @export
 r2_nakagawa <- function(model, by_group = FALSE, tolerance = 1e-5) {
   vars <- tryCatch(
@@ -75,7 +74,7 @@ r2_nakagawa <- function(model, by_group = FALSE, tolerance = 1e-5) {
   if (isTRUE(by_group)) {
     # with random slopes, explained variance is inaccurate
     if (!is.null(insight::find_random_slopes(model))) {
-      warning("Model contains random slopes. Explained variance by levels is not accurate.", call. = FALSE)
+      warning(insight::format_message("Model contains random slopes. Explained variance by levels is not accurate."), call. = FALSE)
     }
 
     # null-model
@@ -101,7 +100,7 @@ r2_nakagawa <- function(model, by_group = FALSE, tolerance = 1e-5) {
     # Calculate R2 values
     if (.is_empty_object(vars$var.random) || is.na(vars$var.random)) {
       # if no random effect variance, return simple R2
-      print_color("Random effect variances not available. Returned R2 does not account for random effects.\n", "red")
+      insight::print_color("Random effect variances not available. Returned R2 does not account for random effects.\n", "red")
       r2_marginal <- vars$var.fixed / (vars$var.fixed + vars$var.residual)
       r2_conditional <- NA
     } else {

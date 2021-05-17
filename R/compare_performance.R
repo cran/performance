@@ -1,14 +1,16 @@
 #' @title Compare performance of different models
 #' @name compare_performance
 #'
-#' @description \code{compare_performance()} computes indices of model performance for
-#' different models at once and hence allows comparison of indices across models.
+#' @description \code{compare_performance()} computes indices of model
+#'   performance for different models at once and hence allows comparison of
+#'   indices across models.
 #'
 #' @param ... Multiple model objects (also of different classes).
 #' @param metrics Can be \code{"all"}, \code{"common"} or a character vector of metrics to be computed. See related \code{\link[=model_performance]{documentation}} of object's class for details.
 #' @param rank Logical, if \code{TRUE}, models are ranked according to 'best' overall model performance. See 'Details'.
 #'
-#' @return A data frame (with one row per model) and one column per "index" (see \code{metrics}).
+#' @return A data frame (with one row per model) and one column per "index" (see
+#'   \code{metrics}).
 #'
 #' @note There is also a \href{https://easystats.github.io/see/articles/performance.html}{\code{plot()}-method} implemented in the \href{https://easystats.github.io/see/}{\pkg{see}-package}.
 #'
@@ -48,8 +50,6 @@
 #'   m3 <- lmer(Petal.Length ~ Sepal.Length + (1 | Species), data = iris)
 #'   compare_performance(m1, m2, m3)
 #' }
-#' @importFrom insight is_model_supported all_models_equal get_response
-#' @importFrom bayestestR bayesfactor_models
 #' @inheritParams model_performance.lm
 #' @export
 compare_performance <- function(..., metrics = "all", rank = FALSE, verbose = TRUE) {
@@ -75,7 +75,7 @@ compare_performance <- function(..., metrics = "all", rank = FALSE, verbose = TR
   # check if all models were fit from same data
   resps <- lapply(objects, insight::get_response)
   if (!all(sapply(resps[-1], function(x) identical(x, resps[[1]]))) && verbose) {
-    warning("When comparing models, please note that probably not all models were fit from same data.", call. = FALSE)
+    warning(insight::format_message("When comparing models, please note that probably not all models were fit from same data."), call. = FALSE)
   }
 
   # create "ranking" of models
@@ -102,7 +102,7 @@ compare_performance <- function(..., metrics = "all", rank = FALSE, verbose = TR
 .rank_performance_indices <- function(x, verbose) {
   # all models comparable?
   if (length(unique(x$Type)) > 1 && isTRUE(verbose)) {
-    warning("Models are not of same type. Comparison of indices might be not meaningful.", call. = FALSE)
+    warning(insight::format_message("Models are not of same type. Comparison of indices might be not meaningful."), call. = FALSE)
   }
 
   # set reference for Bayes factors to 1
@@ -125,7 +125,7 @@ compare_performance <- function(..., metrics = "all", rank = FALSE, verbose = TR
   # don't rank with BF when there is also BIC (same information)
   if ("BF" %in% colnames(out) && "BIC" %in% colnames(out)) {
     if (isTRUE(verbose)) {
-      message("Bayes factor is based on BIC approximation, thus BF and BIC hold the same information. Ignoring BF for performance-score.")
+      message(insight::format_message("Bayes factor is based on BIC approximation, thus BF and BIC hold the same information. Ignoring BF for performance-score."))
     }
     out$BF <- NULL
   }
@@ -140,10 +140,10 @@ compare_performance <- function(..., metrics = "all", rank = FALSE, verbose = TR
   # any indices with NA?
   missing_indices <- sapply(out, anyNA)
   if (any(missing_indices) && isTRUE(verbose)) {
-    warning(sprintf(
+    warning(insight::format_message(sprintf(
       "Following indices with missing values are not used for ranking: %s",
       paste0(colnames(out)[missing_indices], collapse = ", ")
-    ), call. = FALSE)
+    )), call. = FALSE)
   }
 
   # create rank-index, only for complete indices

@@ -18,7 +18,6 @@
 #' data(mtcars)
 #' m <- lm(mpg ~ hp + gear, data = mtcars)
 #' performance_mse(m)
-#' @importFrom insight get_residuals
 #' @export
 performance_mse <- function(model, ...) {
   UseMethod("performance_mse")
@@ -44,9 +43,9 @@ performance_mse.default <- function(model, verbose = TRUE, ...) {
   if (is.null(res)) {
     res <- tryCatch(
       {
-        def_res <- insight::get_residuals(model, verbose = verbose, ...)
+        def_res <- insight::get_residuals(model, verbose = FALSE, ...)
         if (verbose) {
-          warning("Response residuals not available to calculate mean square error. (R)MSE is probably not reliable.", call. = FALSE)
+          warning(insight::format_message("Response residuals not available to calculate mean square error. (R)MSE is probably not reliable."), call. = FALSE)
         }
         def_res
       },
@@ -63,7 +62,7 @@ performance_mse.default <- function(model, verbose = TRUE, ...) {
   # for multivariate response models...
   if (is.data.frame(res)) {
     if (verbose) {
-      warning("Multiple response variables detected. Cannot reliably compute (R)MSE.", call. = FALSE)
+      warning(insight::format_message("Multiple response variables detected. Cannot reliably compute (R)MSE."), call. = FALSE)
     }
     return(NA)
   }
@@ -104,3 +103,6 @@ performance_mse.betaor <- performance_mse.logitor
 
 #' @export
 performance_mse.betamfx <- performance_mse.logitor
+
+#' @export
+performance_mse.model_fit <- performance_mse.logitor

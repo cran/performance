@@ -82,8 +82,6 @@
 #'   x <- check_collinearity(m)
 #'   plot(x)
 #' }
-#' @importFrom stats vcov cov2cor terms
-#' @importFrom insight has_intercept find_formula model_info print_color
 #' @export
 check_collinearity <- function(x, ...) {
   UseMethod("check_collinearity")
@@ -99,6 +97,28 @@ multicollinearity <- check_collinearity
 #' @export
 check_collinearity.default <- function(x, verbose = TRUE, ...) {
   .check_collinearity(x, component = "conditional", verbose = verbose)
+}
+
+#' @export
+check_collinearity.afex_aov <- function(x, verbose = TRUE, ...) {
+  f <- paste(row.names(x$anova_table), collapse = "+")
+  f <- paste0(insight::find_response(x), "~", f)
+  # f <- insight::find_formula(x)[[1]]
+  # f <- Reduce(paste, deparse(f))
+  # f <- sub("\\+\\s*Error\\(.*\\)$", "", f)
+  # f <- as.formula(f)
+
+  d <- insight::get_data(x, verbose = verbose)
+  is_num <- sapply(d, is.numeric)
+  d[is_num] <- sapply(d[is_num], scale, center = TRUE, scale = FALSE)
+  is_fac <- sapply(d, is.factor) | sapply(d, is.character)
+  contrs <- lapply(is_fac, function(...) stats::contr.sum)[is_fac]
+
+  if (verbose) {
+    message(insight::format_message("All predictors have been centered (factors with 'contr.sum()', numerics with 'scale()')."))
+  }
+
+  check_collinearity(suppressWarnings(stats::lm(formula = f, data = d, contrasts = contrs)))
 }
 
 
@@ -185,7 +205,7 @@ check_collinearity.zerocount <- function(x, component = c("all", "conditional", 
   if (component == "count") component <- "conditional"
   if (component == "zi") component <- "zero_inflated"
 
-  mi <- insight::model_info(x)
+  mi <- insight::model_info(x, verbose = FALSE)
   if (!mi$is_zero_inflated) component <- "conditional"
 
   if (component == "all") {
@@ -217,16 +237,24 @@ check_collinearity.zerocount <- function(x, component = c("all", "conditional", 
 
 
 
-#' @importFrom insight get_varcov
 .check_collinearity <- function(x, component, verbose = TRUE) {
   v <- insight::get_varcov(x, component = component, verbose = FALSE)
-  assign <- .term_assignments(x, component)
+  assign <- .term_assignments(x, component, verbose = verbose)
+
+  # any assignment found?
+  if (is.null(assign)) {
+    if (verbose) {
+      warning(insight::format_message(sprintf("Could not extract model terms for the %s component of the model.", component), call. = FALSE))
+    }
+    return(NULL)
+  }
+
 
   # we have rank-deficiency here. remove NA columns from assignment
   if (isTRUE(attributes(v)$rank_deficient) && !is.null(attributes(v)$na_columns_index)) {
     assign <- assign[-attributes(v)$na_columns_index]
     if (isTRUE(verbose)) {
-      warning("Model matrix is rank deficient. VIFs may not be sensible.", call. = FALSE)
+      warning(insight::format_message("Model matrix is rank deficient. VIFs may not be sensible."), call. = FALSE)
     }
   }
 
@@ -256,7 +284,7 @@ check_collinearity.zerocount <- function(x, component = c("all", "conditional", 
 
   if (n.terms < 2) {
     if (isTRUE(verbose)) {
-      warning(sprintf("Not enough model terms in the %s part of the model to check for multicollinearity.\n", component), call. = FALSE)
+      warning(insight::format_message(sprintf("Not enough model terms in the %s part of the model to check for multicollinearity.", component)), call. = FALSE)
     }
     return(NULL)
   }
@@ -287,7 +315,7 @@ check_collinearity.zerocount <- function(x, component = c("all", "conditional", 
   # check for interactions, VIF might be inflated...
   if (!is.null(insight::find_interactions(x)) && any(result > 10)) {
     if (isTRUE(verbose)) {
-      warning("Model has interaction terms. VIFs might be inflated. You may check multicollinearity among predictors of a model without interaction terms.", call. = FALSE)
+      warning(insight::format_message("Model has interaction terms. VIFs might be inflated. You may check multicollinearity among predictors of a model without interaction terms."), call. = FALSE)
     }
   }
 
@@ -316,37 +344,36 @@ check_collinearity.zerocount <- function(x, component = c("all", "conditional", 
 
 
 
-#' @importFrom stats model.matrix
-.term_assignments <- function(x, component) {
+.term_assignments <- function(x, component, verbose = TRUE) {
   tryCatch(
     {
       if (inherits(x, c("hurdle", "zeroinfl", "zerocount"))) {
         assign <- switch(component,
-          conditional = attr(stats::model.matrix(x, model = "count"), "assign"),
-          zero_inflated = attr(stats::model.matrix(x, model = "zero"), "assign")
+          conditional = attr(insight::get_modelmatrix(x, model = "count"), "assign"),
+          zero_inflated = attr(insight::get_modelmatrix(x, model = "zero"), "assign")
         )
       } else if (inherits(x, "glmmTMB")) {
         assign <- switch(component,
-          conditional = attr(stats::model.matrix(x), "assign"),
-          zero_inflated = .zi_term_assignment(x, component)
+          conditional = attr(insight::get_modelmatrix(x), "assign"),
+          zero_inflated = .zi_term_assignment(x, component, verbose = verbose)
         )
       } else if (inherits(x, "MixMod")) {
         assign <- switch(component,
-          conditional = attr(stats::model.matrix(x, type = "fixed"), "assign"),
-          zero_inflated = attr(stats::model.matrix(x, type = "zi_fixed"), "assign")
+          conditional = attr(insight::get_modelmatrix(x, type = "fixed"), "assign"),
+          zero_inflated = attr(insight::get_modelmatrix(x, type = "zi_fixed"), "assign")
         )
       } else {
-        assign <- attr(stats::model.matrix(x), "assign")
+        assign <- attr(insight::get_modelmatrix(x), "assign")
       }
 
       if (is.null(assign)) {
-        assign <- .find_term_assignment(x, component)
+        assign <- .find_term_assignment(x, component, verbose = verbose)
       }
 
       assign
     },
     error = function(e) {
-      .find_term_assignment(x, component)
+      .find_term_assignment(x, component, verbose = verbose)
     }
   )
 }
@@ -354,10 +381,14 @@ check_collinearity.zerocount <- function(x, component = c("all", "conditional", 
 
 
 
-#' @importFrom insight get_data find_predictors find_parameters clean_names
-.find_term_assignment <- function(x, component) {
+.find_term_assignment <- function(x, component, verbose = TRUE) {
   pred <- insight::find_predictors(x)[[component]]
-  dat <- insight::get_data(x)[, pred, drop = FALSE]
+
+  if (is.null(pred)) {
+    return(NULL)
+  }
+
+  dat <- insight::get_data(x, verbose = verbose)[, pred, drop = FALSE]
 
   parms <- unlist(lapply(1:length(pred), function(i) {
     p <- pred[i]
@@ -379,14 +410,12 @@ check_collinearity.zerocount <- function(x, component = c("all", "conditional", 
 
 
 
-#' @importFrom insight find_formula get_data
-#' @importFrom stats model.matrix
-.zi_term_assignment <- function(x, component = "zero_inflated") {
+.zi_term_assignment <- function(x, component = "zero_inflated", verbose = TRUE) {
   tryCatch(
     {
       rhs <- insight::find_formula(x)[[component]]
-      d <- insight::get_data(x)
-      attr(stats::model.matrix(rhs, data = d), "assign")
+      d <- insight::get_data(x, verbose = verbose)
+      attr(insight::get_modelmatrix(rhs, data = d), "assign")
     },
     error = function(e) {
       NULL

@@ -135,7 +135,6 @@
 #'   )
 #'   icc(model, by_group = TRUE)
 #' }
-#' @importFrom insight is_mixed_model get_variance print_color find_random find_random_slopes is_multivariate
 #' @export
 icc <- function(model, by_group = FALSE, tolerance = 1e-05) {
 
@@ -195,7 +194,7 @@ icc <- function(model, by_group = FALSE, tolerance = 1e-05) {
   if (isTRUE(by_group)) {
     # with random slopes, icc is inaccurate
     if (!is.null(insight::find_random_slopes(model))) {
-      warning("Model contains random slopes. Cannot compute accurate ICCs by group factors.", call. = FALSE)
+      warning(insight::format_message("Model contains random slopes. Cannot compute accurate ICCs by group factors."), call. = FALSE)
     }
 
     # icc per group factor with reference to overall model
@@ -238,9 +237,6 @@ icc <- function(model, by_group = FALSE, tolerance = 1e-05) {
 
 
 
-#' @importFrom bayestestR ci
-#' @importFrom insight is_multivariate find_response model_info is_mixed_model
-#' @importFrom stats quantile var
 #' @param ... Arguments passed down to \code{brms::posterior_predict()}.
 #' @inheritParams icc
 #' @rdname icc

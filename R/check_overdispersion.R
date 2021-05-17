@@ -82,14 +82,21 @@ check_overdispersion.default <- function(x, ...) {
 # Overdispersion for classical models -----------------------------
 
 
-#' @importFrom insight get_response model_info find_parameters
-#' @importFrom stats fitted nobs coef pchisq
 #' @export
 check_overdispersion.glm <- function(x, ...) {
   # check if we have poisson
-  model_info <- insight::model_info(x)
-  if (!model_info$is_poisson) {
-    stop("Model must be from Poisson-family.", call. = FALSE)
+  info <- insight::model_info(x)
+  if (!info$is_poisson && !info$is_binomial) {
+    stop("Model must be from Poisson or binomial family.", call. = FALSE)
+  }
+
+  # check for Bernoulli
+  if (info$is_bernoulli) {
+    stop("Model is not allowed to be a Bernoulli model.", call. = FALSE)
+  }
+
+  if (info$is_binomial) {
+    return(check_overdispersion.merMod(x, ...))
   }
 
   yhat <- stats::fitted(x)
@@ -97,7 +104,7 @@ check_overdispersion.glm <- function(x, ...) {
   n <- stats::nobs(x)
   k <- length(insight::find_parameters(x, effects = "fixed", flatten = TRUE))
 
-  zi <- (insight::get_response(x) - yhat) / sqrt(yhat)
+  zi <- (insight::get_response(x, verbose = FALSE) - yhat) / sqrt(yhat)
   chisq <- sum(zi^2)
   ratio <- chisq / (n - k)
   p.value <- stats::pchisq(chisq, df = n - k, lower.tail = FALSE)
@@ -148,13 +155,17 @@ check_overdispersion.model_fit <- check_overdispersion.poissonmfx
 # Overdispersion for mixed models ---------------------------
 
 
-#' @importFrom insight model_info
-#' @importFrom stats df.residual residuals pchisq
 #' @export
 check_overdispersion.merMod <- function(x, ...) {
-  # check if we have poisson
-  if (!insight::model_info(x)$is_poisson) {
-    stop("Model must be from Poisson-family.", call. = FALSE)
+  # check if we have poisson or binomial
+  info <- insight::model_info(x)
+  if (!info$is_poisson && !info$is_binomial) {
+    stop("Model must be from Poisson or binomial family.", call. = FALSE)
+  }
+
+  # check for Bernoulli
+  if (info$is_bernoulli) {
+    stop("Model is not allowed to be a Bernoulli model.", call. = FALSE)
   }
 
   rdf <- stats::df.residual(x)

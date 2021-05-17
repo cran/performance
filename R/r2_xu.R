@@ -16,8 +16,6 @@
 #' @examples
 #' model <- lm(Sepal.Length ~ Petal.Length + Species, data = iris)
 #' r2_xu(model)
-#' @importFrom stats residuals var
-#' @importFrom insight get_response model_info
 #' @export
 r2_xu <- function(model) {
   mi <- insight::model_info(model)
@@ -25,7 +23,7 @@ r2_xu <- function(model) {
     stop("Xu's R2 is only applicable for linear models.")
   }
 
-  .r2_xu <- 1 - stats::var(stats::residuals(model)) / stats::var(insight::get_response(model))
+  .r2_xu <- 1 - stats::var(stats::residuals(model, verbose = FALSE)) / stats::var(insight::get_response(model, verbose = FALSE))
   names(.r2_xu) <- "Xu's R2"
   .r2_xu
 }

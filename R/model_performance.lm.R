@@ -30,7 +30,6 @@
 #'
 #' model <- glm(vs ~ wt + mpg, data = mtcars, family = "binomial")
 #' model_performance(model)
-#' @importFrom insight model_info
 #' @export
 model_performance.lm <- function(model, metrics = "all", verbose = TRUE, ...) {
   if (any(tolower(metrics) == "log_loss")) {
@@ -43,7 +42,12 @@ model_performance.lm <- function(model, metrics = "all", verbose = TRUE, ...) {
     metrics <- c("AIC", "BIC", "R2", "R2_adj", "RMSE")
   }
 
-  info <- suppressWarnings(insight::model_info(model))
+  # check model formula
+  if (verbose) {
+    insight::formula_ok(model)
+  }
+
+  info <- suppressWarnings(insight::model_info(model, verbose = FALSE))
 
   ## TODO remove is.list() once insight 0.8.3 is on CRAN
   if (is.null(info) || !is.list(info)) {

@@ -137,31 +137,32 @@
 #' }
 #'
 #' @examples
-#' data <- mtcars  # Size nrow(data) = 32
+#' data <- mtcars # Size nrow(data) = 32
 #'
 #' # For single variables ------------------------------------------------------
-#' outliers_list <- check_outliers(data$mpg)  # Find outliers
-#' outliers_list  # Show the row index of the outliers
-#' as.numeric(outliers_list)  # The object is a binary vector...
+#' outliers_list <- check_outliers(data$mpg) # Find outliers
+#' outliers_list # Show the row index of the outliers
+#' as.numeric(outliers_list) # The object is a binary vector...
 #' filtered_data <- data[!outliers_list, ] # And can be used to filter a dataframe
-#' nrow(filtered_data)  # New size, 28 (4 outliers removed)
+#' nrow(filtered_data) # New size, 28 (4 outliers removed)
 #'
 #'
 #' # For dataframes ------------------------------------------------------
-#' check_outliers(data)  # It works the same way on dataframes
+#' check_outliers(data) # It works the same way on dataframes
 #'
 #' # You can also use multiple methods at once
-#' outliers_list <- check_outliers(data, method = c("mahalanobis",
-#'                                                  "iqr",
-#'                                                  "zscore"))
+#' outliers_list <- check_outliers(data, method = c(
+#'   "mahalanobis",
+#'   "iqr",
+#'   "zscore"
+#' ))
 #' outliers_list
 #' # Using `as.data.frame()`, we can access more details!
 #' outliers_info <- as.data.frame(outliers_list)
 #' head(outliers_info)
-#' outliers_info$Outlier  # Including the probability of being an outlier
+#' outliers_info$Outlier # Including the probability of being an outlier
 #' # And we can be more stringent in our outliers removal process
 #' filtered_data <- data[outliers_info$Outlier < 0.1, ]
-#'
 #' \dontrun{
 #' # You can also run all the methods
 #' check_outliers(data, method = "all")
@@ -170,14 +171,16 @@
 #' # select only mpg and disp (continuous)
 #' mt1 <- mtcars[, c(1, 3, 4)]
 #' # create some fake outliers and attach outliers to main df
-#' mt2 <- rbind(mt1, data.frame(mpg = c(37, 40), disp = c(300, 400),
-#'                              hp = c(110, 120)))
+#' mt2 <- rbind(mt1, data.frame(
+#'   mpg = c(37, 40), disp = c(300, 400),
+#'   hp = c(110, 120)
+#' ))
 #' # fit model with outliers
 #' model <- lm(disp ~ mpg + hp, data = mt2)
 #'
 #' outliers_list <- check_outliers(model)
 #' # plot(outliers_list)
-#' insight::get_data(model)[outliers_list, ]  # Show outliers data
+#' insight::get_data(model)[outliers_list, ] # Show outliers data
 #'
 #' if (require("MASS")) {
 #'   check_outliers(model, method = c("mahalabonis", "mcd"))
@@ -187,8 +190,6 @@
 #'   check_outliers(model, method = "ics")
 #' }
 #' }
-#' @importFrom insight n_obs get_predictors get_data
-#' @importFrom stats cooks.distance mahalanobis cov
 #' @export
 check_outliers <- function(x, ...) {
   UseMethod("check_outliers")
@@ -208,8 +209,7 @@ check_outliers.default <- function(x, method = c("cook", "pareto"), threshold = 
   method <- match.arg(method, c("zscore", "iqr", "cook", "pareto", "mahalanobis", "robust", "mcd", "ics", "optics", "iforest", "lof"), several.ok = TRUE)
 
   # Remove non-numerics
-  data <- insight::get_predictors(x)
-  data <- data[, sapply(data, is.numeric), drop = FALSE]
+  data <- insight::get_modelmatrix(x)
 
 
 
@@ -385,7 +385,6 @@ as.numeric.check_outliers <- function(x, ...) {
   suppressWarnings(.check_outliers_thresholds_nowarn(x))
 }
 
-#' @importFrom stats qf qchisq
 .check_outliers_thresholds_nowarn <- function(x) {
   zscore <- stats::qnorm(p = 1 - 0.025)
   iqr <- 1.5
@@ -416,7 +415,6 @@ as.numeric.check_outliers <- function(x, ...) {
 
 
 
-#' @importFrom stats median sd qnorm mad
 .check_outliers_zscore <- function(x, threshold = stats::qnorm(p = 1 - 0.025), robust = TRUE, method = "max") {
   # Standardize
   if (robust == FALSE) {
@@ -441,7 +439,6 @@ as.numeric.check_outliers <- function(x, ...) {
 
 
 
-#' @importFrom stats IQR quantile
 .check_outliers_iqr <- function(x, threshold = 1.5, method = "tukey") {
   d <- data.frame(Obs = 1:nrow(as.data.frame(x)))
   for (col in 1:ncol(as.data.frame(x))) {
@@ -480,7 +477,6 @@ as.numeric.check_outliers <- function(x, ...) {
 
 
 
-#' @importFrom stats cooks.distance
 .check_outliers_cook <- function(x, threshold = NULL) {
   # Compute
   d <- unname(stats::cooks.distance(x))
@@ -526,7 +522,6 @@ as.numeric.check_outliers <- function(x, ...) {
 
 
 
-#' @importFrom stats mahalanobis cov
 .check_outliers_mahalanobis <- function(x, threshold = NULL, ...) {
   out <- data.frame(Obs = 1:nrow(x))
 
@@ -679,8 +674,6 @@ as.numeric.check_outliers <- function(x, ...) {
 }
 
 
-# @importFrom utils packageVersion
-# @importFrom stats median qnorm mad sd predict
 # .check_outliers_iforest <- function(x, threshold = 0.025) {
 #   out <- data.frame(Obs = 1:nrow(x))
 #
@@ -747,10 +740,10 @@ as.numeric.check_outliers <- function(x, ...) {
 
 # influential observations data --------
 
-.influential_obs <- function(x) {
+.influential_obs <- function(x, threshold = NULL) {
   tryCatch(
     {
-      .diag_influential_obs(x)
+      .diag_influential_obs(x, threshold = threshold)
     },
     error = function(e) {
       NULL

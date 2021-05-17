@@ -10,7 +10,8 @@
 #' @inheritParams r2_nakagawa
 #'
 #' @return Returns a list containing values related to the most appropriate R2
-#'   for the given model. See the list below:
+#'   for the given model (or \code{NULL} if no R2 could be extracted). See the
+#'   list below:
 #' \itemize{
 #'   \item Logistic models: \link[=r2_tjur]{Tjur's R2}
 #'   \item General linear models: \link[=r2_nagelkerke]{Nagelkerke's R2}
@@ -48,15 +49,14 @@ r2 <- function(model, ...) {
 # Default models -----------------------------------------------
 
 
-#' @importFrom insight print_color get_response get_predicted
 #' @export
 r2.default <- function(model, verbose = TRUE, ...) {
   out <- tryCatch(
     {
       if (insight::model_info(model)$is_binomial) {
-        resp <- .recode_to_zero(insight::get_response(model))
+        resp <- .recode_to_zero(insight::get_response(model, verbose = FALSE))
       } else {
-        resp <- .factor_to_numeric(insight::get_response(model))
+        resp <- .factor_to_numeric(insight::get_response(model, verbose = FALSE))
       }
       mean_resp <- mean(resp, na.rm = TRUE)
       pred <- insight::get_predicted(model, verbose = FALSE)
@@ -67,22 +67,19 @@ r2.default <- function(model, verbose = TRUE, ...) {
     }
   )
 
-  if (is.na(NULL) && isTRUE(verbose)) {
+  if (is.null(out) && isTRUE(verbose)) {
     insight::print_color(sprintf("'r2()' does not support models of class '%s'.\n", class(model)[1]), "red")
   }
 
   if (!is.null(out)) {
     names(out$R2) <- "R2"
     class(out) <- c("r2_generic", class(out))
-  } else {
-    out <- NA
   }
 
   out
 }
 
 
-#' @importFrom stats pf
 #' @export
 r2.lm <- function(model, ...) {
   .r2_lm(summary(model))
@@ -139,10 +136,9 @@ r2.cph <- r2.ols
 
 
 
-#' @importFrom insight get_response n_parameters
 #' @export
 r2.mhurdle <- function(model, ...) {
-  resp <- insight::get_response(model)
+  resp <- insight::get_response(model, verbose = FALSE)
   mean_resp <- mean(resp, na.rm = TRUE)
   ftd <- model$fitted.values[, "pos", drop = TRUE] * (1 - model$fitted.values[, "zero", drop = TRUE])
   n <- length(resp)
@@ -163,7 +159,6 @@ r2.mhurdle <- function(model, ...) {
 
 
 
-#' @importFrom stats summary.lm
 #' @export
 r2.aov <- function(model, ...) {
   model_summary <- stats::summary.lm(model)
@@ -182,7 +177,6 @@ r2.aov <- function(model, ...) {
 
 
 
-#' @importFrom stats pf
 #' @export
 r2.mlm <- function(model, ...) {
   model_summary <- summary(model)
@@ -207,18 +201,22 @@ r2.mlm <- function(model, ...) {
 
 
 
-#' @importFrom insight model_info
 #' @export
-r2.glm <- function(model, ...) {
+r2.glm <- function(model, verbose = TRUE, ...) {
   info <- insight::model_info(model)
 
   if (info$family %in% c("gaussian", "inverse.gaussian")) {
     out <- r2.default(model, ...)
-  } else if (info$is_logit) {
+  } else if (info$is_logit && info$is_bernoulli) {
     out <- list("R2_Tjur" = r2_tjur(model))
     attr(out, "model_type") <- "Logistic"
     names(out$R2_Tjur) <- "Tjur's R2"
     class(out) <- c("r2_pseudo", class(out))
+  } else if (info$is_binomial && !info$is_bernoulli && class(model)[1] == "glm") {
+    if (verbose) {
+      warning(insight::format_message("Can't calculate accurate R2 for binomial models that are not Bernoulli models."), call. = FALSE)
+    }
+    out <- NULL
   } else {
     out <- list("R2_Nagelkerke" = r2_nagelkerke(model))
     names(out$R2_Nagelkerke) <- "Nagelkerke's R2"
@@ -684,6 +682,23 @@ r2.plm <- function(model, ...) {
   )
 
   attr(out, "model_type") <- "Panel Data"
+  structure(class = "r2_generic", out)
+}
+
+
+
+#' @export
+r2.selection <- function(model, ...) {
+  model_summary <- summary(model)
+  if (is.null(model_summary$rSquared)) {
+    return(NULL)
+  }
+  out <- list(
+    "R2" = c(`R2` = model_summary$rSquared$R2),
+    "R2_adjusted" = c(`adjusted R2` = model_summary$rSquared$R2adj)
+  )
+
+  attr(out, "model_type") <- "Tobit 2"
   structure(class = "r2_generic", out)
 }
 

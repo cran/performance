@@ -1,3 +1,22 @@
+# performance 0.7.2
+
+## New functions
+
+* `performance_mae()` to calculate the mean absolute error.
+
+## Bug fixes
+
+* Fixed issue with `"data length differs from size of matrix"` warnings in
+  examples in forthcoming R 4.2.
+
+* Fixed issue in `check_normality()` for models with sample size larger than
+  5.000 observations.
+
+* Fixed issue in `check_model()` for *glmmTMB* models.
+
+* Fixed issue in `check_collinearity()` for *glmmTMB* models with zero-inflation,
+  where the zero-inflated model was an intercept-only model.
+
 # performance 0.7.1
 
 ## New supported models

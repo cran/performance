@@ -56,9 +56,6 @@
 #' if (require("ggplot2") && require("see")) {
 #'   pp_check(model)
 #' }
-#'
-#' @importFrom stats simulate
-#' @importFrom insight get_response
 #' @export
 pp_check <- function(object, ...) {
   UseMethod("pp_check")
@@ -141,13 +138,13 @@ print.performance_pp_check <- function(x, verbose = TRUE, ...) {
 
   if (min(replicated) > min(original)) {
     if (verbose) {
-      warning("Minimum value of original data is not included in the replicated data. Model may not capture the variation of the data.", call. = FALSE)
+      warning(insight::format_message("Minimum value of original data is not included in the replicated data. Model may not capture the variation of the data."), call. = FALSE)
     }
   }
 
   if (max(replicated) < max(original)) {
     if (verbose) {
-      warning("Maximum value of original data is not included in the replicated data. Model may not capture the variation of the data.", call. = FALSE)
+      warning(insight::format_message("Maximum value of original data is not included in the replicated data. Model may not capture the variation of the data."), call. = FALSE)
     }
   }
 

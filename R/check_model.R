@@ -24,6 +24,7 @@
 #' @param theme String, indicating the name of the plot-theme. Must be in the
 #'   format \code{"package::theme_name"} (e.g. \code{"ggplot2::theme_minimal"}).
 #' @param detrend Should QQ/PP plots be detrended?
+#' @param verbose Toggle off warnings.
 #' @param ... Currently not used.
 #'
 #' @return The data frame that is used for plotting.
@@ -75,8 +76,13 @@ check_model <- function(x, ...) {
 
 #' @rdname check_model
 #' @export
-check_model.default <- function(x, dot_size = 2, line_size = .8, panel = TRUE, check = "all", alpha = .2, dot_alpha = .8, colors = c("#3aaf85", "#1b6ca8", "#cd201f"), theme = "see::theme_lucid", detrend = FALSE, ...) {
-  minfo <- insight::model_info(x)
+check_model.default <- function(x, dot_size = 2, line_size = .8, panel = TRUE, check = "all", alpha = .2, dot_alpha = .8, colors = c("#3aaf85", "#1b6ca8", "#cd201f"), theme = "see::theme_lucid", detrend = FALSE, verbose = TRUE, ...) {
+  # check model formula
+  if (verbose) {
+    insight::formula_ok(x)
+  }
+
+  minfo <- insight::model_info(x, verbose = FALSE)
 
   if (minfo$is_bayesian) {
     ca <- suppressWarnings(.check_assumptions_stan(x))
@@ -126,7 +132,7 @@ check_model.model_fit <- function(x, dot_size = 2, line_size = .8, panel = TRUE,
   } else {
     threshold <- NULL
   }
-  dat$INFLUENTIAL <- .diag_influential_obs(model, threshold = threshold)
+  dat$INFLUENTIAL <- .influential_obs(model, threshold = threshold)
 
   dat <- .compact_list(dat)
   class(dat) <- c("check_model", "see_check_model")
@@ -149,7 +155,7 @@ check_model.model_fit <- function(x, dot_size = 2, line_size = .8, panel = TRUE,
   } else {
     threshold <- NULL
   }
-  dat$INFLUENTIAL <- .diag_influential_obs(model, threshold = threshold)
+  dat$INFLUENTIAL <- .influential_obs(model, threshold = threshold)
 
   dat <- .compact_list(dat)
   class(dat) <- c("check_model", "see_check_model")
@@ -159,7 +165,6 @@ check_model.model_fit <- function(x, dot_size = 2, line_size = .8, panel = TRUE,
 
 
 
-#' @importFrom stats reshape update
 .check_assumptions_stan <- function(model) {
   if (inherits(model, "brmsfit")) {
 

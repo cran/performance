@@ -5,17 +5,17 @@
 #'
 #' @param x A model object.
 #' @param effects Should normality for residuals (\code{"fixed"}) or random
-#' effects (\code{"random"}) be tested? Only applies to mixed models. May
-#' be abbreviated.
+#'   effects (\code{"random"}) be tested? Only applies to mixed-effects models.
+#'   May be abbreviated.
 #' @param ... Currently not used.
 #'
 #' @return Invisibly returns the p-value of the test statistics. A p-value
 #' < 0.05 indicates a significant deviation from normal distribution
 #'
-#' @note For mixed models, studentized residuals are used for the test,
-#'   \emph{not} the standardized residuals. There is also a
+#' @note For mixed-effects models, studentized residuals, and \emph{not}
+#'   standardized residuals, are used for the test. There is also a
 #'   \href{https://easystats.github.io/see/articles/performance.html}{\code{plot()}-method}
-#'   implemented in the
+#'    implemented in the
 #'   \href{https://easystats.github.io/see/}{\pkg{see}-package}.
 #'
 #' @details \code{check_normality()} calls \code{stats::shapiro.test}
@@ -40,19 +40,17 @@
 #' # PP-plot
 #' plot(check_normality(m), type = "pp")
 #' }
-#' @importFrom stats shapiro.test rstandard rstudent
 #' @export
 check_normality <- function(x, ...) {
   UseMethod("check_normality")
 }
 
 
-#' @importFrom insight model_info
 #' @export
 check_normality.default <- function(x, ...) {
   # valid model?
   if (!insight::model_info(x)$is_linear) {
-    message("Checking normality of residuals is only useful an appropriate assumption for linear models.")
+    message(insight::format_message("Checking normality of residuals is only useful an appropriate assumption for linear models."))
     return(NULL)
   }
 
@@ -82,7 +80,7 @@ check_normality.merMod <- function(x, effects = c("fixed", "random"), ...) {
 
   # valid model?
   if (!info$is_linear) {
-    message("Checking normality of residuals is only useful an appropriate assumption for linear models.")
+    message(insight::format_message("Checking normality of residuals is only useful an appropriate assumption for linear models."))
     return(NULL)
   }
 
@@ -137,18 +135,34 @@ check_normality.merMod <- function(x, effects = c("fixed", "random"), ...) {
 check_normality.glmmTMB <- check_normality.merMod
 
 
+#' @export
+check_normality.lmerModLmerTest <- check_normality.merMod
 
+
+#' @export
+check_normality.afex_aov <- function(x, ...) {
+  r <- suppressMessages(stats::residuals(x, append = FALSE))
+  p.val <- .check_normality(r, x)
+
+  attr(p.val, "object_name") <- .safe_deparse(substitute(x))
+  class(p.val) <- unique(c("check_normality", "see_check_normality", class(p.val)))
+
+  invisible(p.val)
+}
 
 
 
 # helper ---------------------
 
 
-#' @importFrom insight print_color format_p
 .check_normality <- function(x, model, type = "residuals") {
   ts <- tryCatch(
     {
-      stats::shapiro.test(x)
+      if (length(x) >= 5000) {
+        suppressWarnings(stats::ks.test(x, y = "pnorm", alternative = "two.sided"))
+      } else {
+        stats::shapiro.test(x)
+      }
     },
     error = function(e) {
       NULL

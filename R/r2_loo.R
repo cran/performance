@@ -17,8 +17,6 @@
 #'   model <- stan_glm(mpg ~ wt + cyl, data = mtcars, chains = 1, iter = 500, refresh = 0)
 #'   r2_loo(model)
 #' }
-#' @importFrom insight get_response find_algorithm
-#' @importFrom stats var
 #' @export
 r2_loo <- function(model, verbose = TRUE) {
   if (inherits(model, "stanmvreg")) {
@@ -36,7 +34,7 @@ r2_loo <- function(model, verbose = TRUE) {
     stop("Package `loo` needed for this function to work. Please install it.", call. = FALSE)
   }
 
-  y <- insight::get_response(model)
+  y <- insight::get_response(model, verbose = FALSE)
   ypred <- rstantools::posterior_linpred(model)
 
 

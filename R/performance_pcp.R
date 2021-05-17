@@ -46,23 +46,21 @@
 #' m <- glm(formula = vs ~ hp + wt, family = binomial, data = mtcars)
 #' performance_pcp(m)
 #' performance_pcp(m, method = "Gelman-Hill")
-#' @importFrom stats predict qnorm binomial predict.glm pchisq weights as.formula glm
-#' @importFrom insight get_response n_obs model_info find_response get_data get_loglikelihood
 #' @export
 performance_pcp <- function(model, ci = 0.95, method = "Herron", verbose = TRUE) {
   # fix special cases
-  if (inherits(model, c("logitor", "logitmfx", "probitmfx"))) {
+  if (inherits(model, c("model_fit", "logitor", "logitmfx", "probitmfx"))) {
     model <- model$fit
   }
 
   method <- match.arg(method, choices = c("Herron", "Gelman-Hill", "herron", "gelman_hill"))
-  mi <- insight::model_info(model)
+  mi <- insight::model_info(model, verbose = verbose)
 
   if (!mi$is_binomial) {
     stop("`performance_pcp()` only works for models with binary outcome.")
   }
 
-  resp <- insight::get_response(model)
+  resp <- insight::get_response(model, verbose = verbose)
   if (!is.null(ncol(resp)) && ncol(resp) > 1) {
     if (verbose) insight::print_color("`performance_pcp()` only works for models with binary response values.\n", "red")
     return(NULL)
@@ -71,21 +69,21 @@ performance_pcp <- function(model, ci = 0.95, method = "Herron", verbose = TRUE)
   m0 <- suppressWarnings(stats::glm(
     formula = stats::as.formula(sprintf("%s ~ 1", insight::find_response(model))),
     family = stats::binomial(link = "logit"),
-    data = insight::get_data(model),
+    data = insight::get_data(model, verbose = verbose),
     weights = stats::weights(model)
   ))
 
   if (method %in% c("Herron", "herron")) {
-    .pcp_herron(model, m0, ci)
+    .pcp_herron(model, m0, ci, verbose = verbose)
   } else {
-    .pcp_gelman_hill(model, m0, ci)
+    .pcp_gelman_hill(model, m0, ci, verbose = verbose)
   }
 }
 
 
-.pcp_herron <- function(model, m0, ci) {
-  y_full <- .recode_to_zero(insight::get_response(model))
-  y_null <- .recode_to_zero(insight::get_response(m0))
+.pcp_herron <- function(model, m0, ci, verbose = TRUE) {
+  y_full <- .recode_to_zero(insight::get_response(model, verbose = verbose))
+  y_null <- .recode_to_zero(insight::get_response(m0, verbose = verbose))
 
   n_full <- suppressWarnings(insight::n_obs(model))
   n_null <- suppressWarnings(insight::n_obs(m0))
@@ -102,7 +100,7 @@ performance_pcp <- function(model, ci = 0.95, method = "Herron", verbose = TRUE)
     lower.tail = TRUE
   )
 
-  lrt.chisq <- 2 * abs(insight::get_loglikelihood(model) - insight::get_loglikelihood(m0))
+  lrt.chisq <- 2 * abs(insight::get_loglikelihood(model, verbose = verbose) - insight::get_loglikelihood(m0, verbose = verbose))
 
   structure(
     class = "performance_pcp",
@@ -120,9 +118,9 @@ performance_pcp <- function(model, ci = 0.95, method = "Herron", verbose = TRUE)
 }
 
 
-.pcp_gelman_hill <- function(model, m0, ci) {
-  y_full <- .recode_to_zero(insight::get_response(model))
-  y_null <- .recode_to_zero(insight::get_response(m0))
+.pcp_gelman_hill <- function(model, m0, ci, verbose = TRUE) {
+  y_full <- .recode_to_zero(insight::get_response(model, verbose = verbose))
+  y_null <- .recode_to_zero(insight::get_response(m0, verbose = verbose))
 
   n_full <- suppressWarnings(insight::n_obs(model))
   n_null <- suppressWarnings(insight::n_obs(m0))
@@ -139,7 +137,7 @@ performance_pcp <- function(model, ci = 0.95, method = "Herron", verbose = TRUE)
     lower.tail = TRUE
   )
 
-  lrt.chisq <- 2 * abs(insight::get_loglikelihood(model) - insight::get_loglikelihood(m0))
+  lrt.chisq <- 2 * abs(insight::get_loglikelihood(model, verbose = verbose) - insight::get_loglikelihood(m0, verbose = verbose))
 
   structure(
     class = "performance_pcp",

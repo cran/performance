@@ -49,9 +49,6 @@
 #'   check_distribution(model)
 #'   plot(check_distribution(model))
 #' }
-#' @importFrom bayestestR map_estimate
-#' @importFrom stats IQR density predict sd mad residuals
-#' @importFrom insight get_response
 #' @export
 check_distribution <- function(model) {
   UseMethod("check_distribution")
@@ -99,7 +96,7 @@ check_distribution.default <- function(model) {
 
 
   # Extract features
-  x <- .factor_to_numeric(insight::get_response(model))
+  x <- .factor_to_numeric(insight::get_response(model, verbose = FALSE))
   dat <- .extract_features(x)
 
   dist_response <- as.data.frame(t(stats::predict(classify_distribution, dat, type = "prob")))
@@ -124,7 +121,7 @@ check_distribution.default <- function(model) {
   data.frame(
     "SD" = stats::sd(x),
     "MAD" = stats::mad(x, constant = 1),
-    "Mean_Median_Distance" = mean(x) - median(x),
+    "Mean_Median_Distance" = mean(x) - stats::median(x),
     "Mean_Mode_Distance" = mean(x) - as.numeric(bayestestR::map_estimate(x, bw = "nrd0")),
     "SD_MAD_Distance" = stats::sd(x) - stats::mad(x, constant = 1),
     "Var_Mean_Distance" = stats::var(x) - mean(x),

@@ -48,9 +48,6 @@
 #'   performance_score(model)
 #' }
 #' }
-#'
-#' @importFrom insight get_response model_info
-#' @importFrom stats dbinom dpois dnbinom ppois pnbinom
 #' @export
 performance_score <- function(model, verbose = TRUE) {
   # check special case
@@ -58,14 +55,14 @@ performance_score <- function(model, verbose = TRUE) {
     model <- model$fit
   }
 
-  minfo <- insight::model_info(model)
+  minfo <- insight::model_info(model, verbose = verbose)
 
   if (minfo$is_ordinal || minfo$is_multinomial) {
     if (verbose) insight::print_color("Can't calculate proper scoring rules for ordinal, multinomial or cumulative link models.\n", "red")
     return(list(logarithmic = NA, quadratic = NA, spherical = NA))
   }
 
-  resp <- insight::get_response(model)
+  resp <- insight::get_response(model, verbose = verbose)
 
   if (!is.null(ncol(resp)) && ncol(resp) > 1) {
     if (verbose) insight::print_color("Can't calculate proper scoring rules for models without integer response values.\n", "red")
@@ -77,7 +74,7 @@ performance_score <- function(model, verbose = TRUE) {
   } else if (minfo$is_poisson && !minfo$is_zero_inflated) {
     function(x, mean, pis, n) stats::dpois(x, lambda = mean)
   } else if (minfo$is_negbin && !minfo$is_zero_inflated) {
-    function(x, mean, pis, n) dnbinom(x, mu = mean, size = exp(.dispersion_parameter(model, minfo)))
+    function(x, mean, pis, n) stats::dnbinom(x, mu = mean, size = exp(.dispersion_parameter(model, minfo)))
   } else if (minfo$is_poisson && minfo$is_zero_inflated && !minfo$is_hurdle) {
     function(x, mean, pis, n) {
       ind0 <- x == 0
@@ -133,7 +130,6 @@ performance_score <- function(model, verbose = TRUE) {
 
 
 
-#' @importFrom stats residuals df.residual
 .dispersion_parameter <- function(model, minfo) {
   if (inherits(model, "MixMod")) {
     model$phis
@@ -160,7 +156,6 @@ performance_score <- function(model, verbose = TRUE) {
 
 
 
-#' @importFrom stats predict
 .predict_score_y <- function(model) {
   pred <- NULL
   pred_zi <- NULL
