@@ -25,7 +25,7 @@
 #' inspection (e.g. Q-Q plots) are preferable.
 #'
 #' @examples
-#' m <- lm(mpg ~ wt + cyl + gear + disp, data = mtcars)
+#' m <<- lm(mpg ~ wt + cyl + gear + disp, data = mtcars)
 #' check_normality(m)
 #'
 #' # plot results
@@ -70,7 +70,6 @@ check_normality.default <- function(x, ...) {
 
 # mixed models ---------------------
 
-
 #' @rdname check_normality
 #' @export
 check_normality.merMod <- function(x, effects = c("fixed", "random"), ...) {
@@ -85,9 +84,7 @@ check_normality.merMod <- function(x, effects = c("fixed", "random"), ...) {
   }
 
   if (effects == "random") {
-    if (!requireNamespace("lme4", quietly = TRUE)) {
-      stop("Package 'lme4' required for this function to work. Please install it.", call. = FALSE)
-    }
+    insight::check_if_installed("lme4")
 
     re <- tryCatch(
       {

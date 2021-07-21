@@ -237,6 +237,20 @@ icc <- function(model, by_group = FALSE, tolerance = 1e-05) {
 
 
 
+#' @export
+as.data.frame.icc <- function(x, row.names = NULL, optional = FALSE, ...) {
+  data.frame(
+    ICC_adjusted = x$ICC_adjusted,
+    ICC_conditional = x$ICC_conditional,
+    stringsAsFactors = FALSE,
+    row.names = row.names,
+    optional = optional,
+    ...
+  )
+}
+
+
+
 #' @param ... Arguments passed down to \code{brms::posterior_predict()}.
 #' @inheritParams icc
 #' @rdname icc
@@ -265,10 +279,7 @@ variance_decomposition <- function(model,
     return(NULL)
   }
 
-
-  if (!requireNamespace("brms", quietly = TRUE)) {
-    stop("Package `brms` needed for this function to work. Please install it.", call. = FALSE)
-  }
+  insight::check_if_installed("brms")
 
   PPD <- brms::posterior_predict(model, re_formula = re_formula, summary = FALSE, ...)
   var_total <- apply(PPD, MARGIN = 1, FUN = stats::var)

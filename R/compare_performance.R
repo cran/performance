@@ -6,8 +6,12 @@
 #'   indices across models.
 #'
 #' @param ... Multiple model objects (also of different classes).
-#' @param metrics Can be \code{"all"}, \code{"common"} or a character vector of metrics to be computed. See related \code{\link[=model_performance]{documentation}} of object's class for details.
-#' @param rank Logical, if \code{TRUE}, models are ranked according to 'best' overall model performance. See 'Details'.
+#' @param metrics Can be \code{"all"}, \code{"common"} or a character vector of
+#'   metrics to be computed. See related
+#'   \code{\link[=model_performance]{documentation}} of object's class for
+#'   details.
+#' @param rank Logical, if \code{TRUE}, models are ranked according to 'best'
+#'   overall model performance. See 'Details'.
 #'
 #' @return A data frame (with one row per model) and one column per "index" (see
 #'   \code{metrics}).
@@ -15,18 +19,19 @@
 #' @note There is also a \href{https://easystats.github.io/see/articles/performance.html}{\code{plot()}-method} implemented in the \href{https://easystats.github.io/see/}{\pkg{see}-package}.
 #'
 #' @details \subsection{Ranking Models}{
-#'   When \code{rank = TRUE}, a new column \code{Performance_Score} is returned. This
-#'   score ranges from 0\% to 100\%, higher values indicating better model performance.
-#'   Note that all score value do not necessarily sum up to 100\%. Rather,
-#'   calculation is based on normalizing all indices (i.e. rescaling them to a
-#'   range from 0 to 1), and taking the mean value of all indices for each model.
-#'   This is a rather quick heuristic, but might be helpful as exploratory index.
+#'   When \code{rank = TRUE}, a new column \code{Performance_Score} is returned.
+#'   This score ranges from 0\% to 100\%, higher values indicating better model
+#'   performance. Note that all score value do not necessarily sum up to 100\%.
+#'   Rather, calculation is based on normalizing all indices (i.e. rescaling
+#'   them to a range from 0 to 1), and taking the mean value of all indices for
+#'   each model. This is a rather quick heuristic, but might be helpful as
+#'   exploratory index.
 #'   \cr \cr
-#'   In particular when models are of different types (e.g. mixed models, classical
-#'   linear models, logistic regression, ...), not all indices will be computed
-#'   for each model. In case where an index can't be calculated for a specific
-#'   model type, this model gets an \code{NA} value. All indices that have any
-#'   \code{NA}s are excluded from calculating the performance score.
+#'   In particular when models are of different types (e.g. mixed models,
+#'   classical linear models, logistic regression, ...), not all indices will be
+#'   computed for each model. In case where an index can't be calculated for a
+#'   specific model type, this model gets an \code{NA} value. All indices that
+#'   have any \code{NA}s are excluded from calculating the performance score.
 #'   \cr \cr
 #'   There is a \code{plot()}-method for \code{compare_performance()},
 #'   which creates a "spiderweb" plot, where the different indices are
@@ -53,8 +58,39 @@
 #' @inheritParams model_performance.lm
 #' @export
 compare_performance <- function(..., metrics = "all", rank = FALSE, verbose = TRUE) {
+  # objects <- list(...)
+  # object_names <- match.call(expand.dots = FALSE)$`...`
   objects <- list(...)
-  object_names <- match.call(expand.dots = FALSE)$`...`
+
+  if (length(objects) == 1) {
+    if (insight::is_model(objects[[1]])) {
+      modellist <- FALSE
+    } else {
+      objects <- objects[[1]]
+      modellist <- TRUE
+    }
+  } else {
+    modellist <- FALSE
+  }
+
+  if (isTRUE(modellist)) {
+    object_names <- names(objects)
+    if (length(object_names) == 0) {
+      object_names <- paste("Model", seq_along(objects), sep = " ")
+      names(objects) <- object_names
+    }
+  } else {
+    object_names <- match.call(expand.dots = FALSE)$`...`
+    if (length(names(object_names)) > 0) {
+      object_names <- names(object_names)
+    } else if (any(sapply(object_names, is.call))) {
+      object_names <- paste("Model", seq_along(objects), sep = " ")
+    } else {
+      object_names <- sapply(object_names, as.character)
+      names(objects) <- object_names
+    }
+  }
+
 
   supported_models <- sapply(objects, function(i) insight::is_model_supported(i) | inherits(i, "lavaan"))
 

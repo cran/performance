@@ -39,12 +39,10 @@ print.check_outliers <- function(x, ...) {
 
 #' @export
 print.check_model <- function(x, ...) {
-  if (!requireNamespace("see", quietly = TRUE)) {
-    stop("Package 'see' required to plot model assumptions. Please install it.")
-  }
+  insight::check_if_installed("see", "to plot model assumptions")
+
   NextMethod()
 }
-
 
 
 #' @export
@@ -132,12 +130,14 @@ print.performance_pcp <- function(x, digits = 2, ...) {
   insight::print_color("\n# Likelihood-Ratio-Test\n\n", "blue")
 
   v1 <- sprintf("%.3f", x$lrt_chisq)
-  v2 <- sprintf("%.3f", x$lrt_p)
+  v2 <- sprintf("%.3f", x$lrt_df_error)
+  v3 <- sprintf("%.3f", x$lrt_p)
 
   space <- max(nchar(c(v1, v2)))
 
   cat(sprintf("  Chi-squared: %*s\n", space, v1))
-  cat(sprintf("      p-value: %*s\n\n", space, v2))
+  cat(sprintf("  df: %*s\n", space, v2))
+  cat(sprintf("  p-value: %*s\n\n", space, v3))
 
   invisible(x)
 }
@@ -475,9 +475,8 @@ print.icc_decomposed <- function(x, digits = 2, ...) {
 
 #' @export
 print.binned_residuals <- function(x, ...) {
-  if (!requireNamespace("see", quietly = TRUE)) {
-    stop("Package 'see' required to plot binned residuals. Please install it.")
-  }
+  insight::check_if_installed("see", "to plot binned residuals")
+
   NextMethod()
 }
 

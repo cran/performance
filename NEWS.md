@@ -1,3 +1,21 @@
+# performance 0.7.3
+
+## Changes to functions
+
+* `check_outliers()` has new `ci` (or `hdi`, `eti`) method to filter based on
+  Confidence/Credible intervals.
+
+* `compare_performance()` now also accepts a list of model objects.
+
+* `performance_roc()` now also works for binomial models from other classes 
+  than *glm*.
+
+* Several functions, like `icc()` or `r2_nakagawa()`, now have an 
+  `as.data.frame()` method.
+
+* `check_collinearity()` now correctly handles objects from forthcoming *afex* 
+  update.
+
 # performance 0.7.2
 
 ## New functions

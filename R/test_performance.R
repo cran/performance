@@ -2,17 +2,10 @@
 #'
 #' @description
 #'
-#' Testing whether models are different is a delicate and often complex
-#' procedure, with many limitations and requisites. Moreover, several tests are
-#' available, each coming with its own interpretation, and set of strengths and
-#' weaknesses.
+#' Testing whether models are "different" in terms of accuracy or explanatory power is a delicate and often complex
+#' procedure, with many limitations and prerequisites. Moreover, many tests exist, each coming with its own interpretation, and set of strengths and weaknesses.
 #' \cr \cr
-#' The \code{test_performance()} function is available to run the most relevant
-#' and appropriate tests based on the input (for instance, whether the models
-#' are \emph{nested} or not). That said, it still requires the user to
-#' understand what the tests are and what they do in order to prevent their
-#' misinterpretation. See the \strong{details} section for more information
-#' regarding the different tests and their interpretation.
+#' The \code{test_performance()} function runs the most relevant and appropriate tests based on the type of input (for instance, whether the models are \emph{nested} or not). However, it still requires the user to understand what the tests are and what they do in order to prevent their misinterpretation. See the \strong{details} section for more information regarding the different tests and their interpretation.
 #'
 #' @param ... Multiple model objects.
 #' @param reference This only applies when models are non-nested, and determines
@@ -25,7 +18,8 @@
 #'
 #' @return A data frame containing the relevant indices.
 #'
-#' @seealso \code{\link[=compare_performance]{compare_performance()}} to compare the performance indices of many different models.
+#' @seealso \code{\link[=compare_performance]{compare_performance()}} to compare
+#'   the performance indices of many different models.
 #'
 #' @details
 #'
@@ -72,7 +66,7 @@
 #'   approximation of the Likelihood Ratio Test. However, it is more applicable
 #'   than the LRT: you can often run a Wald test in situations where no other
 #'   test can be run. Importantly, this test only makes statistical sense if the
-#'   models are nested.\cr \cr This test is also available in base R through the
+#'   models are nested.\cr Note: this test is also available in base R through the
 #'   \code{\link[=anova]{anova()}} function. It returns an \code{F-value} column
 #'   as a statistic and its associated \code{p-value}.
 #'
@@ -84,10 +78,10 @@
 #'   than method of moments tests like the F-test, and in turn are more
 #'   efficient. Agresti (1990) suggests that you should use the LRT instead of
 #'   the Wald test for small sample sizes (under or about 30) or if the
-#'   parameters are large.\cr \cr For regression models, this is similar to
-#'   \code{anova(..., test="LRT")} or \code{lmtest::lrtest(...)}, depending on
-#'   the \code{estimator} argument. For \code{lavaan} models (SEM, CFA), the
-#'   function calls \code{lavaan::lavTestLRT()}.
+#'   parameters are large.\cr Note: for regression models, this is similar to
+#'   \code{anova(..., test="LRT")} (on models) or \code{lmtest::lrtest(...)},
+#'   depending on the \code{estimator} argument. For \code{lavaan} models (SEM,
+#'   CFA), the function calls \code{lavaan::lavTestLRT()}.
 #'
 #'   \item \strong{Vuong's Test} - \code{test_vuong()}: Vuong's (1989) test can
 #'   be used both for nested and non-nested models, and actually consists of two
@@ -213,7 +207,10 @@ test_performance.default <- function(..., reference = 1, include_formula = FALSE
 
 
 #' @export
-test_performance.ListNestedRegressions <- function(objects, reference = 1, include_formula = FALSE, ...) {
+test_performance.ListNestedRegressions <- function(objects,
+                                                   reference = 1,
+                                                   include_formula = FALSE,
+                                                   ...) {
   out <- .test_performance_init(objects, include_formula = include_formula, ...)
 
   # BF test
@@ -250,7 +247,10 @@ test_performance.ListNestedRegressions <- function(objects, reference = 1, inclu
 
 
 #' @export
-test_performance.ListNonNestedRegressions <- function(objects, reference = 1, include_formula = FALSE, ...) {
+test_performance.ListNonNestedRegressions <- function(objects,
+                                                      reference = 1,
+                                                      include_formula = FALSE,
+                                                      ...) {
   out <- .test_performance_init(objects, include_formula = include_formula, ...)
 
   # BF test
@@ -372,7 +372,7 @@ display.test_performance <- function(object, format = "markdown", digits = 2, ..
   }
 
   if (same_response && !inherits(objects, "ListLavaan") && attributes(objects)$same_response == FALSE) {
-    stop("The models don't have the same response variable, which is a prerequisite to compare them.")
+    stop(insight::format_message("The models' dependent variables don't have the same data, which is a prerequisite to compare them. Probably the proportion of missing data differs between models."), call. = FALSE)
   }
 
   # check formula of all models, but warn only once

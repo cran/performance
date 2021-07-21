@@ -1,11 +1,12 @@
+#' Classify the distribution of a model-family using machine learning
+#'
+#' Choosing the right distributional family for regression models is essential
+#' to get more accurate estimates and standard errors. This function may help to
 #' Machine learning model trained to classify distributions
 #'
 #' Mean accuracy and Kappa of 0.86 and 0.85, repsectively.
 #'
 "classify_distribution"
-
-
-
 
 
 #' Classify the distribution of a model-family using machine learning
@@ -19,20 +20,26 @@
 #' @param model Typically, a model (that should response to \code{residuals()}).
 #'   May also be a numeric vector.
 #'
-#' @note This function is somewhat experimental and might be improved in future releases.
-#'   The final decision on the model-family should also be based on theoretical
-#'   aspects and other information about the data and the model.
+#' @note This function is somewhat experimental and might be improved in future
+#'   releases. The final decision on the model-family should also be based on
+#'   theoretical aspects and other information about the data and the model.
 #'   \cr \cr
-#'   There is also a \href{https://easystats.github.io/see/articles/performance.html}{\code{plot()}-method} implemented in the \href{https://easystats.github.io/see/}{\pkg{see}-package}.
+#'   There is also a
+#'   \href{https://easystats.github.io/see/articles/performance.html}{\code{plot()}-method}
+#'   implemented in the
+#'   \href{https://easystats.github.io/see/}{\pkg{see}-package}.
 #'
-#' @details This function uses an internal random forest model to classify the
+#' @details
+#'
+#' This function uses an internal random forest model to classify the
 #' distribution from a model-family. Currently, following distributions are
-#' trained (i.e. results of \code{check_distribution()} may be one of the following):
-#' \code{"bernoulli"}, \code{"beta"}, \code{"beta-binomial"}, \code{"binomial"},
-#' \code{"chi"}, \code{"exponential"}, \code{"F"}, \code{"gamma"}, \code{"lognormal"},
-#' \code{"normal"}, \code{"negative binomial"}, \code{"negative binomial (zero-inflated)"},
-#' \code{"pareto"}, \code{"poisson"}, \code{"poisson (zero-inflated)"},
-#' \code{"uniform"} and \code{"weibull"}.
+#' trained (i.e. results of \code{check_distribution()} may be one of the
+#' following): \code{"bernoulli"}, \code{"beta"}, \code{"beta-binomial"},
+#' \code{"binomial"}, \code{"chi"}, \code{"exponential"}, \code{"F"},
+#' \code{"gamma"}, \code{"lognormal"}, \code{"normal"}, \code{"negative
+#' binomial"}, \code{"negative binomial (zero-inflated)"}, \code{"pareto"},
+#' \code{"poisson"}, \code{"poisson (zero-inflated)"}, \code{"uniform"} and
+#' \code{"weibull"}.
 #' \cr \cr
 #' Note the similarity between certain distributions according to shape, skewness,
 #' etc. Thus, the predicted distribution may not be perfectly representing the
@@ -42,10 +49,10 @@
 #' distributions, however, only if the probability is greater than zero.
 #'
 #' @examples
-#' if (require("lme4") && require("parameters") && require("gridExtra")) {
+#' if (require("lme4") && require("parameters") && require("see") && require("patchwork")) {
 #'   data(sleepstudy)
 #'
-#'   model <- lmer(Reaction ~ Days + (Days | Subject), sleepstudy)
+#'   model <<- lmer(Reaction ~ Days + (Days | Subject), sleepstudy)
 #'   check_distribution(model)
 #'   plot(check_distribution(model))
 #' }
@@ -54,12 +61,9 @@ check_distribution <- function(model) {
   UseMethod("check_distribution")
 }
 
-
 #' @export
 check_distribution.numeric <- function(model) {
-  if (!requireNamespace("randomForest", quietly = TRUE)) {
-    stop("Package `randomForest` required for this function to work. Please install it.", call. = FALSE)
-  }
+  insight::check_if_installed("randomForest")
 
   dat <- .extract_features(model)
   dist <- as.data.frame(t(stats::predict(classify_distribution, dat, type = "prob")))
@@ -80,9 +84,7 @@ check_distribution.numeric <- function(model) {
 
 #' @export
 check_distribution.default <- function(model) {
-  if (!requireNamespace("randomForest", quietly = TRUE)) {
-    stop("Package `randomForest` required for this function to work. Please install it.", call. = FALSE)
-  }
+  insight::check_if_installed("randomForest")
 
   if (inherits(model, "brmsfit")) {
     x <- stats::residuals(model)[, "Estimate"]

@@ -19,7 +19,7 @@
 #' @note There is also a \href{https://easystats.github.io/see/articles/performance.html}{\code{plot()}-method} implemented in the \href{https://easystats.github.io/see/}{\pkg{see}-package}.
 #'
 #' @examples
-#' model <- lm(len ~ supp + dose, data = ToothGrowth)
+#' model <<- lm(len ~ supp + dose, data = ToothGrowth)
 #' check_homogeneity(model)
 #'
 #' # plot results
@@ -78,9 +78,7 @@ check_homogeneity.default <- function(x, method = c("bartlett", "fligner", "leve
     r <- stats::bartlett.test(f, data = insight::get_data(x))
     p.val <- r$p.value
   } else if (method == "levene") {
-    if (!requireNamespace("car", quietly = TRUE)) {
-      stop("Package `car` required for this function to work. Please install it.", call. = FALSE)
-    }
+    insight::check_if_installed("car")
     r <- car::leveneTest(x, ...)
     p.val <- r$`Pr(>F)`
   }
