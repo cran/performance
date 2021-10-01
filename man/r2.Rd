@@ -2,10 +2,13 @@
 % Please edit documentation in R/r2.R
 \name{r2}
 \alias{r2}
+\alias{r2.default}
 \alias{r2.merMod}
 \title{Compute the model's R2}
 \usage{
 r2(model, ...)
+
+\method{r2}{default}(model, ci = NULL, ci_method = "analytical", verbose = TRUE, ...)
 
 \method{r2}{merMod}(model, tolerance = 1e-05, ...)
 }
@@ -14,35 +17,46 @@ r2(model, ...)
 
 \item{...}{Arguments passed down to the related r2-methods.}
 
+\item{ci}{Confidence Interval (CI) level. Default is \code{NULL}. Confidence
+intervals for R2 can be calculated based on different methods, see
+\code{ci_method}.}
+
+\item{ci_method}{Method for constructing the R2 confidence interval.
+Options are \code{"analytical"} for sampling-theory-based frequentist
+intervals and \code{"bootstrap"} for bootstrap intervals. Analytical intervals
+are not available for all models. For Bayesian models, \code{\link[=r2_bayes]{r2_bayes()}} is used.}
+
+\item{verbose}{Logical. Should details about R2 and CI methods be given (\code{TRUE}) or not (\code{FALSE})?}
+
 \item{tolerance}{Tolerance for singularity check of random effects, to decide
 whether to compute random effect variances for the conditional r-squared
 or not. Indicates up to which value the convergence result is accepted. When
 \code{r2_nakagawa()} returns a warning, stating that random effect variances
 can't be computed (and thus, the conditional r-squared is \code{NA}),
-decrease the tolerance-level. See also \code{\link{check_singularity}}.}
+decrease the tolerance-level. See also \code{\link[=check_singularity]{check_singularity()}}.}
 }
 \value{
 Returns a list containing values related to the most appropriate R2
-  for the given model (or \code{NULL} if no R2 could be extracted). See the
-  list below:
+for the given model (or \code{NULL} if no R2 could be extracted). See the
+list below:
 \itemize{
-  \item Logistic models: \link[=r2_tjur]{Tjur's R2}
-  \item General linear models: \link[=r2_nagelkerke]{Nagelkerke's R2}
-  \item Multinomial Logit: \link[=r2_mcfadden]{McFadden's R2}
-  \item Models with zero-inflation: \link[=r2_zeroinflated]{R2 for zero-inflated models}
-  \item Mixed models: \link[=r2_nakagawa]{Nakagawa's R2}
-  \item Bayesian models: \link[=r2_bayes]{R2 bayes}
+\item Logistic models: \link[=r2_tjur]{Tjur's R2}
+\item General linear models: \link[=r2_nagelkerke]{Nagelkerke's R2}
+\item Multinomial Logit: \link[=r2_mcfadden]{McFadden's R2}
+\item Models with zero-inflation: \link[=r2_zeroinflated]{R2 for zero-inflated models}
+\item Mixed models: \link[=r2_nakagawa]{Nakagawa's R2}
+\item Bayesian models: \link[=r2_bayes]{R2 bayes}
 }
 }
 \description{
 Calculate the R2, also known as the coefficient of
-  determination, value for different model objects. Depending on the model,
-  R2, pseudo-R2, or marginal / adjusted R2 values are returned.
+determination, value for different model objects. Depending on the model,
+R2, pseudo-R2, or marginal / adjusted R2 values are returned.
 }
 \note{
 If there is no \code{r2()}-method defined for the given model class,
-  \code{r2()} tries to return a "generic r2 value, calculated as following:
-  \code{1-sum((y-y_hat)^2)/sum((y-y_bar)^2))}
+\code{r2()} tries to return a "generic r2 value, calculated as following:
+\verb{1-sum((y-y_hat)^2)/sum((y-y_bar)^2))}
 }
 \examples{
 model <- glm(vs ~ wt + mpg, data = mtcars, family = "binomial")
@@ -54,8 +68,8 @@ if (require("lme4")) {
 }
 }
 \seealso{
-\code{\link{r2_bayes}}, \code{\link{r2_coxsnell}}, \code{\link{r2_kullback}},
-  \code{\link{r2_loo}}, \code{\link{r2_mcfadden}}, \code{\link{r2_nagelkerke}},
-  \code{\link{r2_nakagawa}}, \code{\link{r2_tjur}}, \code{\link{r2_xu}} and
-  \code{\link{r2_zeroinflated}}.
+\code{\link[=r2_bayes]{r2_bayes()}}, \code{\link[=r2_coxsnell]{r2_coxsnell()}}, \code{\link[=r2_kullback]{r2_kullback()}},
+\code{\link[=r2_loo]{r2_loo()}}, \code{\link[=r2_mcfadden]{r2_mcfadden()}}, \code{\link[=r2_nagelkerke]{r2_nagelkerke()}},
+\code{\link[=r2_nakagawa]{r2_nakagawa()}}, \code{\link[=r2_tjur]{r2_tjur()}}, \code{\link[=r2_xu]{r2_xu()}} and
+\code{\link[=r2_zeroinflated]{r2_zeroinflated()}}.
 }

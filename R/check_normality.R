@@ -4,21 +4,21 @@
 #' @description Check model for (non-)normality of residuals.
 #'
 #' @param x A model object.
-#' @param effects Should normality for residuals (\code{"fixed"}) or random
-#'   effects (\code{"random"}) be tested? Only applies to mixed-effects models.
+#' @param effects Should normality for residuals (`"fixed"`) or random
+#'   effects (`"random"`) be tested? Only applies to mixed-effects models.
 #'   May be abbreviated.
 #' @param ... Currently not used.
 #'
 #' @return Invisibly returns the p-value of the test statistics. A p-value
 #' < 0.05 indicates a significant deviation from normal distribution
 #'
-#' @note For mixed-effects models, studentized residuals, and \emph{not}
+#' @note For mixed-effects models, studentized residuals, and *not*
 #'   standardized residuals, are used for the test. There is also a
-#'   \href{https://easystats.github.io/see/articles/performance.html}{\code{plot()}-method}
+#'   [`plot()`-method](https://easystats.github.io/see/articles/performance.html)
 #'    implemented in the
 #'   \href{https://easystats.github.io/see/}{\pkg{see}-package}.
 #'
-#' @details \code{check_normality()} calls \code{stats::shapiro.test}
+#' @details `check_normality()` calls `stats::shapiro.test`
 #' and checks the standardized residuals (or Studentized residuals for mixed
 #' models) for normal distribution. Note that this formal test almost always
 #' yields significant results for the distribution of residuals and visual
@@ -57,6 +57,7 @@ check_normality.default <- function(x, ...) {
   # check for normality of residuals
   p.val <- .check_normality(stats::rstandard(x), x)
 
+  attr(p.val, "data") <- x
   attr(p.val, "object_name") <- .safe_deparse(substitute(x))
   attr(p.val, "effects") <- "fixed"
   class(p.val) <- unique(c("check_normality", "see_check_normality", class(p.val)))
@@ -120,6 +121,7 @@ check_normality.merMod <- function(x, effects = c("fixed", "random"), ...) {
     p.val <- .check_normality(stats::rstudent(x), x)
   }
 
+  attr(p.val, "data") <- x
   attr(p.val, "object_name") <- .safe_deparse(substitute(x))
   attr(p.val, "effects") <- effects
   class(p.val) <- unique(c("check_normality", "see_check_normality", class(p.val)))
@@ -141,6 +143,7 @@ check_normality.afex_aov <- function(x, ...) {
   r <- suppressMessages(stats::residuals(x, append = FALSE))
   p.val <- .check_normality(r, x)
 
+  attr(p.val, "data") <- x
   attr(p.val, "object_name") <- .safe_deparse(substitute(x))
   class(p.val) <- unique(c("check_normality", "see_check_normality", class(p.val)))
 

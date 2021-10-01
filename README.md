@@ -27,18 +27,18 @@ zero-inflation, convergence or singularity.
 [![R
 check](https://github.com/easystats/performance/workflows/R-check/badge.svg?branch=master)](https://github.com/easystats/performance/actions)
 
-Run the following to install the stable release of **performance** from
-CRAN:
+The *performance* package is available on CRAN, while its latest
+development version is available on R-universe (from *rOpenSci*).
+
+| Type        | Source     | Command                                                                       |
+|-------------|------------|-------------------------------------------------------------------------------|
+| Release     | CRAN       | `install.packages("performance")`                                             |
+| Development | R-universe | `install.packages("performance", repos = "https://easystats.r-universe.dev")` |
+
+Once you have downloaded the package, you can then load it using:
 
 ``` r
-install.packages("performance")
-```
-
-Or this one to install the latest development version:
-
-``` r
-install.packages("remotes")
-remotes::install_github("easystats/performance")
+library("performance")
 ```
 
 ## Citation
@@ -138,10 +138,10 @@ library(rstanarm)
 model <- stan_glmer(Petal.Length ~ Petal.Width + (1 | Species), data = iris, cores = 4)
 
 r2(model)
-#> # Bayesian R2 with Standard Error
+#> # Bayesian R2 with Compatibility Interval
 #> 
-#>   Conditional R2: 0.953 (89% CI [0.945, 0.962])
-#>      Marginal R2: 0.825 (89% CI [0.746, 0.888])
+#>   Conditional R2: 0.953 (95% CI [0.941, 0.963])
+#>      Marginal R2: 0.824 (95% CI [0.713, 0.896])
 
 library(lme4)
 model <- lmer(Reaction ~ Days + (1 + Days | Subject), data = sleepstudy)
@@ -298,7 +298,7 @@ model <- lm(mpg ~ wt + am + gear + vs * cyl, data = mtcars)
 check_model(model)
 ```
 
-<img src="man/figures/unnamed-chunk-15-1.png" width="100%" />
+<img src="man/figures/unnamed-chunk-14-1.png" width="100%" />
 
 ### Model performance summaries
 
@@ -358,12 +358,12 @@ m4 <- glm(counts ~ outcome + treatment, family = poisson())
 compare_performance(m1, m2, m3, m4)
 #> # Comparison of Model Performance Indices
 #> 
-#> Name |   Model |      AIC |      BIC |   RMSE |  Sigma | Score_log | Score_spherical |    R2 | R2 (adj.) | Tjur's R2 | Log_loss |   PCP | R2 (cond.) | R2 (marg.) |   ICC | Nagelkerke's R2
-#> -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
-#> m1   |      lm |  156.010 |  161.873 |  2.444 |  2.568 |           |                 | 0.830 |     0.819 |           |          |       |            |            |       |                
-#> m2   |     glm |   31.298 |   35.695 |  0.359 |  0.934 |   -14.903 |           0.095 |       |           |     0.478 |    0.395 | 0.743 |            |            |       |                
-#> m3   | lmerMod | 1755.628 | 1774.786 | 23.438 | 25.592 |           |                 |       |           |           |          |       |      0.799 |      0.279 | 0.722 |                
-#> m4   |     glm |   56.761 |   57.747 |  3.043 |  1.132 |    -2.598 |           0.324 |       |           |           |          |       |            |            |       |           0.657
+#> Name |   Model |      AIC | AIC (weighted) |      BIC | BIC (weighted) |   RMSE |  Sigma | Score_log | Score_spherical |    R2 | R2 (adj.) | Tjur's R2 | Log_loss |   PCP | R2 (cond.) | R2 (marg.) |   ICC | Nagelkerke's R2
+#> -----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+#> m1   |      lm |  156.010 |        < 0.001 |  161.873 |        < 0.001 |  2.444 |  2.568 |           |                 | 0.830 |     0.819 |           |          |       |            |            |       |                
+#> m2   |     glm |   31.298 |          1.000 |   35.695 |          1.000 |  0.359 |  0.934 |   -14.903 |           0.095 |       |           |     0.478 |    0.395 | 0.743 |            |            |       |                
+#> m3   | lmerMod | 1755.628 |        < 0.001 | 1774.786 |        < 0.001 | 23.438 | 25.592 |           |                 |       |           |           |          |       |      0.799 |      0.279 | 0.722 |                
+#> m4   |     glm |   56.761 |        < 0.001 |   57.747 |        < 0.001 |  3.043 |  1.132 |    -2.598 |           0.324 |       |           |           |          |       |            |            |       |           0.657
 ```
 
 #### General index of model performance
@@ -376,12 +376,12 @@ of model performance and sort the models from the best one to the worse.
 compare_performance(m1, m2, m3, m4, rank = TRUE)
 #> # Comparison of Model Performance Indices
 #> 
-#> Name |   Model |      AIC |      BIC |   RMSE |  Sigma | Performance-Score
-#> --------------------------------------------------------------------------
-#> m2   |     glm |   31.298 |   35.695 |  0.359 |  0.934 |           100.00%
-#> m4   |     glm |   56.761 |   57.747 |  3.043 |  1.132 |            96.21%
-#> m1   |      lm |  156.010 |  161.873 |  2.444 |  2.568 |            92.46%
-#> m3   | lmerMod | 1755.628 | 1774.786 | 23.438 | 25.592 |             0.00%
+#> Name |   Model |   RMSE |  Sigma | AIC (weighted) | BIC (weighted) | Performance-Score
+#> --------------------------------------------------------------------------------------
+#> m2   |     glm |  0.359 |  0.934 |          1.000 |          1.000 |           100.00%
+#> m4   |     glm |  3.043 |  1.132 |        < 0.001 |        < 0.001 |            46.89%
+#> m1   |      lm |  2.444 |  2.568 |        < 0.001 |        < 0.001 |            46.09%
+#> m3   | lmerMod | 23.438 | 25.592 |        < 0.001 |        < 0.001 |             0.00%
 ```
 
 #### Visualisation of indices of models’ performance
@@ -393,7 +393,7 @@ installed).
 plot(compare_performance(m1, m2, m4, rank = TRUE))
 ```
 
-<img src="man/figures/unnamed-chunk-21-1.png" width="100%" />
+<img src="man/figures/unnamed-chunk-20-1.png" width="100%" />
 
 ### Testing models
 
@@ -410,15 +410,14 @@ lm2 <- lm(Sepal.Length ~ Species + Petal.Length, data = iris)
 lm3 <- lm(Sepal.Length ~ Species * Sepal.Width, data = iris)
 lm4 <- lm(Sepal.Length ~ Species * Sepal.Width + Petal.Length + Petal.Width, data = iris)
 
-compare_performance(lm1, lm2, lm3, lm4)
-#> # Comparison of Model Performance Indices
-#> 
-#> Name | Model |     AIC |     BIC |    R2 | R2 (adj.) |  RMSE | Sigma
-#> --------------------------------------------------------------------
-#> lm1  |    lm | 231.452 | 243.494 | 0.619 |     0.614 | 0.510 | 0.515
-#> lm2  |    lm | 106.233 | 121.286 | 0.837 |     0.833 | 0.333 | 0.338
-#> lm3  |    lm | 187.092 | 208.167 | 0.727 |     0.718 | 0.431 | 0.440
-#> lm4  |    lm |  78.797 | 105.892 | 0.871 |     0.865 | 0.296 | 0.305
+test_performance(lm1, lm2, lm3, lm4)
+#> Name | Model |     BF | Omega2 | p (Omega2) |    LR | p (LR)
+#> ------------------------------------------------------------
+#> lm1  |    lm |        |        |            |       |       
+#> lm2  |    lm | > 1000 |   0.69 |     < .001 | -6.25 | < .001
+#> lm3  |    lm | > 1000 |   0.36 |     < .001 | -3.44 | < .001
+#> lm4  |    lm | > 1000 |   0.73 |     < .001 | -7.77 | < .001
+#> Each model is compared to lm1.
 
 test_bf(lm1, lm2, lm3, lm4)
 #> Bayes Factors for Model Comparison

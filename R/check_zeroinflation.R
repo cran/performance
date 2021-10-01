@@ -1,14 +1,14 @@
 #' @title Check for zero-inflation in count models
 #' @name check_zeroinflation
 #'
-#' @description \code{check_zeroinflation()} checks whether count models are
+#' @description `check_zeroinflation()` checks whether count models are
 #'   over- or underfitting zeros in the outcome.
 #'
-#' @param x Fitted model of class \code{merMod}, \code{glmmTMB}, \code{glm},
-#'    or \code{glm.nb} (package \pkg{MASS}).
+#' @param x Fitted model of class `merMod`, `glmmTMB`, `glm`,
+#'    or `glm.nb` (package \pkg{MASS}).
 #' @param tolerance The tolerance for the ratio of observed and predicted
 #'    zeros to considered as over- or underfitting zeros. A ratio
-#'    between 1 +/- \code{tolerance} is considered as OK, while a ratio
+#'    between 1 +/- `tolerance` is considered as OK, while a ratio
 #'    beyond or below this threshold would indicate over- or underfitting.
 #'
 #' @return A list with information about the amount of predicted and observed
@@ -44,9 +44,20 @@ check_zeroinflation <- function(x, tolerance = .05) {
   # get predictions of outcome
   mu <- stats::fitted(x)
 
+  # get overdispersion parameters
+  if (model_info$is_negbin) {
+    if (methods::is(x, "glmmTMB")) {
+      theta <- stats::sigma(x)
+    } else {
+      theta <- x$theta
+    }
+  } else {
+    theta <- NULL
+  }
+
   # get predicted zero-counts
-  if (model_info$is_negbin && !is.null(x$theta)) {
-    pred.zero <- round(sum(stats::dnbinom(x = 0, size = x$theta, mu = mu)))
+  if (!is.null(theta)) {
+    pred.zero <- round(sum(stats::dnbinom(x = 0, size = theta, mu = mu)))
   } else {
     pred.zero <- round(sum(stats::dpois(x = 0, lambda = mu)))
   }

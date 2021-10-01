@@ -5,18 +5,18 @@
 #'
 #' @param x A linear model or an ANOVA object.
 #' @param method Name of the method (underlying test) that should be performed
-#'   to check the homogeneity of variances. May either be \code{"levene"} for
-#'   Levene's Test for Homogeneity of Variance, \code{"bartlett"} for the
+#'   to check the homogeneity of variances. May either be `"levene"` for
+#'   Levene's Test for Homogeneity of Variance, `"bartlett"` for the
 #'   Bartlett test (assuming normal distributed samples or groups),
-#'   \code{"fligner"} for the Fligner-Killeen test (rank-based, non-parametric
-#'   test), or \code{"auto"}. In the latter case, Bartlett test is used if the
+#'   `"fligner"` for the Fligner-Killeen test (rank-based, non-parametric
+#'   test), or `"auto"`. In the latter case, Bartlett test is used if the
 #'   model response is normal distributed, else Fligner-Killeen test is used.
-#' @param ... Arguments passed down to \code{car::leveneTest()}.
+#' @param ... Arguments passed down to `car::leveneTest()`.
 #'
 #' @return Invisibly returns the p-value of the test statistics. A p-value <
 #'   0.05 indicates a significant difference in the variance between the groups.
 #'
-#' @note There is also a \href{https://easystats.github.io/see/articles/performance.html}{\code{plot()}-method} implemented in the \href{https://easystats.github.io/see/}{\pkg{see}-package}.
+#' @note There is also a [`plot()`-method](https://easystats.github.io/see/articles/performance.html) implemented in the \href{https://easystats.github.io/see/}{\pkg{see}-package}.
 #'
 #' @examples
 #' model <<- lm(len ~ supp + dose, data = ToothGrowth)
@@ -96,7 +96,7 @@ check_homogeneity.default <- function(x, method = c("bartlett", "fligner", "leve
   } else if (p.val < 0.05) {
     insight::print_color(sprintf("Warning: Variances differ between groups (%s, p = %.3f).\n", method.string, p.val), "red")
   } else {
-    insight::print_color(sprintf("OK: Variances in each of the groups are the same (%s, p = %.3f).\n", method.string, p.val), "green")
+    insight::print_color(sprintf("OK: There is not clear evidence for different variances across groups (%s, p = %.3f).\n", method.string, p.val), "green")
   }
 
   attr(p.val, "object_name") <- deparse(substitute(x), width.cutoff = 500)
@@ -151,7 +151,7 @@ check_homogeneity.afex_aov <- function(x, method = "levene", ...) {
   } else if (p.val < 0.05) {
     insight::print_color(sprintf("Warning: Variances differ between groups (%s, p = %.3f).\n", method.string, p.val), "red")
   } else {
-    insight::print_color(sprintf("OK: Variances in each of the groups are the same (%s, p = %.3f).\n", method.string, p.val), "green")
+    insight::print_color(sprintf("OK: There is not clear evidence for different variances across groups (%s, p = %.3f).\n", method.string, p.val), "green")
   }
 
   attr(p.val, "object_name") <- deparse(substitute(x), width.cutoff = 500)

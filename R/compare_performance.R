@@ -1,25 +1,36 @@
 #' @title Compare performance of different models
 #' @name compare_performance
 #'
-#' @description \code{compare_performance()} computes indices of model
+#' @description `compare_performance()` computes indices of model
 #'   performance for different models at once and hence allows comparison of
 #'   indices across models.
 #'
 #' @param ... Multiple model objects (also of different classes).
-#' @param metrics Can be \code{"all"}, \code{"common"} or a character vector of
+#' @param metrics Can be `"all"`, `"common"` or a character vector of
 #'   metrics to be computed. See related
-#'   \code{\link[=model_performance]{documentation}} of object's class for
+#'   [`documentation()`][model_performance] of object's class for
 #'   details.
-#' @param rank Logical, if \code{TRUE}, models are ranked according to 'best'
+#' @param rank Logical, if `TRUE`, models are ranked according to 'best'
 #'   overall model performance. See 'Details'.
 #'
 #' @return A data frame (with one row per model) and one column per "index" (see
-#'   \code{metrics}).
+#'   `metrics`).
 #'
-#' @note There is also a \href{https://easystats.github.io/see/articles/performance.html}{\code{plot()}-method} implemented in the \href{https://easystats.github.io/see/}{\pkg{see}-package}.
+#' @note There is also a [`plot()`-method](https://easystats.github.io/see/articles/performance.html) implemented in the \href{https://easystats.github.io/see/}{\pkg{see}-package}.
 #'
-#' @details \subsection{Ranking Models}{
-#'   When \code{rank = TRUE}, a new column \code{Performance_Score} is returned.
+#' @details \subsection{Model Weights}{
+#'   When information criteria (IC) are requested in `metrics` (i.e., any of `"all"`,
+#'   `"common"`, `"AIC"`, `"AICc"`, `"BIC"`, `"WAIC"`, or `"LOOIC"`), model
+#'   weights based on these criteria are also computed. For all IC except LOOIC,
+#'   weights are computed as `w = exp(-0.5 * delta_ic) / sum(exp(-0.5 * delta_ic))`,
+#'   where `delta_ic` is the difference between the model's IC value and the
+#'   smallest IC value in the model set (Burnham & Anderson, 2002).
+#'   For LOOIC, weights are computed as "stacking weights" using
+#'   [loo::stacking_weights()].
+#' }
+#'
+#' \subsection{Ranking Models}{
+#'   When `rank = TRUE`, a new column `Performance_Score` is returned.
 #'   This score ranges from 0\% to 100\%, higher values indicating better model
 #'   performance. Note that all score value do not necessarily sum up to 100\%.
 #'   Rather, calculation is based on normalizing all indices (i.e. rescaling
@@ -30,16 +41,21 @@
 #'   In particular when models are of different types (e.g. mixed models,
 #'   classical linear models, logistic regression, ...), not all indices will be
 #'   computed for each model. In case where an index can't be calculated for a
-#'   specific model type, this model gets an \code{NA} value. All indices that
-#'   have any \code{NA}s are excluded from calculating the performance score.
+#'   specific model type, this model gets an `NA` value. All indices that
+#'   have any `NA`s are excluded from calculating the performance score.
 #'   \cr \cr
-#'   There is a \code{plot()}-method for \code{compare_performance()},
+#'   There is a `plot()`-method for `compare_performance()`,
 #'   which creates a "spiderweb" plot, where the different indices are
 #'   normalized and larger values indicate better model performance.
 #'   Hence, points closer to the center indicate worse fit indices
-#'   (see \href{https://easystats.github.io/see/articles/performance.html}{online-documentation}
+#'   (see [online-documentation](https://easystats.github.io/see/articles/performance.html)
 #'   for more details).
-#'   }
+#' }
+#'
+#' @references
+#' Burnham, K. P., & Anderson, D. R. (2002).
+#' _Model selection and multimodel inference: A practical information-theoretic approach_ (2nd ed.).
+#' Springer-Verlag. \doi{10.1007/b97636}
 #'
 #' @examples
 #' data(iris)
@@ -103,10 +119,28 @@ compare_performance <- function(..., metrics = "all", rank = FALSE, verbose = TR
   m <- mapply(function(.x, .y) {
     dat <- model_performance(.x, metrics = metrics, verbose = FALSE)
     model_name <- gsub("\"", "", .safe_deparse(.y), fixed = TRUE)
-    cbind(data.frame(Name = model_name, Model = class(.x)[1], stringsAsFactors = FALSE), dat)
+    perf_df <- data.frame(Name = model_name, Model = class(.x)[1], dat, stringsAsFactors = FALSE)
+    attributes(perf_df) <- c(attributes(perf_df), attributes(dat)[!names(attributes(dat)) %in% c("names", "row.names", "class")])
+    return(perf_df)
   }, objects, object_names, SIMPLIFY = FALSE)
 
+  attri <- lapply(m, function(x) {
+    attri <- attributes(x)
+    attri[!names(attri) %in% c("names", "row.names", "class")]
+  })
   dfs <- Reduce(function(x, y) merge(x, y, all = TRUE, sort = FALSE), m)
+
+  if (any(c("AIC", "AICc", "BIC", "WAIC") %in% names(dfs))) {
+    dfs$AIC_wt  <- .ic_weight(dfs$AIC)
+    dfs$AICc_wt <- .ic_weight(dfs$AICc)
+    dfs$BIC_wt  <- .ic_weight(dfs$BIC)
+    dfs$WAIC_wt <- .ic_weight(dfs$WAIC)
+  }
+
+  if ("LOOIC" %in% names(dfs)) {
+    lpd_point <- do.call(cbind, lapply(attri, function(x) x$loo$pointwise[, "elpd_loo"]))
+    dfs$LOOIC_wt <- as.numeric(loo::stacking_weights(lpd_point))
+  }
 
   # check if all models were fit from same data
   resps <- lapply(objects, insight::get_response)
@@ -121,8 +155,38 @@ compare_performance <- function(..., metrics = "all", rank = FALSE, verbose = TR
 
   # Reorder columns
   if (all(c("BIC", "BF") %in% names(dfs))) {
-    idx1 <- grep("BIC", names(dfs))
+    idx1 <- grep("^BIC$", names(dfs))
     idx2 <- grep("BF", names(dfs))
+    last_part <- (idx1 + 1):ncol(dfs)
+    dfs <- dfs[, c(1:idx1, idx2, last_part[last_part != idx2])]
+  }
+  if (all(c("AIC", "AIC_wt") %in% names(dfs))) {
+    idx1 <- grep("^AIC$", names(dfs))
+    idx2 <- grep("AIC_wt", names(dfs))
+    last_part <- (idx1 + 1):ncol(dfs)
+    dfs <- dfs[, c(1:idx1, idx2, last_part[last_part != idx2])]
+  }
+  if (all(c("BIC", "BIC_wt") %in% names(dfs))) {
+    idx1 <- grep("^BIC$", names(dfs))
+    idx2 <- grep("BIC_wt", names(dfs))
+    last_part <- (idx1 + 1):ncol(dfs)
+    dfs <- dfs[, c(1:idx1, idx2, last_part[last_part != idx2])]
+  }
+  if (all(c("AICc", "AICc_wt") %in% names(dfs))) {
+    idx1 <- grep("^AICc$", names(dfs))
+    idx2 <- grep("AICc_wt", names(dfs))
+    last_part <- (idx1 + 1):ncol(dfs)
+    dfs <- dfs[, c(1:idx1, idx2, last_part[last_part != idx2])]
+  }
+  if (all(c("WAIC", "WAIC_wt") %in% names(dfs))) {
+    idx1 <- grep("^WAIC$", names(dfs))
+    idx2 <- grep("WAIC_wt", names(dfs))
+    last_part <- (idx1 + 1):ncol(dfs)
+    dfs <- dfs[, c(1:idx1, idx2, last_part[last_part != idx2])]
+  }
+  if (all(c("LOOIC", "LOOIC_wt") %in% names(dfs))) {
+    idx1 <- grep("^LOOIC$", names(dfs))
+    idx2 <- grep("LOOIC_wt", names(dfs))
     last_part <- (idx1 + 1):ncol(dfs)
     dfs <- dfs[, c(1:idx1, idx2, last_part[last_part != idx2])]
   }
@@ -150,6 +214,23 @@ compare_performance <- function(..., metrics = "all", rank = FALSE, verbose = TR
   x$p <- NULL
   x$p_LRT <- NULL
 
+  # use weights instead of information criteria
+  x$AIC   <- NULL
+  x$AICc  <- NULL
+  x$BIC   <- NULL
+  x$LOOIC <- NULL
+  x$WAIC  <- NULL
+
+  # remove extra columns from LOO criteria
+  x$ELPD <- NULL
+  x$ELPD_SE <- NULL
+  x$LOOIC_SE <- NULL
+
+  # don't rank with BF when there is also BIC (same information)
+  if ("BF" %in% colnames(x) && "BIC_wt" %in% colnames(x)) {
+    x$BF <- NULL
+  }
+
   out <- x
 
   # normalize indices, for comparison
@@ -158,16 +239,8 @@ compare_performance <- function(..., metrics = "all", rank = FALSE, verbose = TR
     i
   })
 
-  # don't rank with BF when there is also BIC (same information)
-  if ("BF" %in% colnames(out) && "BIC" %in% colnames(out)) {
-    if (isTRUE(verbose)) {
-      message(insight::format_message("Bayes factor is based on BIC approximation, thus BF and BIC hold the same information. Ignoring BF for performance-score."))
-    }
-    out$BF <- NULL
-  }
-
   # recode some indices, so higher values = better fit
-  for (i in c("AIC", "AICc", "BIC", "RMSE", "Sigma")) {
+  for (i in c("RMSE", "Sigma")) {
     if (i %in% colnames(out)) {
       out[[i]] <- 1 - out[[i]]
     }
@@ -195,4 +268,13 @@ compare_performance <- function(..., metrics = "all", rank = FALSE, verbose = TR
 
 .normalize_vector <- function(x) {
   as.vector((x - min(x, na.rm = TRUE)) / diff(range(x, na.rm = TRUE), na.rm = TRUE))
+}
+
+.ic_weight <- function(ic) {
+  # ic should be in the deviance metric (-2 * loglik)
+  if (is.null(ic)) return(NULL)
+
+  diffs <- ic - min(ic)
+  f <- exp(-0.5 * diffs)
+  f / sum(f)
 }

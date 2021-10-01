@@ -6,29 +6,37 @@
 #'   R2, pseudo-R2, or marginal / adjusted R2 values are returned.
 #'
 #' @param model A statistical model.
+#' @param ci Confidence Interval (CI) level. Default is \code{NULL}. Confidence
+#'   intervals for R2 can be calculated based on different methods, see
+#'   \code{ci_method}.
+#' @param ci_method Method for constructing the R2 confidence interval.
+#'   Options are \code{"analytical"} for sampling-theory-based frequentist
+#'   intervals and \code{"bootstrap"} for bootstrap intervals. Analytical intervals
+#'   are not available for all models. For Bayesian models, [r2_bayes()] is used.
+#' @param verbose Logical. Should details about R2 and CI methods be given (`TRUE`) or not (`FALSE`)?
 #' @param ... Arguments passed down to the related r2-methods.
 #' @inheritParams r2_nakagawa
 #'
 #' @return Returns a list containing values related to the most appropriate R2
-#'   for the given model (or \code{NULL} if no R2 could be extracted). See the
+#'   for the given model (or `NULL` if no R2 could be extracted). See the
 #'   list below:
 #' \itemize{
-#'   \item Logistic models: \link[=r2_tjur]{Tjur's R2}
-#'   \item General linear models: \link[=r2_nagelkerke]{Nagelkerke's R2}
-#'   \item Multinomial Logit: \link[=r2_mcfadden]{McFadden's R2}
-#'   \item Models with zero-inflation: \link[=r2_zeroinflated]{R2 for zero-inflated models}
-#'   \item Mixed models: \link[=r2_nakagawa]{Nakagawa's R2}
-#'   \item Bayesian models: \link[=r2_bayes]{R2 bayes}
+#'   \item Logistic models: [Tjur's R2][r2_tjur]
+#'   \item General linear models: [Nagelkerke's R2][r2_nagelkerke]
+#'   \item Multinomial Logit: [McFadden's R2][r2_mcfadden]
+#'   \item Models with zero-inflation: [R2 for zero-inflated models][r2_zeroinflated]
+#'   \item Mixed models: [Nakagawa's R2][r2_nakagawa]
+#'   \item Bayesian models: [R2 bayes][r2_bayes]
 #' }
 #'
-#' @note If there is no \code{r2()}-method defined for the given model class,
-#'   \code{r2()} tries to return a "generic r2 value, calculated as following:
-#'   \code{1-sum((y-y_hat)^2)/sum((y-y_bar)^2))}
+#' @note If there is no `r2()`-method defined for the given model class,
+#'   `r2()` tries to return a "generic r2 value, calculated as following:
+#'   `1-sum((y-y_hat)^2)/sum((y-y_bar)^2))`
 #'
-#' @seealso \code{\link{r2_bayes}}, \code{\link{r2_coxsnell}}, \code{\link{r2_kullback}},
-#'   \code{\link{r2_loo}}, \code{\link{r2_mcfadden}}, \code{\link{r2_nagelkerke}},
-#'   \code{\link{r2_nakagawa}}, \code{\link{r2_tjur}}, \code{\link{r2_xu}} and
-#'   \code{\link{r2_zeroinflated}}.
+#' @seealso [r2_bayes()], [r2_coxsnell()], [r2_kullback()],
+#'   [r2_loo()], [r2_mcfadden()], [r2_nagelkerke()],
+#'   [r2_nakagawa()], [r2_tjur()], [r2_xu()] and
+#'   [r2_zeroinflated()].
 #'
 #' @examples
 #' model <- glm(vs ~ wt + mpg, data = mtcars, family = "binomial")
@@ -49,8 +57,14 @@ r2 <- function(model, ...) {
 # Default models -----------------------------------------------
 
 
+#' @rdname r2
 #' @export
-r2.default <- function(model, verbose = TRUE, ...) {
+r2.default <- function(model, ci = NULL, ci_method = "analytical", verbose = TRUE, ...) {
+  ci_method <- match.arg(ci_method, choices = c("analytical", "bootstrap"))
+
+  # check input
+  ci <- .check_r2_ci_args(ci, ci_method, "bootstrap", verbose)
+
   out <- tryCatch(
     {
       if (insight::model_info(model)$is_binomial) {
@@ -115,6 +129,26 @@ r2.lm <- function(model, ...) {
 #' @export
 r2.summary.lm <- function(model, ...) {
   .r2_lm(model)
+}
+
+
+
+#' @export
+r2.systemfit <- function(model, ...) {
+  out <- lapply(summary(model)$eq, function(model_summary) {
+    s <- list(
+      R2 = model_summary$r.squared,
+      R2_adjusted = model_summary$adj.r.squared
+    )
+
+    names(s$R2) <- "R2"
+    names(s$R2_adjusted) <- "adjusted R2"
+
+    s
+  })
+
+  names(out) <- names(insight::find_formula(model))
+  out
 }
 
 
@@ -737,4 +771,22 @@ r2.DirichletRegModel <- function(model, ...) {
   names(out$R2_Nagelkerke) <- "Nagelkerke's R2"
   class(out) <- c("r2_pseudo", class(out))
   out
+}
+
+
+
+
+
+# helper -------------------
+
+.check_r2_ci_args <- function(ci = NULL, ci_method = "bootstrap", valid_ci_method = NULL, verbose = TRUE) {
+  if (!is.null(ci) && !is.na(ci)) {
+    if (!is.null(valid_ci_method) && !ci_method %in% valid_ci_method) {
+      if (verbose) {
+        warning(paste0("Method '", ci_method, "' to compute confidence intervals for R2 not supported."), call. = FALSE)
+      }
+      return(NULL)
+    }
+  }
+  ci
 }
