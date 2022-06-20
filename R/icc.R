@@ -23,21 +23,21 @@
 #' @inheritParams r2_bayes
 #' @inheritParams insight::get_variance
 #'
-#' @return A list with two values, the adjusted and conditional ICC. For
+#' @return A list with two values, the adjusted ICC and the unadjusted ICC. For
 #' `variance_decomposition()`, a list with two values, the decomposed
 #' ICC as well as the credible intervals for this ICC.
 #'
 #' @references \itemize{
 #'  \item Hox, J. J. (2010). Multilevel analysis: techniques and applications
 #'  (2nd ed). New York: Routledge.
-#'  \item Nakagawa, S., Johnson, P. C. D., & Schielzeth, H. (2017). The
+#'  \item Nakagawa, S., Johnson, P. C. D., and Schielzeth, H. (2017). The
 #'  coefficient of determination R2 and intra-class correlation coefficient from
 #'  generalized linear mixed-effects models revisited and expanded. Journal of
 #'  The Royal Society Interface, 14(134), 20170213. \doi{10.1098/rsif.2017.0213}
-#'  \item Rabe-Hesketh, S., & Skrondal, A. (2012). Multilevel and longitudinal
+#'  \item Rabe-Hesketh, S., and Skrondal, A. (2012). Multilevel and longitudinal
 #'  modeling using Stata (3rd ed). College Station, Tex: Stata Press
 #'  Publication.
-#'  \item Raudenbush, S. W., & Bryk, A. S. (2002). Hierarchical linear models:
+#'  \item Raudenbush, S. W., and Bryk, A. S. (2002). Hierarchical linear models:
 #'  applications and data analysis methods (2nd ed). Thousand Oaks: Sage
 #'  Publications.
 #'  }
@@ -51,7 +51,7 @@
 #'  classrooms and each classroom was administered the same test) and ICC indexes
 #'  how strongly measurements in the same group resemble each other. This index
 #'  goes from 0, if the grouping conveys no information, to 1, if all
-#'  observations in a group are identical (Gelman \& Hill, 2007, p. 258). In
+#'  observations in a group are identical (Gelman and Hill, 2007, p. 258). In
 #'  other word, the ICC \dQuote{can also be interpreted as the expected
 #'  correlation between two randomly drawn units that are in the same group}
 #'  \cite{(Hox 2010: 15)}, although this definition might not apply to mixed
@@ -63,12 +63,13 @@
 #'  the total variance, i.e. the sum of the random effect variance and the
 #'  residual variance, \ifelse{html}{\out{&sigma;<sup>2</sup><sub>&epsilon;</sub>}}{\eqn{\sigma^2_\epsilon}}.
 #'  }
-#'  \subsection{Adjusted and conditional ICC}{
-#'  `icc()` calculates an adjusted and conditional ICC, which both take all
-#'  sources of uncertainty (i.e. of *all random effects*) into account.
+#'  \subsection{Adjusted and unadjusted ICC}{
+#'  `icc()` calculates an adjusted and an unadjusted ICC, which both
+#'  take all sources of uncertainty (i.e. of *all random effects*) into account.
 #'  While the *adjusted ICC* only relates to the random effects, the
-#'  *conditional ICC* also takes the fixed effects variances into account
-#'  (see \cite{Nakagawa et al. 2017}). Typically, the *adjusted* ICC is of
+#'  *unadjusted ICC* also takes the fixed effects variances into account, more precisely,
+#'  the fixed effects variance is added to the denominator of the formula to
+#'  calculate the ICC (see \cite{Nakagawa et al. 2017}). Typically, the *adjusted* ICC is of
 #'  interest when the analysis of random effects is of interest. `icc()`
 #'  returns a meaningful ICC also for more complex random effects structures,
 #'  like models with random slopes or nested design (more than two levels) and
@@ -223,13 +224,14 @@ icc <- function(model, by_group = FALSE, tolerance = 1e-05) {
   } else {
     # Calculate ICC values
     icc_adjusted <- vars$var.random / (vars$var.random + vars$var.residual)
-    icc_conditional <- vars$var.random / (vars$var.fixed + vars$var.random + vars$var.residual)
+    icc_unadjusted <- vars$var.random / (vars$var.fixed + vars$var.random + vars$var.residual)
 
     structure(
       class = "icc",
       list(
         "ICC_adjusted" = icc_adjusted,
-        "ICC_conditional" = icc_conditional
+        "ICC_conditional" = icc_unadjusted,
+        "ICC_unadjusted" = icc_unadjusted
       )
     )
   }
@@ -317,7 +319,7 @@ variance_decomposition <- function(model,
 as.data.frame.icc <- function(x, row.names = NULL, optional = FALSE, ...) {
   data.frame(
     ICC_adjusted = x$ICC_adjusted,
-    ICC_conditional = x$ICC_conditional,
+    ICC_conditional = x$ICC_unadjusted,
     stringsAsFactors = FALSE,
     row.names = row.names,
     optional = optional,
@@ -331,8 +333,8 @@ print.icc <- function(x, digits = 3, ...) {
   insight::print_color("# Intraclass Correlation Coefficient\n\n", "blue")
 
   out <- paste0(c(
-    sprintf("     Adjusted ICC: %.*f", digits, x$ICC_adjusted),
-    sprintf("  Conditional ICC: %.*f", digits, x$ICC_conditional)
+    sprintf("    Adjusted ICC: %.*f", digits, x$ICC_adjusted),
+    sprintf("  Unadjusted ICC: %.*f", digits, x$ICC_unadjusted)
   ),
   collapse = "\n"
   )

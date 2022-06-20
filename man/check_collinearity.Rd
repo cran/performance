@@ -12,11 +12,12 @@ check_collinearity(x, ...)
 
 multicollinearity(x, ...)
 
-\method{check_collinearity}{default}(x, verbose = TRUE, ...)
+\method{check_collinearity}{default}(x, ci = 0.95, verbose = TRUE, ...)
 
 \method{check_collinearity}{glmmTMB}(
   x,
   component = c("all", "conditional", "count", "zi", "zero_inflated"),
+  ci = 0.95,
   verbose = TRUE,
   ...
 )
@@ -30,6 +31,8 @@ work without \code{model.matrix()}).}
 
 \item{...}{Currently not used.}
 
+\item{ci}{Confidence Interval (CI) level for VIF and tolerance values.}
+
 \item{verbose}{Toggle off warnings or messages.}
 
 \item{component}{For models with zero-inflation component, multicollinearity
@@ -41,18 +44,20 @@ Following model-classes are currently supported: \code{hurdle},
 \code{zeroinfl}, \code{zerocount}, \code{MixMod} and \code{glmmTMB}.}
 }
 \value{
-A data frame with four columns: The name of the model term, the
-variance inflation factor and the factor by which the standard error
-is increased due to possible correlation with other terms.
+A data frame with information about name of the model term, the
+variance inflation factor and associated confidence intervals, the factor
+by which the standard error is increased due to possible correlation
+with other terms, and tolerance values (including confidence intervals),
+where \code{tolerance = 1/vif}.
 }
 \description{
 \code{check_collinearity()} checks regression models for
 multicollinearity by calculating the variance inflation factor (VIF).
 \code{multicollinearity()} is an alias for \code{check_collinearity()}.
-(When printed, VIF are also translated to tolerance values, where
-\code{tolerance = 1/vif}.) \code{check_concurvity()} is a wrapper around
-\code{mgcv::concurvity()}, and can be considered as a collinearity check
-for smooth terms in GAMs.
+\code{check_concurvity()} is a wrapper around \code{mgcv::concurvity()}, and can be
+considered as a collinearity check for smooth terms in GAMs. Confidence
+intervals for VIF and tolerance are based on Marcoulides et al.
+(2019, Appendix B).
 }
 \details{
 \subsection{Multicollinearity}{
@@ -113,7 +118,11 @@ from 0 (no problem) to 1 (total lack of identifiability).
 }
 }
 \note{
-There is also a \href{https://easystats.github.io/see/articles/performance.html}{\code{plot()}-method} implemented in the \href{https://easystats.github.io/see/}{\pkg{see}-package}.
+The code to compute the confidence intervals for the VIF and tolerance
+values was adapted from the Appendix B from the Marcoulides et al. paper.
+Thus, credits go to these authors the original algorithm. There is also
+a \href{https://easystats.github.io/see/articles/performance.html}{\code{plot()}-method}
+implemented in the \href{https://easystats.github.io/see/}{\pkg{see}-package}.
 }
 \examples{
 m <- lm(mpg ~ wt + cyl + gear + disp, data = mtcars)
@@ -131,9 +140,13 @@ if (require("see")) {
 Low Sensitivity in Moderated Regression? Simulations and Cancer Symptom
 Clusters. Open Journal of Statistics, 03(06), 24-44.
 
-\item James, G., Witten, D., Hastie, T., & Tibshirani, R. (eds.). (2013).
+\item James, G., Witten, D., Hastie, T., and Tibshirani, R. (eds.). (2013).
 An introduction to statistical learning: with applications in R. New York:
 Springer.
+
+\item Marcoulides, K. M., and Raykov, T. (2019). Evaluation of Variance
+Inflation Factors in Regression Models Using Latent Variable Modeling
+Methods. Educational and Psychological Measurement, 79(5), 874–882.
 
 \item McElreath, R. (2020). Statistical rethinking: A Bayesian course with
 examples in R and Stan. 2nd edition. Chapman and Hall/CRC.

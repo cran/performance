@@ -35,7 +35,7 @@ calculate the central tendency of the variances.}
 \item{...}{Arguments passed down to \code{brms::posterior_predict()}.}
 }
 \value{
-A list with two values, the adjusted and conditional ICC. For
+A list with two values, the adjusted ICC and the unadjusted ICC. For
 \code{variance_decomposition()}, a list with two values, the decomposed
 ICC as well as the credible intervals for this ICC.
 }
@@ -58,7 +58,7 @@ scores in a school can be grouped by classroom if there are multiple
 classrooms and each classroom was administered the same test) and ICC indexes
 how strongly measurements in the same group resemble each other. This index
 goes from 0, if the grouping conveys no information, to 1, if all
-observations in a group are identical (Gelman \& Hill, 2007, p. 258). In
+observations in a group are identical (Gelman and Hill, 2007, p. 258). In
 other word, the ICC \dQuote{can also be interpreted as the expected
 correlation between two randomly drawn units that are in the same group}
 \cite{(Hox 2010: 15)}, although this definition might not apply to mixed
@@ -70,12 +70,13 @@ The ICC is calculated by dividing the random effect variance,
 the total variance, i.e. the sum of the random effect variance and the
 residual variance, \ifelse{html}{\out{&sigma;<sup>2</sup><sub>&epsilon;</sub>}}{\eqn{\sigma^2_\epsilon}}.
 }
-\subsection{Adjusted and conditional ICC}{
-\code{icc()} calculates an adjusted and conditional ICC, which both take all
-sources of uncertainty (i.e. of \emph{all random effects}) into account.
+\subsection{Adjusted and unadjusted ICC}{
+\code{icc()} calculates an adjusted and an unadjusted ICC, which both
+take all sources of uncertainty (i.e. of \emph{all random effects}) into account.
 While the \emph{adjusted ICC} only relates to the random effects, the
-\emph{conditional ICC} also takes the fixed effects variances into account
-(see \cite{Nakagawa et al. 2017}). Typically, the \emph{adjusted} ICC is of
+\emph{unadjusted ICC} also takes the fixed effects variances into account, more precisely,
+the fixed effects variance is added to the denominator of the formula to
+calculate the ICC (see \cite{Nakagawa et al. 2017}). Typically, the \emph{adjusted} ICC is of
 interest when the analysis of random effects is of interest. \code{icc()}
 returns a meaningful ICC also for more complex random effects structures,
 like models with random slopes or nested design (more than two levels) and
@@ -147,14 +148,14 @@ if (require("lme4")) {
 \itemize{
 \item Hox, J. J. (2010). Multilevel analysis: techniques and applications
 (2nd ed). New York: Routledge.
-\item Nakagawa, S., Johnson, P. C. D., & Schielzeth, H. (2017). The
+\item Nakagawa, S., Johnson, P. C. D., and Schielzeth, H. (2017). The
 coefficient of determination R2 and intra-class correlation coefficient from
 generalized linear mixed-effects models revisited and expanded. Journal of
 The Royal Society Interface, 14(134), 20170213. \doi{10.1098/rsif.2017.0213}
-\item Rabe-Hesketh, S., & Skrondal, A. (2012). Multilevel and longitudinal
+\item Rabe-Hesketh, S., and Skrondal, A. (2012). Multilevel and longitudinal
 modeling using Stata (3rd ed). College Station, Tex: Stata Press
 Publication.
-\item Raudenbush, S. W., & Bryk, A. S. (2002). Hierarchical linear models:
+\item Raudenbush, S. W., and Bryk, A. S. (2002). Hierarchical linear models:
 applications and data analysis methods (2nd ed). Thousand Oaks: Sage
 Publications.
 }

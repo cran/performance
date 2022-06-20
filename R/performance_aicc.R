@@ -23,7 +23,9 @@
 #' @return Numeric, the AIC or AICc value.
 #'
 #' @details `performance_aic()` correctly detects transformed response and,
-#' unlike `stats::AIC()`, returns the corrected AIC value.
+#' unlike `stats::AIC()`, returns the "corrected" AIC value on the original
+#' scale. To get back to the original scale, the likelihood of the model is
+#' multiplied by the Jacobian/derivative of the transformation.
 #'
 #' @references
 #' - Akaike, H. (1973) Information theory as an extension of the maximum
@@ -250,12 +252,45 @@ performance_aicc.rma <- function(x, ...) {
 .adjust_ic_jacobian <- function(model, ic) {
   response_transform <- insight::find_transformation(model)
   if (!is.null(ic) && !is.null(response_transform) && !identical(response_transform, "identity")) {
-    adjustment <- tryCatch(.ll_jacobian_adjustment(model, insight::get_weights(model, na_rm = TRUE)), error = function(e) NULL)
+    adjustment <- tryCatch(.ll_analytic_adjustment(model, insight::get_weights(model, na_rm = TRUE)), error = function(e) NULL)
     if (!is.null(adjustment)) {
       ic <- ic - 2 * adjustment
     }
   }
   ic
+}
+
+
+# copied from `insight`
+.ll_analytic_adjustment <- function(x, model_weights = NULL) {
+  tryCatch(
+    {
+      trans <- insight::find_transformation(x)
+
+      if (trans == "identity") {
+        .weighted_sum(log(insight::get_response(x)), w = model_weights)
+      } else if (trans == "log") {
+        .weighted_sum(log(1 / insight::get_response(x)), w = model_weights)
+      } else if (trans == "log1p") {
+        .weighted_sum(log(1 / (insight::get_response(x) + 1)), w = model_weights)
+      } else if (trans == "log2") {
+        .weighted_sum(log(1 / (insight::get_response(x) * log(2))), w = model_weights)
+      } else if (trans == "log10") {
+        .weighted_sum(log(1 / (insight::get_response(x) * log(10))), w = model_weights)
+      } else if (trans == "exp") {
+        .weighted_sum(insight::get_response(x), w = model_weights)
+      } else if (trans == "expm1") {
+        .weighted_sum((insight::get_response(x) - 1), w = model_weights)
+      } else if (trans == "sqrt") {
+        .weighted_sum(log(.5 / sqrt(insight::get_response(x))), w = model_weights)
+      } else {
+        .ll_jacobian_adjustment(x, model_weights)
+      }
+    },
+    error = function(e) {
+      NULL
+    }
+  )
 }
 
 
@@ -282,6 +317,7 @@ performance_aicc.rma <- function(x, ...) {
     }
   )
 }
+
 
 .weighted_sum <- function(x, w = NULL, ...) {
   if (is.null(w)) {

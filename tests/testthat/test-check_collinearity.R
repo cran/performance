@@ -34,14 +34,42 @@ if (requiet("testthat") && requiet("performance") && requiet("glmmTMB")) {
       tolerance = 1e-3
     )
     expect_equal(
+      check_collinearity(m2, component = "conditional")$VIF_CI_low,
+      c(1.03392, 1.14674, 1.10105),
+      tolerance = 1e-3
+    )
+    expect_equal(
       check_collinearity(m2, component = "all")$VIF,
       c(1.09015, 1.2343, 1.17832, 1.26914, 1, 1.26914),
+      tolerance = 1e-3
+    )
+    expect_equal(
+      check_collinearity(m2, component = "all")$VIF_CI_low,
+      c(1.03392, 1.14674, 1.10105, 1.17565, 1, 1.17565),
       tolerance = 1e-3
     )
     expect_equal(
       check_collinearity(m2, component = "zero_inflated")$VIF,
       c(1.26914, 1, 1.26914),
       tolerance = 1e-3
+    )
+    expect_equal(
+      check_collinearity(m2, component = "zero_inflated")$Tolerance_CI_high,
+      c(0.85059, 1, 0.85059),
+      tolerance = 1e-3
+    )
+
+    coll <- check_collinearity(m2, component = "all")
+    expect_true(all(coll$Tolerance < coll$Tolerance_CI_high))
+    expect_true(all(coll$VIF > coll$VIF_CI_low))
+
+    expect_equal(
+      attributes(coll)$data$Component,
+      c("conditional", "conditional", "conditional", "zero inflated", "zero inflated", "zero inflated")
+    )
+    expect_equal(
+      colnames(attributes(coll)$CI),
+      c("VIF_CI_low", "VIF_CI_high", "Tolerance_CI_low", "Tolerance_CI_high", "Component")
     )
   })
 

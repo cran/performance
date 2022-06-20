@@ -28,6 +28,11 @@
 #'   \item{**PCP**} {percentage of correct predictions, see [performance_pcp()]}
 #' }
 #'
+#' @details `model_performance()` correctly detects transformed response and
+#' returns the "corrected" AIC and BIC value on the original scale. To get back
+#' to the original scale, the likelihood of the model is multiplied by the
+#' Jacobian/derivative of the transformation.
+#'
 #' @examples
 #' model <- lm(mpg ~ wt + cyl, data = mtcars)
 #' model_performance(model)
@@ -115,7 +120,16 @@ model_performance.lm <- function(model, metrics = "all", verbose = TRUE, ...) {
       if ("R2_ADJ" %in% toupper(metrics) && "R2_adjusted" %in% names(R2)) {
         out$R2_adjusted <- R2$R2_adjusted
       }
-      if (!any(c("R2", "R2_adj") %in% names(R2))) {
+      if ("R2_ADJ" %in% toupper(metrics) && "R2_adj" %in% names(R2)) {
+        out$R2_adjusted <- R2$R2_adj
+      }
+      if ("R2_within" %in% names(R2)) {
+        out$R2_within <- R2$R2_within
+      }
+      if ("R2_within_adjusted" %in% names(R2)) {
+        out$R2_within_adjusted <- R2$R2_within_adjusted
+      }
+      if (!any(c("R2", "R2_adj", "R2_adjusted", "R2_within", "R2_within_adjusted") %in% names(R2))) {
         out <- c(out, R2)
       }
     }
@@ -242,6 +256,9 @@ model_performance.felm <- model_performance.lm
 
 #' @export
 model_performance.iv_robust <- model_performance.lm
+
+#' @export
+model_performance.lm_robust <- model_performance.lm
 
 #' @export
 model_performance.multinom <- model_performance.lm

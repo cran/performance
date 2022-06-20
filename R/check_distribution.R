@@ -82,7 +82,7 @@ check_distribution.default <- function(model) {
 
 
   # Extract features
-  x <- .factor_to_numeric(insight::get_response(model, verbose = FALSE))
+  x <- datawizard::data_to_numeric(insight::get_response(model, verbose = FALSE), dummy_factors = FALSE, preserve_levels = TRUE)
   dat <- .extract_features(x)
 
   dist_response <- as.data.frame(t(stats::predict(classify_distribution, dat, type = "prob")))
@@ -96,6 +96,7 @@ check_distribution.default <- function(model) {
   )
 
   class(out) <- unique(c("check_distribution", "see_check_distribution", class(out)))
+  attr(out, "data") <- model
   attr(out, "object_name") <- deparse(substitute(model), width.cutoff = 500)
 
   out

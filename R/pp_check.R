@@ -41,10 +41,10 @@
 #'   is loaded, `pp_check()` is also available as an alias for `check_predictions()`.
 #'
 #' @references \itemize{
-#'   \item Gabry, J., Simpson, D., Vehtari, A., Betancourt, M., & Gelman, A. (2019). Visualization in Bayesian workflow. Journal of the Royal Statistical Society: Series A (Statistics in Society), 182(2), 389–402. https://doi.org/10.1111/rssa.12378
-#'   \item Gelman, A., & Hill, J. (2007). Data analysis using regression and multilevel/hierarchical models. Cambridge; New York: Cambridge University Press.
-#'   \item Gelman, A., Carlin, J. B., Stern, H. S., Dunson, D. B., Vehtari, A., & Rubin, D. B. (2014). Bayesian data analysis. (Third edition). CRC Press.
-#'   \item Gelman, A., Hill, J., & Vehtari, A. (2020). Regression and Other Stories. Cambridge University Press.
+#'   \item Gabry, J., Simpson, D., Vehtari, A., Betancourt, M., and Gelman, A. (2019). Visualization in Bayesian workflow. Journal of the Royal Statistical Society: Series A (Statistics in Society), 182(2), 389–402. https://doi.org/10.1111/rssa.12378
+#'   \item Gelman, A., and Hill, J. (2007). Data analysis using regression and multilevel/hierarchical models. Cambridge; New York: Cambridge University Press.
+#'   \item Gelman, A., Carlin, J. B., Stern, H. S., Dunson, D. B., Vehtari, A., and Rubin, D. B. (2014). Bayesian data analysis. (Third edition). CRC Press.
+#'   \item Gelman, A., Hill, J., and Vehtari, A. (2020). Regression and Other Stories. Cambridge University Press.
 #' }
 #'
 #' @examples
@@ -114,16 +114,23 @@ check_predictions.BFBayesFactor <- function(object,
   out
 }
 
-
-
 pp_check.BFBayesFactor <- check_predictions.BFBayesFactor
 
+
+# pp-check functions -------------------------------------
 
 pp_check.lm <- function(object,
                         iterations = 50,
                         check_range = FALSE,
                         re_formula = NULL,
                         ...) {
+
+  # if we have a matrix-response, continue here...
+  if (grepl("^cbind\\((.*)\\)", insight::find_response(object, combine = TRUE))) {
+    return(pp_check.glm(object, iterations, check_range, re_formula, ...))
+  }
+
+  # else, proceed as usual
   out <- tryCatch(
     {
       stats::simulate(object, nsim = iterations, re.form = re_formula, ...)
@@ -132,6 +139,17 @@ pp_check.lm <- function(object,
       NULL
     }
   )
+
+  # glmmTMB returns column matrix for bernoulli
+  if (inherits(object, "glmmTMB") && insight::model_info(object)$is_binomial) {
+    out <- as.data.frame(lapply(out, function(i) {
+      if (is.matrix(i)) {
+        i[, 1]
+      } else {
+        i
+      }
+    }))
+  }
 
   if (is.null(out)) {
     stop(insight::format_message(sprintf("Could not simulate responses. Maybe there is no 'simulate()' for objects of class '%s'?", class(object)[1])), call. = FALSE)
@@ -155,6 +173,67 @@ pp_check.lm <- function(object,
   out
 }
 
+
+pp_check.glm <- function(object,
+                         iterations = 50,
+                         check_range = FALSE,
+                         re_formula = NULL,
+                         ...) {
+
+  # if we have no matrix-response, continue here...
+  if (!grepl("^cbind\\((.*)\\)", insight::find_response(object, combine = TRUE))) {
+    return(pp_check.lm(object, iterations, check_range, re_formula, ...))
+  }
+
+  # else, process matrix response. for matrix response models, we compute
+  # the ratio of successes and failures, because the plot cannot handle
+  # matrix columns with separate success/failures in simulations.
+
+  out <- tryCatch(
+    {
+      matrix_sim <- stats::simulate(object, nsim = iterations, re.form = re_formula, ...)
+      as.data.frame(sapply(matrix_sim, function(i) i[, 1] / i[, 2], simplify = TRUE))
+    },
+    error = function(e) {
+      NULL
+    }
+  )
+
+  if (is.null(out)) {
+    stop(insight::format_message(sprintf("Could not simulate responses. Maybe there is no 'simulate()' for objects of class '%s'?", class(object)[1])), call. = FALSE)
+  }
+
+  # get response data, and response term
+  response <- eval(.str2lang(insight::find_response(object)),
+                   envir = insight::get_response(object))
+  resp_string <- insight::find_terms(object)$response
+
+  out$y <- response[, 1] / response[, 2]
+
+  attr(out, "check_range") <- check_range
+  attr(out, "response_name") <- resp_string
+  class(out) <- c("performance_pp_check", "see_performance_pp_check", class(out))
+  out
+}
+
+
+# styler: off
+pp_check.glmmTMB   <-
+  pp_check.glm.nb  <-
+  pp_check.lme     <-
+  pp_check.merMod  <-
+  pp_check.MixMod  <-
+  pp_check.mle2    <-
+  pp_check.negbin  <-
+  pp_check.polr    <-
+  pp_check.rma     <-
+  pp_check.vlm     <-
+  pp_check.wbm     <-
+  pp_check.lm
+# styler: on
+
+
+
 #' @rawNamespace if (getRversion() >= "3.6.0") {
 #'   S3method(bayesplot::pp_check, lm)
 #'   S3method(bayesplot::pp_check, glm)
@@ -171,21 +250,9 @@ pp_check.lm <- function(object,
 #'   S3method(bayesplot::pp_check, BFBayesFactor)
 #' }
 
-# styler: off
-pp_check.glm       <-
-  pp_check.glmmTMB <-
-  pp_check.glm.nb  <-
-  pp_check.lme     <-
-  pp_check.merMod  <-
-  pp_check.MixMod  <-
-  pp_check.mle2    <-
-  pp_check.negbin  <-
-  pp_check.polr    <-
-  pp_check.rma     <-
-  pp_check.vlm     <-
-  pp_check.wbm     <-
-  pp_check.lm
-# styler: on
+
+
+# aliases --------------------------
 
 #' @rdname check_predictions
 #' @export

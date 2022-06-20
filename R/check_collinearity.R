@@ -6,10 +6,10 @@
 #'  `check_collinearity()` checks regression models for
 #'  multicollinearity by calculating the variance inflation factor (VIF).
 #'  `multicollinearity()` is an alias for `check_collinearity()`.
-#'  (When printed, VIF are also translated to tolerance values, where
-#'  `tolerance = 1/vif`.) `check_concurvity()` is a wrapper around
-#'  `mgcv::concurvity()`, and can be considered as a collinearity check
-#'  for smooth terms in GAMs.
+#'  `check_concurvity()` is a wrapper around `mgcv::concurvity()`, and can be
+#'  considered as a collinearity check for smooth terms in GAMs. Confidence
+#'  intervals for VIF and tolerance are based on Marcoulides et al.
+#'  (2019, Appendix B).
 #'
 #' @param x A model object (that should at least respond to `vcov()`,
 #'  and if possible, also to `model.matrix()` - however, it also should
@@ -21,12 +21,15 @@
 #'  `component = "zi"`) or both components (`component = "all"`).
 #'  Following model-classes are currently supported: `hurdle`,
 #'  `zeroinfl`, `zerocount`, `MixMod` and `glmmTMB`.
+#' @param ci Confidence Interval (CI) level for VIF and tolerance values.
 #' @param verbose Toggle off warnings or messages.
 #' @param ... Currently not used.
 #'
-#' @return A data frame with four columns: The name of the model term, the
-#'   variance inflation factor and the factor by which the standard error
-#'   is increased due to possible correlation with other terms.
+#' @return A data frame with information about name of the model term, the
+#'   variance inflation factor and associated confidence intervals, the factor
+#'   by which the standard error is increased due to possible correlation
+#'   with other terms, and tolerance values (including confidence intervals),
+#'   where `tolerance = 1/vif`.
 #'
 #' @details
 #'
@@ -93,9 +96,13 @@
 #'   Low Sensitivity in Moderated Regression? Simulations and Cancer Symptom
 #'   Clusters. Open Journal of Statistics, 03(06), 24-44.
 #'
-#'   \item James, G., Witten, D., Hastie, T., & Tibshirani, R. (eds.). (2013).
+#'   \item James, G., Witten, D., Hastie, T., and Tibshirani, R. (eds.). (2013).
 #'   An introduction to statistical learning: with applications in R. New York:
 #'   Springer.
+#'
+#'   \item Marcoulides, K. M., and Raykov, T. (2019). Evaluation of Variance
+#'   Inflation Factors in Regression Models Using Latent Variable Modeling
+#'   Methods. Educational and Psychological Measurement, 79(5), 874–882.
 #'
 #'   \item McElreath, R. (2020). Statistical rethinking: A Bayesian course with
 #'   examples in R and Stan. 2nd edition. Chapman and Hall/CRC.
@@ -104,7 +111,11 @@
 #'   [webpage](https://janhove.github.io/analysis/2019/09/11/collinearity)
 #'   }
 #'
-#' @note There is also a [`plot()`-method](https://easystats.github.io/see/articles/performance.html) implemented in the \href{https://easystats.github.io/see/}{\pkg{see}-package}.
+#' @note The code to compute the confidence intervals for the VIF and tolerance
+#' values was adapted from the Appendix B from the Marcoulides et al. paper.
+#' Thus, credits go to these authors the original algorithm. There is also
+#' a [`plot()`-method](https://easystats.github.io/see/articles/performance.html)
+#' implemented in the \href{https://easystats.github.io/see/}{\pkg{see}-package}.
 #'
 #' @examples
 #' m <- lm(mpg ~ wt + cyl + gear + disp, data = mtcars)
@@ -131,8 +142,8 @@ multicollinearity <- check_collinearity
 
 #' @rdname check_collinearity
 #' @export
-check_collinearity.default <- function(x, verbose = TRUE, ...) {
-  .check_collinearity(x, component = "conditional", verbose = verbose)
+check_collinearity.default <- function(x, ci = 0.95, verbose = TRUE, ...) {
+  .check_collinearity(x, component = "conditional", ci = ci, verbose = verbose)
 }
 
 
@@ -147,7 +158,7 @@ print.check_collinearity <- function(x, ...) {
     comp <- split(x, x$Component)
     for (i in 1:length(comp)) {
       cat(paste0("\n* ", comp[[i]]$Component[1], " component:\n"))
-      .print_collinearity(comp[[i]][, 1:3])
+      .print_collinearity(datawizard::data_remove(comp[[i]], "Component"))
     }
   } else {
     .print_collinearity(x)
@@ -166,33 +177,32 @@ plot.check_collinearity <- function(x, ...) {
 
 .print_collinearity <- function(x) {
   vifs <- x$VIF
-  x$Tolerance <- 1 / x$VIF
+  low_vif <- which(vifs < 5)
+  mid_vif <- which(vifs >= 5 & vifs < 10)
+  high_vif <- which(vifs >= 10)
 
-  x$VIF <- sprintf("%.2f", x$VIF)
-  x$SE_factor <- sprintf("%.2f", x$SE_factor)
-  x$Tolerance <- sprintf("%.2f", x$Tolerance)
+  all_vifs <- insight::compact_list(list(low_vif, mid_vif, high_vif))
 
-  colnames(x)[3] <- "Increased SE"
+  # format table for each "ViF" group - this ensures that CIs are properly formatted
+  x <- do.call(rbind, lapply(all_vifs, function(i) insight::format_table(x[i, ])))
+  colnames(x)[4] <- "Increased SE"
 
-  low_corr <- which(vifs < 5)
-  if (length(low_corr)) {
+  if (length(low_vif)) {
     cat("\n")
     insight::print_color("Low Correlation\n\n", "green")
-    print.data.frame(x[low_corr, ], row.names = FALSE)
+    print.data.frame(x[low_vif, ], row.names = FALSE)
   }
 
-  mid_corr <- which(vifs >= 5 & vifs < 10)
-  if (length(mid_corr)) {
+  if (length(mid_vif)) {
     cat("\n")
     insight::print_color("Moderate Correlation\n\n", "yellow")
-    print.data.frame(x[mid_corr, ], row.names = FALSE)
+    print.data.frame(x[mid_vif, ], row.names = FALSE)
   }
 
-  high_corr <- which(vifs >= 10)
-  if (length(high_corr)) {
+  if (length(high_vif)) {
     cat("\n")
     insight::print_color("High Correlation\n\n", "red")
-    print.data.frame(x[high_corr, ], row.names = FALSE)
+    print.data.frame(x[high_vif, ], row.names = FALSE)
   }
 }
 
@@ -242,8 +252,8 @@ check_collinearity.BFBayesFactor <- function(x, verbose = TRUE, ...) {
 # mfx models -------------------------------
 
 #' @export
-check_collinearity.logitor <- function(x, verbose = TRUE, ...) {
-  .check_collinearity(x$fit, component = "conditional", verbose = verbose)
+check_collinearity.logitor <- function(x, ci = 0.95, verbose = TRUE, ...) {
+  .check_collinearity(x$fit, component = "conditional", ci = ci, verbose = verbose)
 }
 
 #' @export
@@ -278,57 +288,62 @@ check_collinearity.betamfx <- check_collinearity.logitor
 #' @export
 check_collinearity.glmmTMB <- function(x,
                                        component = c("all", "conditional", "count", "zi", "zero_inflated"),
+                                       ci = 0.95,
                                        verbose = TRUE,
                                        ...) {
   component <- match.arg(component)
-  .check_collinearity_zi_model(x, component, verbose = verbose)
+  .check_collinearity_zi_model(x, component, ci = ci, verbose = verbose)
 }
 
 
 #' @export
 check_collinearity.MixMod <- function(x,
                                       component = c("all", "conditional", "count", "zi", "zero_inflated"),
+                                      ci = 0.95,
                                       verbose = TRUE,
                                       ...) {
   component <- match.arg(component)
-  .check_collinearity_zi_model(x, component, verbose = verbose)
+  .check_collinearity_zi_model(x, component, ci = ci, verbose = verbose)
 }
 
 
 #' @export
 check_collinearity.hurdle <- function(x,
                                       component = c("all", "conditional", "count", "zi", "zero_inflated"),
+                                      ci = 0.95,
                                       verbose = verbose,
                                       ...) {
   component <- match.arg(component)
-  .check_collinearity_zi_model(x, component, verbose = verbose)
+  .check_collinearity_zi_model(x, component, ci = ci, verbose = verbose)
 }
 
 
 #' @export
 check_collinearity.zeroinfl <- function(x,
                                         component = c("all", "conditional", "count", "zi", "zero_inflated"),
+                                        ci = 0.95,
                                         verbose = verbose,
                                         ...) {
   component <- match.arg(component)
-  .check_collinearity_zi_model(x, component, verbose = verbose)
+  .check_collinearity_zi_model(x, component, ci = ci, verbose = verbose)
 }
 
 
 #' @export
 check_collinearity.zerocount <- function(x,
                                          component = c("all", "conditional", "count", "zi", "zero_inflated"),
+                                         ci = 0.95,
                                          verbose = verbose,
                                          ...) {
   component <- match.arg(component)
-  .check_collinearity_zi_model(x, component, verbose = verbose)
+  .check_collinearity_zi_model(x, component, ci = ci, verbose = verbose)
 }
 
 
 
 # utilities ---------------------------------
 
-.check_collinearity_zi_model <- function(x, component, verbose = TRUE) {
+.check_collinearity_zi_model <- function(x, component, ci = 0.95, verbose = TRUE) {
   if (component == "count") component <- "conditional"
   if (component == "zi") component <- "zero_inflated"
 
@@ -336,8 +351,8 @@ check_collinearity.zerocount <- function(x,
   if (!mi$is_zero_inflated) component <- "conditional"
 
   if (component == "all") {
-    cond <- .check_collinearity(x, "conditional", verbose = verbose)
-    zi <- .check_collinearity(x, "zero_inflated", verbose = FALSE)
+    cond <- .check_collinearity(x, "conditional", ci = ci, verbose = verbose)
+    zi <- .check_collinearity(x, "zero_inflated", ci = ci, verbose = FALSE)
     if (is.null(cond) && is.null(zi)) {
       return(NULL)
     }
@@ -349,21 +364,34 @@ check_collinearity.zerocount <- function(x,
       cond$Component <- "conditional"
       return(cond)
     }
-    cond$Component <- "conditional"
-    zi$Component <- "zero inflated"
+
+    # retrieve data for plotting
     dat_cond <- attr(cond, "data")
     dat_zi <- attr(zi, "data")
+    ci_cond <- attr(cond, "CI")
+    ci_zi <- attr(zi, "CI")
+
+    # add component
+    cond$Component <- "conditional"
+    zi$Component <- "zero inflated"
+    dat_cond$Component <- "conditional"
+    dat_zi$Component <- "zero inflated"
+    ci_cond$Component <- "conditional"
+    ci_zi$Component <- "zero inflated"
+
+    # create final data
     dat <- rbind(cond, zi)
     attr(dat, "data") <- rbind(dat_cond, dat_zi)
+    attr(dat, "CI") <- rbind(ci_cond, ci_zi)
     dat
   } else {
-    .check_collinearity(x, component, verbose = verbose)
+    .check_collinearity(x, component, ci = ci, verbose = verbose)
   }
 }
 
 
 
-.check_collinearity <- function(x, component, verbose = TRUE) {
+.check_collinearity <- function(x, component, ci = 0.95, verbose = TRUE) {
   v <- insight::get_varcov(x, component = component, verbose = FALSE)
   assign <- .term_assignments(x, component, verbose = verbose)
 
@@ -445,28 +473,57 @@ check_collinearity.zerocount <- function(x,
     }
   }
 
-  structure(
-    class = c("check_collinearity", "see_check_collinearity", "data.frame"),
-    insight::text_remove_backticks(
-      data.frame(
-        Term = terms,
-        VIF = result,
-        SE_factor = sqrt(result),
-        stringsAsFactors = FALSE
-      ),
-      column = "Term"
+  # CIs, see Appendix B 10.1177/0013164418817803
+  r <- 1 - (1 / result)
+  n <- insight::n_obs(x)
+  p <- insight::n_parameters(x)
+
+  ci_lvl <- (1 + ci) / 2
+
+  logis_r <- stats::qlogis(r) # see Raykov & Marcoulides (2011, ch. 7) for details.
+  se <- sqrt((1 - r^2)^2 * (n - p - 1)^2 / ((n^2 - 1) * (n + 3)))
+  se_log <- se / (r * (1 - r))
+  ci_log_lo <- logis_r - stats::qnorm(ci_lvl) * se_log
+  ci_log_up <- logis_r + stats::qnorm(ci_lvl) * se_log
+  ci_lo <- stats::plogis(ci_log_lo)
+  ci_up <- stats::plogis(ci_log_up)
+
+  out <- insight::text_remove_backticks(
+    data.frame(
+      Term = terms,
+      VIF = result,
+      VIF_CI_low = 1 / (1 - ci_lo),
+      VIF_CI_high = 1 / (1 - ci_up),
+      SE_factor = sqrt(result),
+      Tolerance = 1 / result,
+      Tolerance_CI_low = 1 - ci_up,
+      Tolerance_CI_high = 1 - ci_lo,
+      stringsAsFactors = FALSE
     ),
-    data = insight::text_remove_backticks(
-      data.frame(
-        Term = terms,
-        VIF = result,
-        SE_factor = sqrt(result),
-        Component = component,
-        stringsAsFactors = FALSE
-      ),
-      column = "Term"
-    )
+    column = "Term"
   )
+  attr(out, "ci") <- ci
+
+  attr(out, "data") <- insight::text_remove_backticks(
+    data.frame(
+      Term = terms,
+      VIF = result,
+      SE_factor = sqrt(result),
+      stringsAsFactors = FALSE
+    ),
+    column = "Term"
+  )
+
+  attr(out, "CI") <- data.frame(
+    VIF_CI_low = 1 / (1 - ci_lo),
+    VIF_CI_high = 1 / (1 - ci_up),
+    Tolerance_CI_low = 1 - ci_up,
+    Tolerance_CI_high = 1 - ci_lo,
+    stringsAsFactors = FALSE
+  )
+
+  class(out) <- c("check_collinearity", "see_check_collinearity", "data.frame")
+  out
 }
 
 

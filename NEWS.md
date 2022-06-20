@@ -1,3 +1,48 @@
+# performance 0.9.1
+
+## Breaking
+
+* The formerly "conditional" ICC in `icc()` is now named "unadjusted" ICC.
+
+## New functions
+
+* `performance_cv()` for cross-validated model performance.
+
+## Support for new models
+
+* Added support for models from package *estimator*.
+
+## Changes to functions
+
+* `check_overdispersion()` gets a `plot()` method.
+
+* `check_outliers()` now also works for models of classes `gls` and `lme`. As
+  a consequence, `check_model()` will no longer fail for these models.
+
+* `check_collinearity()` now includes the confidence intervals for the VIFs
+  and tolerance values.
+
+* `model_performance()` now also includes within-subject R2 measures, where
+  applicable.
+
+* Improved handling of random effects in `check_normality()` (i.e. when argument
+  `effects = "random"`).
+
+## Bug fixes
+
+* `check_predictions()` did not work for GLMs with matrix-response.
+
+* `check_predictions()` did not work for logistic regression models (i.e. 
+  models with binary response) from package *glmmTMB*
+
+* `item_split_half()` did not work when the input data frame or matrix only
+  contained two columns.
+
+* Fixed wrong computation of `BIC` in `model_performance()` when models had
+  transformed response values.
+
+* Fixed issues in `check_model()` for GLMs with matrix-response.
+
 # performance 0.9.0
 
 ## New functions
