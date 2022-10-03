@@ -1,15 +1,15 @@
 #' @title Posterior predictive checks
 #' @name check_predictions
 #'
-#' @description Posterior predictive checks mean \dQuote{simulating replicated data
-#'   under the fitted model and then comparing these to the observed data}
-#'   \cite{(Gelman and Hill, 2007, p. 158)}. Posterior predictive checks
-#'   can be used to \dQuote{look for systematic discrepancies between real and
-#'   simulated data} \cite{(Gelman et al. 2014, p. 169)}.
+#' @description Posterior predictive checks mean "simulating replicated data
+#'   under the fitted model and then comparing these to the observed data"
+#'   (_Gelman and Hill, 2007, p. 158_). Posterior predictive checks
+#'   can be used to "look for systematic discrepancies between real and
+#'   simulated data" (_Gelman et al. 2014, p. 169_).
 #'
-#'   \pkg{performance} provides posterior predictive check methods for a variety
+#'   **performance** provides posterior predictive check methods for a variety
 #'   of frequentist models (e.g., `lm`, `merMod`, `glmmTMB`, ...). For Bayesian
-#'   models, the model is passed to \code{\link[bayesplot:pp_check]{bayesplot::pp_check()}}.
+#'   models, the model is passed to [`bayesplot::pp_check()`].
 #'
 #' @param object A statistical model.
 #' @param iterations The number of draws to simulate/bootstrap.
@@ -17,7 +17,7 @@
 #'   value of the original response against the minimum values of the replicated
 #'   responses, and the same for the maximum value. This plot helps judging whether
 #'   the variation in the original data is captured by the model or not
-#'   (\cite{Gelman et al. 2020, pp.163}). The minimum and maximum values of `y` should
+#'   (_Gelman et al. 2020, pp.163_). The minimum and maximum values of `y` should
 #'   be inside the range of the related minimum and maximum values of `yrep`.
 #' @param re_formula Formula containing group-level effects (random effects) to
 #'   be considered in the simulated data. If `NULL` (default), condition
@@ -28,29 +28,35 @@
 #' @return A data frame of simulated responses and the original response vector.
 #'
 #' @details An example how posterior predictive checks can also be used for model
-#'   comparison is Figure 6 from \cite{Gabry et al. 2019, Figure 6}.
-#'   \cr
+#'   comparison is Figure 6 from _Gabry et al. 2019, Figure 6_.
+#'
 #'   \if{html}{\cr \figure{pp_check.png}{options: width="90\%" alt="Posterior Predictive Check"} \cr}
 #'   The model shown in the right panel (b) can simulate new data that are more
 #'   similar to the observed outcome than the model in the left panel (a). Thus,
 #'   model (b) is likely to be preferred over model (a).
 #'
 #' @note  Every model object that has a `simulate()`-method should work with
-#'   `check_predictions()`. On R 3.6.0 and higher, if \pkg{bayesplot}
-#'   (or a package that imports \pkg{bayesplot} such as \pkg{rstanarm} or \pkg{brms})
+#'   `check_predictions()`. On R 3.6.0 and higher, if **bayesplot** (or a
+#'   package that imports **bayesplot** such as **rstanarm** or **brms**)
 #'   is loaded, `pp_check()` is also available as an alias for `check_predictions()`.
 #'
-#' @references \itemize{
-#'   \item Gabry, J., Simpson, D., Vehtari, A., Betancourt, M., and Gelman, A. (2019). Visualization in Bayesian workflow. Journal of the Royal Statistical Society: Series A (Statistics in Society), 182(2), 389–402. https://doi.org/10.1111/rssa.12378
-#'   \item Gelman, A., and Hill, J. (2007). Data analysis using regression and multilevel/hierarchical models. Cambridge; New York: Cambridge University Press.
-#'   \item Gelman, A., Carlin, J. B., Stern, H. S., Dunson, D. B., Vehtari, A., and Rubin, D. B. (2014). Bayesian data analysis. (Third edition). CRC Press.
-#'   \item Gelman, A., Hill, J., and Vehtari, A. (2020). Regression and Other Stories. Cambridge University Press.
-#' }
+#' @references
+#' - Gabry, J., Simpson, D., Vehtari, A., Betancourt, M., and Gelman, A. (2019).
+#'   Visualization in Bayesian workflow. Journal of the Royal Statistical Society:
+#'   Series A (Statistics in Society), 182(2), 389–402. https://doi.org/10.1111/rssa.12378
+#'
+#' - Gelman, A., and Hill, J. (2007). Data analysis using regression and
+#'   multilevel/hierarchical models. Cambridge; New York: Cambridge University Press.
+#'
+#' - Gelman, A., Carlin, J. B., Stern, H. S., Dunson, D. B., Vehtari, A., and
+#'   Rubin, D. B. (2014). Bayesian data analysis. (Third edition). CRC Press.
+#' - Gelman, A., Hill, J., and Vehtari, A. (2020). Regression and Other Stories.
+#'   Cambridge University Press.
 #'
 #' @examples
 #' library(performance)
 #' model <- lm(mpg ~ disp, data = mtcars)
-#' if (require("see") && getRversion() >= "3.5.0") {
+#' if (require("see")) {
 #'   check_predictions(model)
 #' }
 #' @export
@@ -68,6 +74,9 @@ check_predictions.default <- function(object,
                                       check_range = FALSE,
                                       re_formula = NULL,
                                       ...) {
+  # check for valid input
+  .is_model_valid(object)
+
   if (isTRUE(insight::model_info(object, verbose = FALSE)$is_bayesian) &&
     isFALSE(inherits(object, "BFBayesFactor"))) {
     insight::check_if_installed(
@@ -107,7 +116,7 @@ check_predictions.BFBayesFactor <- function(object,
   yrep <- t(yrep)
 
   out <- as.data.frame(yrep)
-  colnames(out) <- paste0("sim_", seq(ncol(out)))
+  colnames(out) <- paste0("sim_", seq_len(ncol(out)))
   out$y <- y
   attr(out, "check_range") <- check_range
   class(out) <- c("performance_pp_check", "see_performance_pp_check", class(out))
@@ -151,7 +160,9 @@ pp_check.lm <- function(object,
   }
 
   if (is.null(out)) {
-    stop(insight::format_message(sprintf("Could not simulate responses. Maybe there is no 'simulate()' for objects of class '%s'?", class(object)[1])), call. = FALSE)
+    insight::format_error(
+      sprintf("Could not simulate responses. Maybe there is no `simulate()` for objects of class `%s`?", class(object)[1])
+    )
   }
 
   # get response data, and response term, to check for transformations
@@ -198,11 +209,13 @@ pp_check.glm <- function(object,
   )
 
   if (is.null(out)) {
-    stop(insight::format_message(sprintf("Could not simulate responses. Maybe there is no 'simulate()' for objects of class '%s'?", class(object)[1])), call. = FALSE)
+    insight::format_error(
+      sprintf("Could not simulate responses. Maybe there is no `simulate()` for objects of class `%s`?", class(object)[1])
+    )
   }
 
   # get response data, and response term
-  response <- eval(.str2lang(insight::find_response(object)),
+  response <- eval(str2lang(insight::find_response(object)),
     envir = insight::get_response(object)
   )
   resp_string <- insight::find_terms(object)$response
@@ -233,21 +246,20 @@ pp_check.glmmTMB   <-
 
 
 
-#' @rawNamespace if (getRversion() >= "3.6.0") {
-#'   S3method(bayesplot::pp_check, lm)
-#'   S3method(bayesplot::pp_check, glm)
-#'   S3method(bayesplot::pp_check, glmmTMB)
-#'   S3method(bayesplot::pp_check, glm.nb)
-#'   S3method(bayesplot::pp_check, merMod)
-#'   S3method(bayesplot::pp_check, MixMod)
-#'   S3method(bayesplot::pp_check, mle2)
-#'   S3method(bayesplot::pp_check, negbin)
-#'   S3method(bayesplot::pp_check, polr)
-#'   S3method(bayesplot::pp_check, rma)
-#'   S3method(bayesplot::pp_check, vlm)
-#'   S3method(bayesplot::pp_check, wbm)
-#'   S3method(bayesplot::pp_check, BFBayesFactor)
-#' }
+#' @rawNamespace
+#' S3method(bayesplot::pp_check, lm)
+#' S3method(bayesplot::pp_check, glm)
+#' S3method(bayesplot::pp_check, glmmTMB)
+#' S3method(bayesplot::pp_check, glm.nb)
+#' S3method(bayesplot::pp_check, merMod)
+#' S3method(bayesplot::pp_check, MixMod)
+#' S3method(bayesplot::pp_check, mle2)
+#' S3method(bayesplot::pp_check, negbin)
+#' S3method(bayesplot::pp_check, polr)
+#' S3method(bayesplot::pp_check, rma)
+#' S3method(bayesplot::pp_check, vlm)
+#' S3method(bayesplot::pp_check, wbm)
+#' S3method(bayesplot::pp_check, BFBayesFactor)
 
 
 
@@ -325,7 +337,24 @@ plot.performance_pp_check <- function(x, ...) {
   if (grepl("log(log(", resp_string, fixed = TRUE)) {
     sims[] <- lapply(sims, function(i) exp(exp(i)))
   } else if (grepl("log(", resp_string, fixed = TRUE)) {
-    sims[] <- lapply(sims, function(i) exp(i))
+    # exceptions: log(x+1) or log(1+x)
+    # 1. try: log(x + number)
+    plus_minus <- tryCatch(
+      eval(parse(text = gsub("log\\(([^,\\+)]*)(.*)\\)", "\\2", resp_string))),
+      error = function(e) NULL
+    )
+    # 2. try: log(number + x)
+    if (is.null(plus_minus)) {
+      plus_minus <- tryCatch(
+        eval(parse(text = gsub("log\\(([^,\\+)]*)(.*)\\)", "\\1", resp_string))),
+        error = function(e) NULL
+      )
+    }
+    if (is.null(plus_minus)) {
+      sims[] <- lapply(sims, function(i) exp(i))
+    } else {
+      sims[] <- lapply(sims, function(i) exp(i) - plus_minus)
+    }
   } else if (grepl("log1p(", resp_string, fixed = TRUE)) {
     sims[] <- lapply(sims, function(i) expm1(i))
   } else if (grepl("log10(", resp_string, fixed = TRUE)) {

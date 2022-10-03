@@ -25,13 +25,11 @@ mae <- performance_mae
 
 #' @export
 performance_mae.default <- function(model, verbose = TRUE, ...) {
-  pred <- tryCatch(
-    {
-      insight::get_predicted(model, ci = NULL, verbose = verbose, ...)
-    },
-    error = function(e) {
-      NULL
-    }
+  # check for valid input
+  .is_model_valid(model)
+
+  pred <- tryCatch(insight::get_predicted(model, ci = NULL, verbose = verbose, ...),
+    error = function(e) NULL
   )
 
   observed <- insight::get_response(model)

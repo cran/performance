@@ -77,7 +77,11 @@ check_overdispersion <- function(x, ...) {
 
 #' @export
 check_overdispersion.default <- function(x, ...) {
-  stop(insight::format_message(paste0("'check_overdisperion()' not yet implemented for models of class '", class(x)[1], "'.")), call. = FALSE)
+  # check for valid input
+  .is_model_valid(x)
+  insight::format_error(
+    paste0("`check_overdisperion()` not yet implemented for models of class `", class(x)[1], "`.")
+  )
 }
 
 
@@ -150,12 +154,14 @@ check_overdispersion.glm <- function(x, verbose = TRUE, ...) {
   # check if we have poisson
   info <- insight::model_info(x)
   if (!info$is_count && !info$is_binomial) {
-    stop(insight::format_message("Overdispersion checks can only be used for models from Poisson families or binomial families with trials > 1."), call. = FALSE)
+    insight::format_error(
+      "Overdispersion checks can only be used for models from Poisson families or binomial families with trials > 1."
+    )
   }
 
   # check for Bernoulli
   if (info$is_bernoulli) {
-    stop("Overdispersion checks cannot be used for Bernoulli models.", call. = FALSE)
+    insight::format_error("Overdispersion checks cannot be used for Bernoulli models.")
   }
 
   if (info$is_binomial) {
@@ -219,12 +225,14 @@ check_overdispersion.merMod <- function(x, verbose = TRUE, ...) {
   # check if we have poisson or binomial
   info <- insight::model_info(x)
   if (!info$is_count && !info$is_binomial) {
-    stop(insight::format_message("Overdispersion checks can only be used for models from Poisson families or binomial families with trials > 1."), call. = FALSE)
+    insight::format_error(
+      "Overdispersion checks can only be used for models from Poisson families or binomial families with trials > 1."
+    )
   }
 
   # check for Bernoulli
   if (info$is_bernoulli) {
-    stop("Overdispersion checks cannot be used for Bernoulli models.", call. = FALSE)
+    insight::format_error("Overdispersion checks cannot be used for Bernoulli models.")
   }
 
   rdf <- stats::df.residual(x)
@@ -235,10 +243,10 @@ check_overdispersion.merMod <- function(x, verbose = TRUE, ...) {
     pval <- NA
     rp <- NA
     if (isTRUE(verbose)) {
-      warning(insight::format_message(
+      insight::format_warning(
         "Cannot test for overdispersion, because pearson residuals are not implemented for models with zero-inflation or variable dispersion.",
-        "Only the visual inspection using 'plot(check_overdispersion(model))' is possible."
-      ), call. = FALSE)
+        "Only the visual inspection using `plot(check_overdispersion(model))` is possible."
+      )
     }
   } else {
     Pearson.chisq <- sum(rp^2)

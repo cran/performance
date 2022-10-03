@@ -1,7 +1,11 @@
 .r2_ci <- function(model, ci = .95, ...) {
   alpha <- 1 - ci
   n <- insight::n_obs(model)
-  df_int <- ifelse(insight::has_intercept(model), 1, 0)
+  df_int <- if (insight::has_intercept(model)) {
+    1
+  } else {
+    0
+  }
 
   model_rank <- tryCatch(
     {
@@ -17,7 +21,7 @@
   out <- lapply(model_r2, function(rsq) {
     ci_low <- stats::uniroot(
       .pRsq,
-      c(.00001, .99999),
+      c(0.00001, 0.99999),
       R2_obs = as.vector(rsq),
       p = model_rank,
       nobs = n,
@@ -26,7 +30,7 @@
 
     ci_high <- stats::uniroot(
       .pRsq,
-      c(.00001, .99999),
+      c(0.00001, 0.99999),
       R2_obs = as.vector(rsq),
       p = model_rank,
       nobs = n,
@@ -60,25 +64,26 @@
   a1 <- 1 - alpha
   # This approach avoids undersampling the area of the chi-squared
   # distribution that actually has any density
-  integrals <- mapply(function(i, j, ...) {
-    dots <- list(...)
-    stats::integrate(.dRsq,
-      i, j,
-      R2_pop = dots$R2_pop,
-      R2_obs = dots$R2_obs,
-      p = dots$p,
-      nobs = dots$nobs
-    )
-  },
-  seq(0, 2, by = .25) * nobs,
-  c(seq(.25, 2, by = .25), Inf) * nobs,
-  MoreArgs = list(
-    R2_pop = R2_pop,
-    R2_obs = R2_obs,
-    p = p,
-    nobs = nobs
-  ),
-  SIMPLIFY = TRUE
+  integrals <- mapply(
+    function(i, j, ...) {
+      dots <- list(...)
+      stats::integrate(.dRsq,
+        i, j,
+        R2_pop = dots$R2_pop,
+        R2_obs = dots$R2_obs,
+        p = dots$p,
+        nobs = dots$nobs
+      )
+    },
+    seq(0, 2, by = 0.25) * nobs,
+    c(seq(0.25, 2, by = 0.25), Inf) * nobs,
+    MoreArgs = list(
+      R2_pop = R2_pop,
+      R2_obs = R2_obs,
+      p = p,
+      nobs = nobs
+    ),
+    SIMPLIFY = TRUE
   )
   sum(unlist(integrals["value", ])) - a1
 }

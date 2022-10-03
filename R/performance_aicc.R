@@ -68,6 +68,9 @@ performance_aic <- function(x, ...) {
 #' @rdname performance_aicc
 #' @export
 performance_aic.default <- function(x, estimator = "ML", verbose = TRUE, ...) {
+  # check for valid input
+  .is_model_valid(x)
+
   if (is.null(info <- list(...)$model_info)) {
     info <- suppressWarnings(insight::model_info(x, verbose = FALSE))
   }
@@ -191,6 +194,9 @@ AIC.bife <- function(object, ..., k = 2) {
 
 #' @export
 performance_aicc.default <- function(x, estimator = "ML", ...) {
+  # check for valid input
+  .is_model_valid(x)
+
   # check ML estimator
   REML <- identical(estimator, "REML")
   if (isTRUE(list(...)$REML)) REML <- TRUE
@@ -282,7 +288,7 @@ performance_aicc.rma <- function(x, ...) {
       } else if (trans == "expm1") {
         .weighted_sum((insight::get_response(x) - 1), w = model_weights)
       } else if (trans == "sqrt") {
-        .weighted_sum(log(.5 / sqrt(insight::get_response(x))), w = model_weights)
+        .weighted_sum(log(0.5 / sqrt(insight::get_response(x))), w = model_weights)
       } else {
         .ll_jacobian_adjustment(x, model_weights)
       }

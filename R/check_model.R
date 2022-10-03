@@ -75,7 +75,7 @@
 #' such cases, setting the argument `show_dots = FALSE` might help. Furthermore,
 #' look at the `check` argument and see if some of the model checks could be
 #' skipped, which also increases performance.
-#' 
+#'
 #' @examples
 #' \dontrun{
 #' m <- lm(mpg ~ wt + cyl + gear + disp, data = mtcars)
@@ -138,7 +138,7 @@ check_model.default <- function(x,
   )
 
   if (is.null(ca)) {
-    stop(paste0("`check_model()` not implemented for models of class '", class(x)[1], "' yet."), call. = FALSE)
+    insight::format_error(paste0("`check_model()` not implemented for models of class `", class(x)[1], "` yet."))
   }
 
   # set default for show_dots, based on "model size"
@@ -167,13 +167,13 @@ check_model.default <- function(x,
 
 #' @export
 print.check_model <- function(x, ...) {
-  insight::check_if_installed("see", "for model diagnositic plots")
+  insight::check_if_installed("see", "for model diagnostic plots")
   NextMethod()
 }
 
 #' @export
 plot.check_model <- function(x, ...) {
-  insight::check_if_installed("see", "for model diagnositic plots")
+  insight::check_if_installed("see", "for model diagnostic plots")
   NextMethod()
 }
 
@@ -317,7 +317,7 @@ check_model.model_fit <- function(x,
     # check if brms can be loaded
 
     if (!requireNamespace("brms", quietly = TRUE)) {
-      stop("Package `brms` needs to be loaded first!", call. = FALSE)
+      insight::format_error("Package `brms` needs to be loaded first!")
     }
 
     # check if prior sample are available
@@ -325,7 +325,9 @@ check_model.model_fit <- function(x,
     d2 <- brms::prior_samples(model)
 
     if (is.null(d2)) {
-      stop(insight::format_message("No prior-samples found. Please use option `sample_prior = TRUE` when fitting the model."), call. = FALSE)
+      insight::format_error(
+        "No prior-samples found. Please use option `sample_prior = TRUE` when fitting the model."
+      )
     }
 
     d1 <- brms::posterior_samples(model)
@@ -337,7 +339,7 @@ check_model.model_fit <- function(x,
   } else if (inherits(model, c("stanreg", "stanfit"))) {
     # check if rstanarm can be loaded
     if (!requireNamespace("rstanarm", quietly = TRUE)) {
-      stop("Package `rstanarm` needs to be loaded first!", call. = FALSE)
+      insight::format_error("Package `rstanarm` needs to be loaded first!")
     }
 
 

@@ -39,16 +39,18 @@
     res_ <- sort(stats::rstandard(model, type = "pearson"), na.last = NA)
   } else {
     res_ <- tryCatch(sort(stats::rstudent(model), na.last = NA),
-                     error = function(e) NULL)
+      error = function(e) NULL
+    )
     if (is.null(res_)) {
       res_ <- tryCatch(sort(stats::residuals(model), na.last = NA),
-                       error = function(e) NULL)
+        error = function(e) NULL
+      )
     }
   }
 
   if (is.null(res_)) {
     if (verbose) {
-      message(insight::format_message(sprintf("QQ plot could not be created. Cannot extract residuals from objects of class '%s'.", class(model)[1])))
+      insight::format_alert(sprintf("QQ plot could not be created. Cannot extract residuals from objects of class '%s'.", class(model)[1]))
     }
     return(NULL)
   }
@@ -100,7 +102,7 @@
 
   if (is.null(se)) {
     if (verbose) {
-      message(insight::format_message("Could not compute standard errors from random effects for diagnostic plot."))
+      insight::format_alert("Could not compute standard errors from random effects for diagnostic plot.")
     }
     return(NULL)
   }
@@ -132,7 +134,7 @@
   r <- try(stats::residuals(model), silent = TRUE)
 
   if (inherits(r, "try-error")) {
-    message(insight::format_message(sprintf("Non-normality of residuals could not be computed. Cannot extract residuals from objects of class '%s'.", class(model)[1])))
+    insight::format_alert(sprintf("Non-normality of residuals could not be computed. Cannot extract residuals from objects of class '%s'.", class(model)[1]))
     return(NULL)
   }
 
@@ -149,11 +151,11 @@
   s <- summary(model)
 
   if (inherits(model, "lm", which = TRUE) == 1) {
-    cook_levels <- round(stats::qf(.5, s$fstatistic[2], s$fstatistic[3]), 2)
+    cook_levels <- round(stats::qf(0.5, s$fstatistic[2], s$fstatistic[3]), 2)
   } else if (!is.null(threshold)) {
     cook_levels <- threshold
   } else {
-    cook_levels <- c(.5, 1)
+    cook_levels <- c(0.5, 1)
   }
 
   n_params <- tryCatch(model$rank, error = function(e) insight::n_parameters(model))

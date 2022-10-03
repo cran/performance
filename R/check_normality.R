@@ -51,9 +51,13 @@ check_normality <- function(x, ...) {
 
 #' @export
 check_normality.default <- function(x, ...) {
-  # valid model?
+  # check for valid input
+  .is_model_valid(x)
+
   if (!insight::model_info(x)$is_linear) {
-    message(insight::format_message("Checking normality of residuals is only useful an appropriate assumption for linear models."))
+    insight::format_alert(
+      "Checking normality of residuals is only useful an appropriate assumption for linear models."
+    )
     return(NULL)
   }
 
@@ -86,18 +90,27 @@ print.check_normality <- function(x, ...) {
 
   if (identical(attributes(x)$effects, "random")) {
     re_groups <- attributes(x)$re_groups
-    for (i in 1:length(x)) {
+    for (i in seq_along(x)) {
       if (x[i] < 0.05) {
-        insight::print_color(sprintf("Warning: Non-normality for random effects '%s' detected (%s).\n", re_groups[i], pstring[i]), "red")
+        insight::print_color(
+          sprintf("Warning: Non-normality for random effects '%s' detected (%s).\n", re_groups[i], pstring[i]),
+          "red"
+        )
       } else {
-        insight::print_color(sprintf("OK: Random effects '%s' appear as normally distributed (%s).\n", re_groups[i], pstring[i]), "green")
+        insight::print_color(
+          sprintf("OK: Random effects '%s' appear as normally distributed (%s).\n", re_groups[i], pstring[i]),
+          "green"
+        )
       }
     }
   } else {
-    if (x < 0.05) {
-      insight::print_color(sprintf("Warning: Non-normality of %s detected (%s).\n", type, pstring), "red")
-    } else {
-      insight::print_color(sprintf("OK: %s appear as normally distributed (%s).\n", type, pstring), "green")
+    if (length(x) > 1 && "units" %in% names(attributes(x))) type <- attributes(x)$units
+    for (i in seq_along(x)) {
+      if (x[i] < 0.05) {
+        insight::print_color(sprintf("Warning: Non-normality of %s detected (%s).\n", type[i], pstring[i]), "red")
+      } else {
+        insight::print_color(sprintf("OK: %s appear as normally distributed (%s).\n", type[i], pstring[i]), "green")
+      }
     }
   }
   invisible(x)
@@ -118,7 +131,9 @@ check_normality.merMod <- function(x, effects = c("fixed", "random"), ...) {
 
   # valid model?
   if (!info$is_linear && effects == "fixed") {
-    message(insight::format_message("Checking normality of residuals is only useful an appropriate assumption for linear models."))
+    insight::format_alert(
+      "Checking normality of residuals is only useful an appropriate assumption for linear models."
+    )
     return(NULL)
   }
 
@@ -211,7 +226,10 @@ check_normality.BFBayesFactor <- check_normality.afex_aov
   )
 
   if (is.null(ts)) {
-    insight::print_color(sprintf("'check_normality()' does not support models of class '%s'.\n", class(model)[1]), "red")
+    insight::print_color(
+      sprintf("`check_normality()` does not support models of class `%s`.\n", class(model)[1]),
+      "red"
+    )
     return(NULL)
   }
 

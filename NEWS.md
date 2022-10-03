@@ -1,3 +1,40 @@
+# performance 0.10.0
+
+## Breaking Change
+
+* The minimum needed R version has been bumped to `3.6`.
+
+* The alias `performance_lrt()` was removed. Use `test_lrt()` resp.
+  `test_likelihoodratio()`.
+
+## New functions
+
+* Following functions were moved from package *parameters* to *performance*:
+  `check_sphericity_bartlett()`, `check_kmo()`, `check_factorstructure()` and
+  `check_clusterstructure()`.
+
+## Changes to functions
+
+* `check_normality()`, `check_homogeneity()` and `check_symmetry()` now works
+  for `htest` objects.
+
+* Print method for `check_outliers()` changed significantly: now states the 
+  methods, thresholds, and variables used, reports outliers per variable (for 
+  univariate methods) as well as any observation flagged for several 
+  variables/methods. Includes a new optional ID argument to add along the 
+  row number in the output (@rempsyc #443).
+
+* `check_outliers()` now uses more conventional outlier thresholds. The `IQR` 
+  and confidence interval methods now gain improved distance scores that
+  are continuous instead of discrete.
+  
+## Bug Fixes
+
+* Fixed wrong *z*-score values when using a vector instead of a data frame in
+  `check_outliers()` (#476).
+
+* Fixed `cronbachs_alpha()` for objects from `parameters::principal_component()`.
+
 # performance 0.9.2
 
 ## General

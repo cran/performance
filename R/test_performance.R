@@ -251,7 +251,7 @@ test_performance.default <- function(..., reference = 1, include_formula = FALSE
   if (inherits(objects, c("ListNestedRegressions", "ListNonNestedRegressions", "ListLavaan"))) {
     test_performance(objects, reference = reference, include_formula = include_formula)
   } else {
-    stop("The models cannot be compared for some reason :/", call. = FALSE)
+    insight::format_error("The models cannot be compared for some reason :/")
   }
 }
 
@@ -261,10 +261,10 @@ test_performance.default <- function(..., reference = 1, include_formula = FALSE
 
 #' @export
 plot.test_performance <- function(x, ...) {
-  warning(insight::format_message(
-    "There is currently no plot() method for test-functions.",
-    "Please use 'plot(compare_perfomance())' for some visual representations of your model comparisons."
-  ), call. = FALSE)
+  insight::format_warning(
+    "There is currently no `plot()` method for test-functions.",
+    "Please use `plot(compare_perfomance())` for some visual representations of your model comparisons."
+  )
 }
 
 
@@ -443,7 +443,9 @@ test_performance.ListNonNestedRegressions <- function(objects,
   }
 
   if (same_response && !inherits(objects, "ListLavaan") && attributes(objects)$same_response == FALSE) {
-    stop(insight::format_message("The models' dependent variables don't have the same data, which is a prerequisite to compare them. Probably the proportion of missing data differs between models."), call. = FALSE)
+    stop(insight::format_message(
+      "The models' dependent variables don't have the same data, which is a prerequisite to compare them. Probably the proportion of missing data differs between models."
+    ), call. = FALSE)
   }
 
   # check formula of all models, but warn only once
