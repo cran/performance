@@ -53,7 +53,7 @@
 #'  }
 #'
 #'
-#' @examples
+#' @examplesIf getRversion() >= "4.0.0"
 #' if (require("glmmTMB")) {
 #'   data(Salamanders)
 #'   m <- glm(count ~ spp + mined, family = poisson, data = Salamanders)
@@ -90,7 +90,7 @@ check_overdispersion.default <- function(x, ...) {
 
 #' @export
 plot.check_overdisp <- function(x, ...) {
-  insight::check_if_installed("see", "for overdispersion plots")
+  insight::check_if_installed(c("see", "graphics"), "for overdispersion plots")
   obj_name <- attr(x, "object_name", exact = TRUE)
   model <- NULL
 
@@ -111,7 +111,7 @@ plot.check_overdisp <- function(x, ...) {
     attr(x, "colors") <- list(...)$colors
     attr(x, "line_size") <- list(...)$size_line
     attr(x, "overdisp_type") <- list(...)$plot_type
-    plot(x, ...)
+    graphics::plot(x, ...)
   }
 }
 
@@ -186,7 +186,7 @@ check_overdispersion.glm <- function(x, verbose = TRUE, ...) {
   )
 
   class(out) <- c("check_overdisp", "see_check_overdisp")
-  attr(out, "object_name") <- insight::safe_deparse(substitute(x))
+  attr(out, "object_name") <- insight::safe_deparse_symbol(substitute(x))
 
   out
 }
@@ -262,7 +262,7 @@ check_overdispersion.merMod <- function(x, verbose = TRUE, ...) {
   )
 
   class(out) <- c("check_overdisp", "see_check_overdisp")
-  attr(out, "object_name") <- insight::safe_deparse(substitute(x))
+  attr(out, "object_name") <- insight::safe_deparse_symbol(substitute(x))
 
   out
 }

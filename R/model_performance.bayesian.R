@@ -83,7 +83,7 @@ model_performance.stanreg <- function(model, metrics = "all", verbose = TRUE, ..
     metrics[tolower(metrics) == "log_loss"] <- "LOGLOSS"
   }
 
-  all_metrics <- c("LOOIC", "WAIC", "R2", "R2_adjusted", "RMSE", "SIGMA", "LOGLOSS", "SCORE")
+  all_metrics <- c("LOOIC", "WAIC", "R2", "R2_adjusted", "ICC", "RMSE", "SIGMA", "LOGLOSS", "SCORE")
 
   if (all(metrics == "all")) {
     metrics <- all_metrics
@@ -98,9 +98,9 @@ model_performance.stanreg <- function(model, metrics = "all", verbose = TRUE, ..
 
   if (algorithm$algorithm != "sampling") {
     if (verbose) {
-      warning(insight::format_message(
-        "`model_performance()` only possible for models fit using the 'sampling' algorithm."
-      ), call. = FALSE)
+      insight::format_warning(
+        "`model_performance()` only possible for models fit using the \"sampling\" algorithm."
+      )
     }
     return(NULL)
   }
@@ -150,12 +150,8 @@ model_performance.stanreg <- function(model, metrics = "all", verbose = TRUE, ..
   # LOO-R2 ------------------
   if (("R2_ADJUSTED" %in% metrics || "R2_LOO" %in% metrics) && mi$is_linear) {
     r2_adj <- tryCatch(
-      {
-        suppressWarnings(r2_loo(model, verbose = verbose))
-      },
-      error = function(e) {
-        NULL
-      }
+      suppressWarnings(r2_loo(model, verbose = verbose)),
+      error = function(e) NULL
     )
     if (!is.null(r2_adj)) {
       # save attributes
@@ -174,6 +170,14 @@ model_performance.stanreg <- function(model, metrics = "all", verbose = TRUE, ..
   if (length(attri_r2) > 0) {
     attri$r2 <- attri_r2
     attri$r2_bayes <- attri_r2
+  }
+
+  # ICC ------------------
+  if ("ICC" %in% metrics) {
+    out$ICC <- tryCatch(
+      suppressWarnings(icc(model, verbose = verbose)$ICC_adjusted),
+      error = function(e) NULL
+    )
   }
 
   # RMSE ------------------
@@ -263,7 +267,7 @@ model_performance.BFBayesFactor <- function(model,
 
   mi <- insight::model_info(model, verbose = FALSE)
   if (!mi$is_linear || mi$is_correlation || mi$is_ttest || mi$is_binomial || mi$is_meta) {
-    warning("Can produce ", paste0(metrics, collapse = " & "), " only for linear models.", call. = FALSE)
+    insight::format_warning("Can produce ", paste0(metrics, collapse = " & "), " only for linear models.")
     return(NULL)
   }
 

@@ -1,3 +1,39 @@
+# performance 0.10.1
+
+## General
+
+* Minor improvements to the documentation.
+
+## Changes to functions
+
+* `icc()` and `r2_nakagawa()` get `ci` and `iterations` arguments, to compute
+  confidence intervals for the ICC resp. R2, based on bootstrapped sampling.
+
+* `r2()` gets `ci`, to compute (analytical) confidence intervals for the R2.
+
+* `check_predictions()` accepts a `bw` argument (smoothing bandwidth), which is
+  passed down to the `plot()` methods density-estimation. The default for the
+  smoothing bandwidth `bw` has changed from `"nrd0"` to `"nrd"`, which seems
+  to produce better fitting plots for non-gaussian models.
+  
+* The model underlying `check_distribution()` was now also trained to detect
+  cauchy, half-cauchy and inverse-gamma distributions.
+
+* `model_performance()` now allows to include the ICC for Bayesian models.
+
+## Bug fixes
+
+* `verbose` didn't work for `r2_bayes()` with `BFBayesFactor` objects.
+
+* Fixed issues in `check_model()` for models with convergence issues that lead
+  to `NA` values in residuals.
+  
+* Fixed bug in `check_outliers` whereby passing multiple elements to the 
+  threshold list generated an error (#496).
+
+* `test_wald()` now warns the user about inappropriate F test and calls
+  `test_likelihoodratio()` for binomial models.
+
 # performance 0.10.0
 
 ## Breaking Change

@@ -13,7 +13,7 @@
 #'   for a description of the methods.
 #'
 #' @param x A model or a data.frame object.
-#' @param method The outlier detection method(s). Can be `"all"`` or some of
+#' @param method The outlier detection method(s). Can be `"all"` or some of
 #'   `"cook"`, `"pareto"`, `"zscore"`, `"zscore_robust"`, `"iqr"`, `"ci"`, `"eti"`,
 #'   `"hdi"`, `"bci"`, `"mahalanobis"`, `"mahalanobis_robust"`, `"mcd"`, `"ics"`,
 #'   `"optics"` or `"lof"`.
@@ -90,16 +90,15 @@
 #'  (`"zscore"`) or, as it is here the case (`"zscore_robust"`) by
 #'  default (Iglewicz, 1993), in terms of Median Absolute Deviation (MAD) from
 #'  the median (which are robust measures of dispersion and centrality). The
-#'  default threshold to classify outliers is 1.959 (`threshold =
-#'  list("zscore" = 1.959)`), corresponding to the 2.5\% (`qnorm(0.975)`)
-#'  most extreme observations (assuming the data is normally distributed).
-#'  Importantly, the Z-score method is univariate: it is computed column by
-#'  column. If a dataframe is passed, the Z-score is calculated for each
-#'  variable separately, and the maximum (absolute) Z-score is kept for each
-#'  observations. Thus, all observations that are extreme on at least one
-#'  variable might be detected as outliers. Thus, this method is not suited for
-#'  high dimensional data (with many columns), returning too liberal results
-#'  (detecting many outliers).
+#'  default threshold to classify outliers is 1.959 (`threshold = list("zscore" = 1.959)`),
+#'  corresponding to the 2.5\% (`qnorm(0.975)`) most extreme observations
+#'  (assuming the data is normally distributed). Importantly, the Z-score
+#'  method is univariate: it is computed column by column. If a dataframe is
+#'  passed, the Z-score is calculated for each variable separately, and the
+#'  maximum (absolute) Z-score is kept for each observations. Thus, all
+#'  observations that are extreme on at least one variable might be detected
+#'  as outliers. Thus, this method is not suited for high dimensional data
+#'  (with many columns), returning too liberal results (detecting many outliers).
 #'
 #'  - **IQR** `("iqr")`:
 #'  Using the IQR (interquartile range) is a robust method developed by John
@@ -304,14 +303,6 @@
 #' }
 #'
 #' insight::get_data(model)[outliers_list, ] # Show outliers data
-#'
-#' if (require("MASS")) {
-#'   check_outliers(model, method = c("mahalanobis", "mcd"))
-#' }
-#' if (require("ICS")) {
-#'   # This one takes some seconds to finish...
-#'   check_outliers(model, method = "ics")
-#' }
 #' }
 #' @export
 check_outliers <- function(x, ...) {
@@ -376,7 +367,7 @@ check_outliers.default <- function(x,
     thresholds <- .check_outliers_thresholds(data)
   } else if (is.list(threshold)) {
     thresholds <- .check_outliers_thresholds(data)
-    thresholds[[names(threshold)]] <- threshold[[names(threshold)]]
+    thresholds[names(threshold)] <- threshold[names(threshold)]
   } else {
     insight::format_error(
       "The `threshold` argument must be NULL (for default values) or a list containing threshold values for desired methods (e.g., `list('mahalanobis' = 7)`)."
@@ -404,7 +395,7 @@ check_outliers.default <- function(x,
 
   # Cook
   if ("cook" %in% method &&
-    insight::model_info(x)$is_bayesian == FALSE &&
+    !insight::model_info(x)$is_bayesian &&
     !inherits(x, "bife")) {
     data_cook <- .check_outliers_cook(
       x,
@@ -513,7 +504,7 @@ check_outliers.default <- function(x,
   thresholds <- thresholds[names(thresholds) %in% method]
 
   # Composite outlier score
-  df$Outlier <- rowMeans(df[grepl("Outlier_", names(df))])
+  df$Outlier <- rowMeans(df[grepl("Outlier_", names(df), fixed = TRUE)])
   df <- df[c(names(df)[names(df) != "Outlier"], "Outlier")]
 
   # Out
@@ -712,7 +703,7 @@ check_outliers.data.frame <- function(x,
     thresholds <- .check_outliers_thresholds(x)
   } else if (is.list(threshold)) {
     thresholds <- .check_outliers_thresholds(x)
-    thresholds[[names(threshold)]] <- threshold[[names(threshold)]]
+    thresholds[names(threshold)] <- threshold[names(threshold)]
   } else if (is.numeric(threshold)) {
     thresholds <- .check_outliers_thresholds(x)
     thresholds <- lapply(thresholds, function(x) threshold)
@@ -742,7 +733,7 @@ check_outliers.data.frame <- function(x,
   count_outlier_table <- function(outlier.list) {
     count.table <- do.call(rbind, outlier.list)
     name.method <- grep("Distance_", names(count.table), value = TRUE)
-    name.method <- paste0("n_", gsub("Distance_", "", name.method))
+    name.method <- paste0("n_", gsub("Distance_", "", name.method, fixed = TRUE))
     if (isTRUE(nrow(count.table) > 0)) {
       count.values <- rle(sort(count.table$Row))
       count.table <- data.frame(Row = count.values$values)
@@ -1034,7 +1025,7 @@ check_outliers.data.frame <- function(x,
   }
 
   # Composite outlier score
-  df$Outlier <- rowMeans(df[grepl("Outlier_", names(df))])
+  df$Outlier <- rowMeans(df[grepl("Outlier_", names(df), fixed = TRUE)])
 
   # Out
   outlier <- df$Outlier > 0.5
@@ -1202,9 +1193,8 @@ check_outliers.gls <- function(x,
                                ID = NULL,
                                ...) {
   if (!missing(ID)) {
-    warning(
-      paste0("ID argument not supported for objects of class `", class(x)[1], "`."),
-      call. = FALSE
+    insight::format_warning(
+      paste0("ID argument not supported for objects of class `", class(x)[1], "`.")
     )
   }
 
@@ -1214,7 +1204,7 @@ check_outliers.gls <- function(x,
     method <- valid_methods
   }
 
-  if (!method %in% valid_methods) {
+  if (!all(method %in% valid_methods)) {
     method <- "pareto"
   }
 
@@ -1287,7 +1277,7 @@ check_outliers.geeglm <- check_outliers.gls
   x <- as.data.frame(x)
 
   # Standardize
-  if (robust == FALSE) {
+  if (!robust) {
     d <- abs(as.data.frame(sapply(x, function(x) (x - mean(x, na.rm = TRUE)) / stats::sd(x, na.rm = TRUE))))
   } else {
     d <- abs(as.data.frame(sapply(x, function(x) (x - stats::median(x, na.rm = TRUE)) / stats::mad(x, na.rm = TRUE))))
@@ -1328,7 +1318,6 @@ check_outliers.geeglm <- check_outliers.gls
                                 threshold = 1.7,
                                 method = "tukey",
                                 ID.names = NULL) {
-
   d <- data.frame(Row = seq_len(nrow(as.data.frame(x))))
   Distance_IQR <- d
 
@@ -1351,7 +1340,6 @@ check_outliers.geeglm <- check_outliers.gls
     d[names(as.data.frame(x))[col]] <- ifelse(v > upper, 1,
       ifelse(v < lower, 1, 0)
     )
-
   }
 
   out <- data.frame(Row = d$Row)
@@ -1384,24 +1372,21 @@ check_outliers.geeglm <- check_outliers.gls
                                threshold = 0.999,
                                method = "ci",
                                ID.names = NULL) {
-
   # Run through columns
   d <- data.frame(Row = seq_len(nrow(x)))
   Distance_CI <- d
 
   for (col in names(x)) {
-
     v <- x[, col]
     ci <- bayestestR::ci(v, ci = threshold, method = method)
     d[col] <- ifelse(x[[col]] > ci$CI_high |
-                       x[[col]] < ci$CI_low, 1, 0)
+      x[[col]] < ci$CI_low, 1, 0)
 
     m.int <- stats::median(c(ci$CI_low, ci$CI_high), na.rm = TRUE)
     d2 <- abs(v - m.int)
     ci.range <- (ci$CI_high - ci$CI_low) / 2
 
     Distance_CI[col] <- d2 / ci.range
-
   }
 
   out.0 <- data.frame(Row = d$Row)
@@ -1420,7 +1405,8 @@ check_outliers.geeglm <- check_outliers.gls
   out[paste0("Outlier_", method)] <- sapply(
     as.data.frame(t(d)), function(x) {
       ifelse(all(is.na(x)), NA, max(x, na.rm = TRUE))
-  })
+    }
+  )
 
   out <- cbind(out.0, out)
 
@@ -1475,7 +1461,8 @@ check_outliers.geeglm <- check_outliers.gls
 
 .check_outliers_mahalanobis <- function(x,
                                         threshold = stats::qchisq(
-                                          p = 1 - 0.001, df = ncol(x)),
+                                          p = 1 - 0.001, df = ncol(x)
+                                        ),
                                         ID.names = NULL,
                                         ...) {
   if (any(is.na(x)) || any(with(x, x == Inf))) {
@@ -1505,7 +1492,8 @@ check_outliers.geeglm <- check_outliers.gls
 # Bigutils not yet fully available on CRAN
 .check_outliers_mahalanobis_robust <- function(x,
                                                threshold = stats::qchisq(
-                                                 p = 1 - 0.001, df = ncol(x)),
+                                                 p = 1 - 0.001, df = ncol(x)
+                                               ),
                                                ID.names = NULL) {
   out <- data.frame(Row = seq_len(nrow(x)))
 
@@ -1534,7 +1522,8 @@ check_outliers.geeglm <- check_outliers.gls
 
 .check_outliers_mcd <- function(x,
                                 threshold = stats::qchisq(
-                                  p = 1 - 0.001, df = ncol(x)),
+                                  p = 1 - 0.001, df = ncol(x)
+                                ),
                                 percentage_central = .50,
                                 ID.names = NULL) {
   out <- data.frame(Row = seq_len(nrow(x)))

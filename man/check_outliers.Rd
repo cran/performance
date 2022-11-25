@@ -28,7 +28,10 @@ check_outliers(x, ...)
 down to \code{ICSOutlier::ics.outlier()}. When \code{method = "mahalanobis"},
 they are  passed down to \code{stats::mahalanobis()}.}
 
-\item{method}{The outlier detection method(s). Can be \verb{"all"`` or some of }"cook"\verb{, }"pareto"\verb{, }"zscore"\verb{, }"zscore_robust"\verb{, }"iqr"\verb{, }"ci"\verb{, }"eti"\verb{, }"hdi"\verb{, }"bci"\verb{, }"mahalanobis"\verb{, }"mahalanobis_robust"\verb{, }"mcd"\verb{, }"ics"\verb{, }"optics"\code{or}"lof"`.}
+\item{method}{The outlier detection method(s). Can be \code{"all"} or some of
+\code{"cook"}, \code{"pareto"}, \code{"zscore"}, \code{"zscore_robust"}, \code{"iqr"}, \code{"ci"}, \code{"eti"},
+\code{"hdi"}, \code{"bci"}, \code{"mahalanobis"}, \code{"mahalanobis_robust"}, \code{"mcd"}, \code{"ics"},
+\code{"optics"} or \code{"lof"}.}
 
 \item{threshold}{A list containing the threshold values for each method (e.g.
 \code{list('mahalanobis' = 7, 'cook' = 1)}), above which an observation is
@@ -119,15 +122,15 @@ deviance from a central value, in terms of standard deviations from the mean
 (\code{"zscore"}) or, as it is here the case (\code{"zscore_robust"}) by
 default (Iglewicz, 1993), in terms of Median Absolute Deviation (MAD) from
 the median (which are robust measures of dispersion and centrality). The
-default threshold to classify outliers is 1.959 (\code{threshold =  list("zscore" = 1.959)}), corresponding to the 2.5\\% (\code{qnorm(0.975)})
-most extreme observations (assuming the data is normally distributed).
-Importantly, the Z-score method is univariate: it is computed column by
-column. If a dataframe is passed, the Z-score is calculated for each
-variable separately, and the maximum (absolute) Z-score is kept for each
-observations. Thus, all observations that are extreme on at least one
-variable might be detected as outliers. Thus, this method is not suited for
-high dimensional data (with many columns), returning too liberal results
-(detecting many outliers).
+default threshold to classify outliers is 1.959 (\code{threshold = list("zscore" = 1.959)}),
+corresponding to the 2.5\\% (\code{qnorm(0.975)}) most extreme observations
+(assuming the data is normally distributed). Importantly, the Z-score
+method is univariate: it is computed column by column. If a dataframe is
+passed, the Z-score is calculated for each variable separately, and the
+maximum (absolute) Z-score is kept for each observations. Thus, all
+observations that are extreme on at least one variable might be detected
+as outliers. Thus, this method is not suited for high dimensional data
+(with many columns), returning too liberal results (detecting many outliers).
 \item \strong{IQR} \code{("iqr")}:
 Using the IQR (interquartile range) is a robust method developed by John
 Tukey, which often appears in box-and-whisker plots (e.g., in
@@ -292,14 +295,6 @@ if (require("see")) {
 }
 
 insight::get_data(model)[outliers_list, ] # Show outliers data
-
-if (require("MASS")) {
-  check_outliers(model, method = c("mahalanobis", "mcd"))
-}
-if (require("ICS")) {
-  # This one takes some seconds to finish...
-  check_outliers(model, method = "ics")
-}
 }
 }
 \references{
