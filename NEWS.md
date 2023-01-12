@@ -1,3 +1,20 @@
+# performance 0.10.2
+
+## General
+
+* Revised usage of `insight::get_data()` to meet forthcoming changes in the
+  _insight_ package.
+
+## Changes to functions
+
+* `check_collinearity()` now accepts `NULL` for the `ci` argument.
+
+## Bug fixes
+
+* Fixed issue in `item_difficulty()` with detecting the maximum values of an
+  item set. Furthermore, `item_difficulty()` gets a `maximum_value` argument
+  in case no item contains the maximum value due to missings.
+
 # performance 0.10.1
 
 ## General
@@ -33,6 +50,8 @@
 
 * `test_wald()` now warns the user about inappropriate F test and calls
   `test_likelihoodratio()` for binomial models.
+
+* Fixed edge case for usage of `parellel::detectCores()` in `check_outliers()`.
 
 # performance 0.10.0
 

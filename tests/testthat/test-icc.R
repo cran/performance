@@ -1,7 +1,7 @@
 osx <- tryCatch({
   si <- Sys.info()
   if (!is.null(si["sysname"])) {
-    si["sysname"] == "Darwin" || grepl("^darwin", R.version$os)
+    si["sysname"] == "Darwin" || startsWith(R.version$os, "darwin")
   } else {
     FALSE
   }
@@ -11,7 +11,9 @@ osx <- tryCatch({
 .runThisTest <- Sys.getenv("RunAllperformanceTests") == "yes"
 
 if (.runThisTest && !osx) {
-  if (requiet("testthat") && requiet("brms") && requiet("rstanarm") && requiet("performance") && requiet("lme4") && requiet("nlme") && requiet("insight") && requiet("httr")) {
+  if (requiet("brms") && requiet("rstanarm") && requiet("lme4") && requiet("nlme") && requiet("httr")) {
+    skip_if_offline()
+
     data(iris)
     m0 <- lm(Sepal.Length ~ Petal.Length, data = iris)
     m1 <- lmer(Sepal.Length ~ Petal.Length + (1 | Species), data = iris)
@@ -98,7 +100,12 @@ if (.runThisTest && !osx) {
     test_that("icc", {
       expect_equal(
         icc(model, by_group = TRUE),
-        structure(list(Group = c("Subject", "grp"), ICC = c(0.5896587, 0.0016551)), class = c("icc_by_group", "data.frame"), row.names = c(NA, -2L)),
+        structure(list(
+          Group = c("Subject", "grp"),
+          ICC = c(0.5896587, 0.0016551)),
+          class = c("icc_by_group", "data.frame"),
+          row.names = c(NA, -2L)
+        ),
         tolerance = 0.05
       )
     })

@@ -72,9 +72,38 @@ check_normality.default <- function(x, ...) {
   p.val
 }
 
+# numeric -------------------
+
+#' @export
+check_normality.numeric <- function(x, ...) {
+  # check for normality of residuals
+  p.val <- .check_normality(x, NULL, type = "raw")
+
+  attr(p.val, "data") <- x
+  attr(p.val, "object_name") <- insight::safe_deparse(substitute(x))
+  attr(p.val, "effects") <- "fixed"
+  class(p.val) <- unique(c("check_normality", "see_check_normality", "check_normality_numeric", class(p.val)))
+
+  p.val
+}
 
 
 # methods ----------------------
+
+
+#' @importFrom stats residuals
+#' @export
+residuals.check_normality_numeric <- function(object, ...) {
+  attr(object, "data")
+}
+
+
+#' @importFrom stats rstudent
+#' @export
+rstudent.check_normality_numeric <- function(model, ...) {
+  attr(model, "data")
+}
+
 
 #' @export
 plot.check_normality <- function(x, ...) {
@@ -155,8 +184,7 @@ check_normality.merMod <- function(x, effects = c("fixed", "random"), ...) {
       }
     )
 
-    p.val <- c()
-    re_groups <- c()
+    p.val <- re_groups <- NULL
 
     if (!is.null(re)) {
       for (i in names(re)) {

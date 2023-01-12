@@ -260,7 +260,7 @@ r2.mlm <- function(model, ...) {
     tmp <- list(
       R2 = model_summary[[i]]$r.squared,
       R2_adjusted = model_summary[[i]]$adj.r.squared,
-      Response = sub("Response ", "", i)
+      Response = sub("Response ", "", i, fixed = TRUE)
     )
     names(tmp$R2) <- "R2"
     names(tmp$R2_adjusted) <- "adjusted R2"
@@ -692,7 +692,7 @@ r2.bigglm <- function(model, ...) {
 
 #' @export
 r2.biglm <- function(model, ...) {
-  df.int <- ifelse(insight::has_intercept(model), 1, 0)
+  df.int <- as.numeric(insight::has_intercept(model))
   n <- suppressWarnings(insight::n_obs(model))
 
   rsq <- summary(model)$rsq
@@ -746,7 +746,7 @@ r2.Arima <- function(model, ...) {
   if (!requireNamespace("forecast", quietly = TRUE)) {
     list(R2 = NA)
   } else {
-    list(R2 = stats::cor(stats::fitted(model), insight::get_data(model))^2)
+    list(R2 = stats::cor(stats::fitted(model), insight::get_data(model, verbose = FALSE))^2)
   }
 }
 

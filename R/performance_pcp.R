@@ -76,7 +76,7 @@ performance_pcp <- function(model,
   m0 <- suppressWarnings(stats::glm(
     formula = stats::as.formula(sprintf("%s ~ 1", insight::find_response(model))),
     family = stats::binomial(link = "logit"),
-    data = insight::get_data(model, verbose = verbose),
+    data = insight::get_data(model, verbose = FALSE),
     weights = stats::weights(model)
   ))
 
@@ -143,8 +143,8 @@ as.data.frame.performance_pcp <- function(x, row.names = NULL, ...) {
     pcp_full <- (sum(1 - pr_full[y_full == 0]) + sum(pr_full[y_full == 1])) / n_full
     pcp_null <- (sum(1 - pr_null[y_null == 0]) + sum(pr_null[y_null == 1])) / n_null
   } else {
-    pcp_full <- 1 - mean((pr_full > .5 & y_full == 0) | (pr_full <= .5 & y_full == 1))
-    pcp_null <- 1 - mean((pr_null > .5 & y_null == 0) | (pr_null <= .5 & y_null == 1))
+    pcp_full <- 1 - mean((pr_full > 0.5 & y_full == 0) | (pr_full <= 0.5 & y_full == 1))
+    pcp_null <- 1 - mean((pr_null > 0.5 & y_null == 0) | (pr_null <= 0.5 & y_null == 1))
   }
 
   lrt.p <- 1 - stats::pchisq(
