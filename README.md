@@ -57,7 +57,6 @@ To cite performance in publications use:
 
 ``` r
 citation("performance")
-#> 
 #> To cite package 'performance' in publications use:
 #> 
 #>   Lüdecke et al., (2021). performance: An R Package for Assessment, Comparison and
@@ -139,13 +138,17 @@ Schielzeth 2017).
 set.seed(123)
 library(rstanarm)
 
-model <- stan_glmer(Petal.Length ~ Petal.Width + (1 | Species), data = iris, cores = 4)
+model <- stan_glmer(
+  Petal.Length ~ Petal.Width + (1 | Species),
+  data = iris,
+  cores = 4
+)
 
 r2(model)
 #> # Bayesian R2 with Compatibility Interval
 #> 
-#>   Conditional R2: 0.953 (95% CI [0.942, 0.964])
-#>      Marginal R2: 0.825 (95% CI [0.721, 0.900])
+#>   Conditional R2: 0.953 (95% CI [0.941, 0.963])
+#>      Marginal R2: 0.824 (95% CI [0.713, 0.896])
 
 library(lme4)
 model <- lmer(Reaction ~ Days + (1 + Days | Subject), data = sleepstudy)
@@ -258,12 +261,16 @@ set.seed(123)
 sleepstudy$mygrp <- sample(1:5, size = 180, replace = TRUE)
 sleepstudy$mysubgrp <- NA
 for (i in 1:5) {
-    filter_group <- sleepstudy$mygrp == i
-    sleepstudy$mysubgrp[filter_group] <- sample(1:30, size = sum(filter_group), replace = TRUE)
+  filter_group <- sleepstudy$mygrp == i
+  sleepstudy$mysubgrp[filter_group] <-
+    sample(1:30, size = sum(filter_group), replace = TRUE)
 }
 
 # fit strange model
-model <- lmer(Reaction ~ Days + (1 | mygrp/mysubgrp) + (1 | Subject), data = sleepstudy)
+model <- lmer(
+  Reaction ~ Days + (1 | mygrp / mysubgrp) + (1 | Subject),
+  data = sleepstudy
+)
 
 check_singularity(model)
 #> [1] TRUE
@@ -331,7 +338,7 @@ model_performance(m2)
 #> 
 #> AIC    |   AICc |    BIC | Tjur's R2 |  RMSE | Sigma | Log_loss | Score_log | Score_spherical |   PCP
 #> -----------------------------------------------------------------------------------------------------
-#> 31.298 | 32.155 | 35.695 |     0.478 | 0.359 | 0.934 |    0.395 |   -14.903 |           0.095 | 0.743
+#> 31.298 | 32.155 | 35.695 |     0.478 | 0.359 | 1.000 |    0.395 |   -14.903 |           0.095 | 0.743
 ```
 
 #### Linear mixed model
@@ -359,15 +366,15 @@ outcome <- gl(3, 1, 9)
 treatment <- gl(3, 3)
 m4 <- glm(counts ~ outcome + treatment, family = poisson())
 
-compare_performance(m1, m2, m3, m4)
+compare_performance(m1, m2, m3, m4, verbose = FALSE)
 #> # Comparison of Model Performance Indices
 #> 
 #> Name |   Model |  AIC (weights) | AICc (weights) |  BIC (weights) |   RMSE |  Sigma | Score_log | Score_spherical |    R2 | R2 (adj.) | Tjur's R2 | Log_loss |   PCP | R2 (cond.) | R2 (marg.) |   ICC | Nagelkerke's R2
 #> ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 #> m1   |      lm |  156.0 (<.001) |  157.5 (<.001) |  161.9 (<.001) |  2.444 |  2.568 |           |                 | 0.830 |     0.819 |           |          |       |            |            |       |                
-#> m2   |     glm |   31.3 (>.999) |   32.2 (>.999) |   35.7 (>.999) |  0.359 |  0.934 |   -14.903 |           0.095 |       |           |     0.478 |    0.395 | 0.743 |            |            |       |                
+#> m2   |     glm |   31.3 (>.999) |   32.2 (>.999) |   35.7 (>.999) |  0.359 |  1.000 |   -14.903 |           0.095 |       |           |     0.478 |    0.395 | 0.743 |            |            |       |                
 #> m3   | lmerMod | 1764.0 (<.001) | 1764.5 (<.001) | 1783.1 (<.001) | 23.438 | 25.592 |           |                 |       |           |           |          |       |      0.799 |      0.279 | 0.722 |                
-#> m4   |     glm |   56.8 (<.001) |   76.8 (<.001) |   57.7 (<.001) |  3.043 |  1.132 |    -2.598 |           0.324 |       |           |           |          |       |            |            |       |           0.657
+#> m4   |     glm |   56.8 (<.001) |   76.8 (<.001) |   57.7 (<.001) |  3.043 |  1.000 |    -2.598 |           0.324 |       |           |           |          |       |            |            |       |           0.657
 ```
 
 #### General index of model performance
@@ -377,14 +384,14 @@ index**](https://easystats.github.io/performance/reference/compare_performance.h
 of model performance and sort the models from the best one to the worse.
 
 ``` r
-compare_performance(m1, m2, m3, m4, rank = TRUE)
+compare_performance(m1, m2, m3, m4, rank = TRUE, verbose = FALSE)
 #> # Comparison of Model Performance Indices
 #> 
 #> Name |   Model |   RMSE |  Sigma | AIC weights | AICc weights | BIC weights | Performance-Score
 #> -----------------------------------------------------------------------------------------------
-#> m2   |     glm |  0.359 |  0.934 |       1.000 |        1.000 |       1.000 |           100.00%
-#> m4   |     glm |  3.043 |  1.132 |    2.96e-06 |     2.06e-10 |    1.63e-05 |            37.51%
-#> m1   |      lm |  2.444 |  2.568 |    8.30e-28 |     6.07e-28 |    3.99e-28 |            36.87%
+#> m2   |     glm |  0.359 |  1.000 |       1.000 |        1.000 |       1.000 |           100.00%
+#> m4   |     glm |  3.043 |  1.000 |    2.96e-06 |     2.06e-10 |    1.63e-05 |            37.67%
+#> m1   |      lm |  2.444 |  2.568 |    8.30e-28 |     6.07e-28 |    3.99e-28 |            36.92%
 #> m3   | lmerMod | 23.438 | 25.592 |    0.00e+00 |     0.00e+00 |    0.00e+00 |             0.00%
 ```
 
@@ -394,7 +401,7 @@ Finally, we provide convenient visualisation (the `see` package must be
 installed).
 
 ``` r
-plot(compare_performance(m1, m2, m4, rank = TRUE))
+plot(compare_performance(m1, m2, m4, rank = TRUE, verbose = FALSE))
 ```
 
 <img src="man/figures/unnamed-chunk-20-1.png" width="100%" />
@@ -484,7 +491,6 @@ Nakagawa, Shinichi, Paul C. D. Johnson, and Holger Schielzeth. 2017.
 “The Coefficient of Determination R2 and Intra-Class Correlation
 Coefficient from Generalized Linear Mixed-Effects Models Revisited and
 Expanded.” *Journal of The Royal Society Interface* 14 (134): 20170213.
-<https://doi.org/10.1098/rsif.2017.0213>.
 
 </div>
 

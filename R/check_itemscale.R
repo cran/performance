@@ -65,13 +65,6 @@ check_itemscale <- function(x) {
   insight::check_if_installed("parameters")
 
   dataset <- attributes(x)$dataset
-
-  ## TODO: remove once parameters 0.18.3 or higher on CRAN
-  # backward compatibility to parameters 0.18.2
-  if (is.null(dataset)) {
-    dataset <- attributes(x)$data_set
-  }
-
   subscales <- parameters::closest_component(x)
 
   out <- lapply(sort(unique(subscales)), function(.subscale) {
@@ -90,7 +83,7 @@ check_itemscale <- function(x) {
       Mean = vapply(items, mean, numeric(1), na.rm = TRUE),
       SD = vapply(items, stats::sd, numeric(1), na.rm = TRUE),
       Skewness = vapply(items, function(i) as.numeric(datawizard::skewness(i)), numeric(1)),
-      "Difficulty" = item_difficulty(items)$difficulty,
+      "Difficulty" = item_difficulty(items)$Difficulty,
       "Discrimination" = .item_discr,
       "alpha if deleted" = .item_alpha,
       stringsAsFactors = FALSE,

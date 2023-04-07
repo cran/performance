@@ -60,19 +60,27 @@ performance_score <- function(model, verbose = TRUE, ...) {
     model <- model$fit
   }
 
-  if (is.null(minfo <- list(...)$model_info)) {
+  minfo <- list(...)$model_info
+  if (is.null(minfo)) {
     minfo <- suppressWarnings(insight::model_info(model, verbose = FALSE))
   }
 
   if (minfo$is_ordinal || minfo$is_multinomial) {
-    if (verbose) insight::print_color("Can't calculate proper scoring rules for ordinal, multinomial or cumulative link models.\n", "red")
+    if (verbose) {
+      insight::print_color("Can't calculate proper scoring rules for ordinal, multinomial or cumulative link models.\n", "red")
+    }
     return(list(logarithmic = NA, quadratic = NA, spherical = NA))
   }
 
   resp <- insight::get_response(model, verbose = verbose)
 
   if (!is.null(ncol(resp)) && ncol(resp) > 1) {
-    if (verbose) insight::print_color("Can't calculate proper scoring rules for models without integer response values.\n", "red")
+    if (verbose) {
+      insight::print_color(
+        "Can't calculate proper scoring rules for models without integer response values.\n",
+        "red"
+      )
+    }
     return(list(logarithmic = NA, quadratic = NA, spherical = NA))
   }
 
@@ -188,14 +196,7 @@ print.performance_score <- function(x, ...) {
       sum(stats::residuals(model, type = "pearson")^2) / stats::df.residual(model)
     }
   } else {
-    tryCatch(
-      {
-        sum(stats::residuals(model, type = "pearson")^2) / stats::df.residual(model)
-      },
-      error = function(e) {
-        0
-      }
-    )
+    .safe(sum(stats::residuals(model, type = "pearson")^2) / stats::df.residual(model), 0)
   }
 }
 

@@ -1,3 +1,44 @@
+# performance 0.10.3
+
+## New functions
+
+* `item_discrimination()`, to calculate the discrimination of a scale's items.
+
+## Support for new models
+
+* `model_performance()`, `check_overdispersion()`, `check_outliers()` and `r2()`
+  now work with objects of class `fixest_multi` (@etiennebacher, #554).
+  
+* `model_performance()` can now return the "Weak instruments" statistic and
+  p-value for models of class `ivreg` with `metrics = "weak_instruments"`
+  (@etiennebacher, #560).
+
+* Support for `mclogit` models.
+
+## Changes to functions
+
+* `test_*()` functions now automatically fit a null-model when only one model
+  objects was provided for testing multiple models.
+
+* Warnings in `model_performance()` for unsupported objects of class
+  `BFBayesFactor` can now be suppressed with `verbose = FALSE`.
+
+* `check_predictions()` no longer fails with issues when `re_formula = NULL`
+  for mixed models, but instead gives a warning and tries to compute posterior
+  predictive checks with `re_formuka = NA`.
+
+* `check_outliers()` now also works for meta-analysis models from packages
+  *metafor* and *meta*.
+
+* `plot()` for `performance::check_model()` no longer produces a normal QQ plot
+  for GLMs. Instead, it now shows a half-normal QQ plot of the absolute value
+  of the standardized deviance residuals.
+
+## Bug fixes
+
+* Fixed issue in `print()` method for `check_collinearity()`, which could mix
+  up the correct order of parameters.
+
 # performance 0.10.2
 
 ## General

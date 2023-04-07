@@ -18,6 +18,8 @@
 #'
 #' @note There is also a [`plot()`-method](https://easystats.github.io/see/articles/performance.html) implemented in the \href{https://easystats.github.io/see/}{\pkg{see}-package}.
 #'
+#' @family functions to check model assumptions and and assess model quality
+#'
 #' @examples
 #' model <<- lm(len ~ supp + dose, data = ToothGrowth)
 #' check_homogeneity(model)
@@ -58,7 +60,7 @@ check_homogeneity.default <- function(x, method = c("bartlett", "fligner", "leve
   if (method == "auto") {
     check <- tryCatch(
       {
-        utils::capture.output(p <- check_normality(x))
+        utils::capture.output(p <- check_normality(x)) # nolint
         p
       },
       error = function(e) {
@@ -153,7 +155,7 @@ check_homogeneity.afex_aov <- function(x, method = "levene", ...) {
   colnames(ag_data)[length(c(between, id)) + 1] <- dv
 
   if (any(is_covar)) {
-    insight::format_warning(
+    insight::format_alert(
       "Levene's test is not appropriate with quantitative explanatory variables. Testing assumption of homogeneity among factor groups only."
     )
     # ## TODO maybe add as option?

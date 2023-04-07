@@ -59,7 +59,8 @@ r2_mcfadden <- function(model, ...) {
 
 #' @export
 r2_mcfadden.glm <- function(model, verbose = TRUE, ...) {
-  if (is.null(info <- list(...)$model_info)) {
+  info <- list(...)$model_info
+  if (is.null(info)) {
     info <- suppressWarnings(insight::model_info(model, verbose = FALSE))
   }
   if (info$is_binomial && !info$is_bernoulli && class(model)[1] == "glm") {
@@ -92,13 +93,28 @@ r2_mcfadden.bracl <- r2_mcfadden.glm
 r2_mcfadden.brmultinom <- r2_mcfadden.glm
 
 #' @export
-r2_mcfadden.mclogit <- r2_mcfadden.glm
-
-#' @export
 r2_mcfadden.censReg <- r2_mcfadden.glm
 
 #' @export
 r2_mcfadden.truncreg <- r2_mcfadden.glm
+
+#' @export
+r2_mcfadden.mclogit <- function(model, ...) {
+  insight::check_if_installed("mclogit", reason = "to calculate R2")
+  s <- mclogit::getSummary.mclogit(model)
+  r2_mcfadden <- s$sumstat["McFadden"]
+  names(r2_mcfadden) <- "McFadden's R2"
+  r2_mcfadden
+}
+
+#' @export
+r2_mcfadden.mblogit <- function(model, ...) {
+  insight::check_if_installed("mclogit", reason = "to calculate R2")
+  s <- mclogit::getSummary.mblogit(model)
+  r2_mcfadden <- s$sumstat["McFadden"]
+  names(r2_mcfadden) <- "McFadden's R2"
+  r2_mcfadden
+}
 
 
 
@@ -138,7 +154,7 @@ r2_mcfadden.negbinmfx <- r2_mcfadden.logitmfx
 #' @export
 r2_mcfadden.vglm <- function(model, ...) {
   if (!(is.null(model@call$summ) && !identical(model@call$summ, 0))) {
-    stop("Can't get log-likelihood when `summ` is not zero.", call. = FALSE)
+    insight::format_error("Can't get log-likelihood when `summ` is not zero.")
   }
 
   l_null <- insight::get_loglikelihood(stats::update(model, ~1))

@@ -41,24 +41,33 @@
   } else if (inherits(model, "geeglm")) {
     res_ <- stats::residuals(model, type = "pearson")
   } else if (inherits(model, "glm")) {
-    res_ <- stats::rstandard(model, type = "pearson")
+    res_ <- .safe(abs(stats::rstandard(model, type = "deviance")))
   } else {
-    res_ <- tryCatch(stats::rstudent(model), error = function(e) NULL)
+    res_ <- .safe(stats::rstudent(model))
     if (is.null(res_)) {
-      res_ <- tryCatch(stats::residuals(model), error = function(e) NULL)
+      res_ <- .safe(stats::residuals(model))
     }
   }
 
   if (is.null(res_)) {
     if (verbose) {
-      insight::format_alert(sprintf("QQ plot could not be created. Cannot extract residuals from objects of class `%s`.", class(model)[1]))
+      insight::format_alert(
+        sprintf(
+          "QQ plot could not be created. Cannot extract residuals from objects of class `%s`.",
+          class(model)[1]
+        )
+      )
     }
     return(NULL)
   }
 
-  fitted_ <- stats::fitted(model)
+  if (inherits(model, "glm")) {
+    fitted_ <- stats::qnorm((stats::ppoints(length(res_)) + 1) / 2)
+  } else {
+    fitted_ <- stats::fitted(model)
+  }
 
-  # sanity check, sometime either residuals or fitted can contain NA, see #488
+  # sanity check, sometimes either residuals or fitted can contain NA, see #488
   if (anyNA(res_) || anyNA(fitted_)) {
     # drop NA and make sure both fitted and residuals match
     non_na <- !is.na(fitted_) & !is.na(res_)
@@ -121,7 +130,7 @@
   }
 
 
-  mapply(function(.re, .se) {
+  Map(function(.re, .se) {
     ord <- unlist(lapply(.re, order)) + rep((0:(ncol(.re) - 1)) * nrow(.re), each = nrow(.re))
 
     df.y <- unlist(.re)[ord]
@@ -136,7 +145,7 @@
       stringsAsFactors = FALSE,
       row.names = NULL
     )
-  }, re, se, SIMPLIFY = FALSE)
+  }, re, se)
 }
 
 
@@ -214,7 +223,7 @@
 
   if (is.null(ncv)) {
     if (verbose) {
-      message(insight::format_message(sprintf("Non-constant error variance could not be computed. Cannot extract residuals from objects of class '%s'.", class(model)[1])))
+      insight::format_alert(sprintf("Non-constant error variance could not be computed. Cannot extract residuals from objects of class '%s'.", class(model)[1]))
     }
     return(NULL)
   }
@@ -242,6 +251,7 @@
         }
         stats::residuals(model) / sigma
       } else if (inherits(model, "glm")) {
+        ## TODO: check if we can / should use deviance residuals (as for QQ plots) here as well?
         stats::rstandard(model, type = "pearson")
       } else {
         stats::rstandard(model)
@@ -254,7 +264,7 @@
 
   if (is.null(r)) {
     if (verbose) {
-      message(insight::format_message(sprintf("Homogeneity of variance could not be computed. Cannot extract residual variance from objects of class '%s'.", class(model)[1])))
+      insight::format_alert(sprintf("Homogeneity of variance could not be computed. Cannot extract residual variance from objects of class '%s'.", class(model)[1]))
     }
     return(NULL)
   }

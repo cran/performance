@@ -18,6 +18,8 @@
 #'
 #' @references Breusch, T. S., and Pagan, A. R. (1979) A simple test for heteroscedasticity and random coefficient variation. Econometrica 47, 1287-1294.
 #'
+#' @family functions to check model assumptions and and assess model quality
+#'
 #' @examples
 #' m <<- lm(mpg ~ wt + cyl + gear + disp, data = mtcars)
 #' check_heteroscedasticity(m)
@@ -52,7 +54,7 @@ check_heteroscedasticity.default <- function(x, ...) {
     if (info$is_count) {
       paste0(msg, " You may check your model for overdispersion or zero-inflation instead (see 'check_overdispersion()' and 'check_zeroinflation()').")
     }
-    message(insight::format_message(msg))
+    insight::format_alert(msg)
     return(NULL)
   }
 

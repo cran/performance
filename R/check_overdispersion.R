@@ -16,19 +16,17 @@
 #'   with the mean and, therefore, variance usually (roughly) equals the mean
 #'   value. If the variance is much higher, the data are "overdispersed".
 #'
-#' \subsection{Interpretation of the Dispersion Ratio}{
+#' @section Interpretation of the Dispersion Ratio:
 #' If the dispersion ratio is close to one, a Poisson model fits well to the
 #' data. Dispersion ratios larger than one indicate overdispersion, thus a
 #' negative binomial model or similar might fit better to the data. A p-value <
 #' .05 indicates overdispersion.
-#' }
 #'
-#' \subsection{Overdispersion in Poisson Models}{
+#' @section Overdispersion in Poisson Models:
 #' For Poisson models, the overdispersion test is based on the code from
-#' \cite{Gelman and Hill (2007), page 115}.
-#' }
+#' _Gelman and Hill (2007), page 115_.
 #'
-#' \subsection{Overdispersion in Mixed Models}{
+#' @section Overdispersion in Mixed Models:
 #' For `merMod`- and `glmmTMB`-objects, `check_overdispersion()`
 #' is based on the code in the
 #' [GLMM FAQ](http://bbolker.github.io/mixedmodels-misc/glmmFAQ.html),
@@ -36,16 +34,15 @@
 #' function only returns an *approximate* estimate of an overdispersion
 #' parameter, and is probably inaccurate for zero-inflated mixed models (fitted
 #' with `glmmTMB`).
-#' }
 #'
-#' \subsection{How to fix Overdispersion}{
+#' @section How to fix Overdispersion:
 #' Overdispersion can be fixed by either modeling the dispersion parameter, or
 #' by choosing a different distributional family (like Quasi-Poisson, or
-#' negative binomial, see \cite{Gelman and Hill (2007), pages 115-116}).
-#' }
+#' negative binomial, see _Gelman and Hill (2007), pages 115-116_).
+#'
+#' @family functions to check model assumptions and and assess model quality
 #'
 #' @references
-#'
 #' - Bolker B et al. (2017):
 #'  [GLMM FAQ.](http://bbolker.github.io/mixedmodels-misc/glmmFAQ.html)
 #'
@@ -95,14 +92,10 @@ plot.check_overdisp <- function(x, ...) {
   model <- NULL
 
   if (!is.null(obj_name)) {
-    model <- tryCatch(get(obj_name, envir = parent.frame()),
-      error = function(e) NULL
-    )
+    model <- .safe(get(obj_name, envir = parent.frame()))
     if (is.null(model)) {
       # second try, global env
-      model <- tryCatch(get(obj_name, envir = globalenv()),
-        error = function(e) NULL
-      )
+      model <- .safe(get(obj_name, envir = globalenv()))
     }
   }
   if (!is.null(model)) {
@@ -195,6 +188,11 @@ check_overdispersion.glm <- function(x, verbose = TRUE, ...) {
 check_overdispersion.fixest <- check_overdispersion.glm
 
 #' @export
+check_overdispersion.fixest_multi <- function(x, verbose = TRUE, ...) {
+  lapply(x, check_overdispersion.fixest)
+}
+
+#' @export
 check_overdispersion.glmx <- check_overdispersion.glm
 
 
@@ -243,7 +241,7 @@ check_overdispersion.merMod <- function(x, verbose = TRUE, ...) {
     pval <- NA
     rp <- NA
     if (isTRUE(verbose)) {
-      insight::format_warning(
+      insight::format_alert(
         "Cannot test for overdispersion, because pearson residuals are not implemented for models with zero-inflation or variable dispersion.",
         "Only the visual inspection using `plot(check_overdispersion(model))` is possible."
       )

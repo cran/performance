@@ -23,13 +23,14 @@
 #'
 #' @export
 r2_tjur <- function(model, ...) {
-  if (is.null(info <- list(...)$model_info)) {
+  info <- list(...)$model_info
+  if (is.null(info)) {
     info <- suppressWarnings(insight::model_info(model, verbose = FALSE))
   }
 
   # check for valid object class
   if (!info$is_binomial) {
-    stop("`model` must be binomial.", call. = FALSE)
+    insight::format_error("`model` must be binomial.")
   }
 
   y <- .recode_to_zero(insight::get_response(model, verbose = FALSE))

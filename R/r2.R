@@ -64,7 +64,8 @@ r2.default <- function(model, ci = NULL, verbose = TRUE, ...) {
     return(.r2_ci(model, ci = ci, verbose = verbose, ...))
   }
 
-  if (is.null(minfo <- list(...)$model_info)) {
+  minfo <- list(...)$model_info
+  if (is.null(minfo)) {
     minfo <- suppressWarnings(insight::model_info(model, verbose = FALSE))
   }
 
@@ -113,6 +114,8 @@ r2.lm <- function(model, ci = NULL, ...) {
   .r2_lm(summary(model))
 }
 
+#' @export
+r2.phylolm <- r2.lm
 
 .r2_lm <- function(model_summary, ci = NULL) {
   out <- list(
@@ -282,7 +285,8 @@ r2.glm <- function(model, ci = NULL, verbose = TRUE, ...) {
     return(.r2_ci(model, ci = ci, verbose = verbose, ...))
   }
 
-  if (is.null(info <- list(...)$model_info)) {
+  info <- list(...)$model_info
+  if (is.null(info)) {
     info <- suppressWarnings(insight::model_info(model, verbose = FALSE))
   }
 
@@ -395,9 +399,6 @@ r2.clm2 <- r2.censReg
 r2.coxph <- r2.censReg
 
 #' @export
-r2.mclogit <- r2.censReg
-
-#' @export
 r2.polr <- r2.censReg
 
 #' @export
@@ -415,7 +416,15 @@ r2.brmultinom <- r2.censReg
 #' @export
 r2.bife <- r2.censReg
 
+#' @export
+r2.mclogit <- function(model, ...) {
+  r2_nagelkerke(model)
+}
 
+#' @export
+r2.mblogit <- function(model, ...) {
+  r2_nagelkerke(model)
+}
 
 
 
@@ -554,7 +563,7 @@ r2.BFBayesFactor <- r2.brmsfit
 #' @export
 r2.gam <- function(model, ...) {
   # gamlss inherits from gam, and summary.gamlss prints results automatically
-  printout <- utils::capture.output(s <- summary(model))
+  printout <- utils::capture.output(s <- summary(model)) # nolint
 
   if (!is.null(s$r.sq)) {
     list(
@@ -634,6 +643,11 @@ r2.fixest <- function(model, ...) {
 
   attr(out, "model_type") <- "Fixed Effects"
   structure(class = "r2_generic", out)
+}
+
+#' @export
+r2.fixest_multi <- function(model, ...) {
+  lapply(model, r2.fixest)
 }
 
 
@@ -736,12 +750,6 @@ r2.mmclogit <- function(model, ...) {
 
 
 #' @export
-r2.mclogit <- function(model, ...) {
-  list(R2 = NA)
-}
-
-
-#' @export
 r2.Arima <- function(model, ...) {
   if (!requireNamespace("forecast", quietly = TRUE)) {
     list(R2 = NA)
@@ -827,15 +835,13 @@ r2.DirichletRegModel <- function(model, ...) {
 # helper -------------------
 
 .check_r2_ci_args <- function(ci = NULL, ci_method = "bootstrap", valid_ci_method = NULL, verbose = TRUE) {
-  if (!is.null(ci) && !is.na(ci)) {
-    if (!is.null(valid_ci_method) && !ci_method %in% valid_ci_method) {
-      if (verbose) {
-        insight::format_warning(
-          paste0("Method `", ci_method, "` to compute confidence intervals for R2 not supported.")
-        )
-      }
-      return(NULL)
+  if (!is.null(ci) && !is.na(ci) && !is.null(valid_ci_method) && !ci_method %in% valid_ci_method) {
+    if (verbose) {
+      insight::format_warning(
+        paste0("Method `", ci_method, "` to compute confidence intervals for R2 not supported.")
+      )
     }
+    return(NULL)
   }
   ci
 }

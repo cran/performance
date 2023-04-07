@@ -1,7 +1,7 @@
 Type: Package
 Package: performance
 Title: Assessment of Regression Models Performance
-Version: 0.10.2
+Version: 0.10.3
 Authors@R: 
     c(person(given = "Daniel",
              family = "Lüdecke",
@@ -47,7 +47,12 @@ Authors@R:
              family = "Jullum",
              role = "rev"),
       person(given = "gjo11",
-             role = "rev"))
+             role = "rev"),
+      person("Etienne", 
+             "Bacher", , 
+             "etienne.bacher@protonmail.com", 
+             role = "ctb",
+             comment = c(ORCID = "0000-0002-9271-5075")))
 Maintainer: Daniel Lüdecke <d.luedecke@uke.de>
 Description: Utilities for computing measures to assess model quality,
     which are not directly provided by R's 'base' or 'stats' packages.
@@ -62,25 +67,27 @@ License: GPL-3
 URL: https://easystats.github.io/performance/
 BugReports: https://github.com/easystats/performance/issues
 Depends: R (>= 3.6)
-Imports: bayestestR (>= 0.13.0), insight (>= 0.18.8), datawizard (>=
-        0.6.5), methods, stats, utils
+Imports: bayestestR (>= 0.13.0), insight (>= 0.19.1), datawizard (>=
+        0.7.0), methods, stats, utils
 Suggests: AER, afex, BayesFactor, bayesplot, betareg, bigutilsr,
         blavaan, boot, brms, car, CompQuadForm, correlation, cplm,
         dbscan, estimatr, fixest, forecast, gamm4, ggplot2, glmmTMB,
-        graphics, Hmisc, httr, ICS, ICSOutlier, ISLR, lavaan, lme4,
-        lmtest, loo, MASS, Matrix, mclust, metafor, mgcv, mlogit,
-        multimode, nlme, nonnest2, ordinal, parallel, parameters,
-        patchwork, poorman, pscl, psych, randomForest, rmarkdown,
-        rstanarm, rstantools, sandwich, see (>= 0.7.4), survey,
-        survival, testthat, tweedie, VGAM
+        graphics, Hmisc, httr, ICS, ICSOutlier, ISLR, ivreg, lavaan,
+        lme4, lmtest, loo, MASS, Matrix, mclogit, mclust, metadat,
+        metafor, mgcv, mlogit, multimode, nlme, nonnest2, ordinal,
+        parallel, parameters (>= 0.20.3), patchwork, pscl, psych,
+        randomForest, rmarkdown, rstanarm, rstantools, sandwich, see
+        (>= 0.7.5), survey, survival, testthat, tweedie, VGAM, withr
 Encoding: UTF-8
 Language: en-US
-RoxygenNote: 7.2.3
+RoxygenNote: 7.2.3.9000
 Config/testthat/edition: 3
+Config/testthat/parallel: true
 Config/Needs/website: rstudio/bslib, r-lib/pkgdown,
         easystats/easystatstemplate
+Config/rcmdcheck/ignore-inconsequential-notes: true
 NeedsCompilation: no
-Packaged: 2023-01-11 16:36:46 UTC; Daniel
+Packaged: 2023-04-06 14:06:58 UTC; mail
 Author: Daniel Lüdecke [aut, cre] (<https://orcid.org/0000-0002-8895-3206>,
     @strengejacke),
   Dominique Makowski [aut, ctb] (<https://orcid.org/0000-0001-5375-9967>,
@@ -96,6 +103,7 @@ Author: Daniel Lüdecke [aut, cre] (<https://orcid.org/0000-0002-8895-3206>,
   Rémi Thériault [ctb] (<https://orcid.org/0000-0003-4315-6788>,
     @rempsyc),
   Martin Jullum [rev],
-  gjo11 [rev]
+  gjo11 [rev],
+  Etienne Bacher [ctb] (<https://orcid.org/0000-0002-9271-5075>)
 Repository: CRAN
-Date/Publication: 2023-01-12 09:00:06 UTC
+Date/Publication: 2023-04-07 17:00:02 UTC
