@@ -19,6 +19,8 @@ check_model(x, ...)
   theme = "see::theme_lucid",
   detrend = FALSE,
   show_dots = NULL,
+  bandwidth = "nrd",
+  type = "density",
   verbose = TRUE,
   ...
 )
@@ -61,13 +63,24 @@ time-consuming. By default, \code{show_dots = NULL}. In this case \code{check_mo
 tries to guess whether performance will be poor due to a very large model
 and thus automatically shows or hides dots.}
 
+\item{bandwidth}{A character string indicating the smoothing bandwidth to
+be used. Unlike \code{stats::density()}, which used \code{"nrd0"} as default, the
+default used here is \code{"nrd"} (which seems to give more plausible results
+for non-Gaussian models). When problems with plotting occur, try to change
+to a different value.}
+
+\item{type}{Plot type for the posterior predictive checks plot. Can be \code{"density"},
+\code{"discrete_dots"}, \code{"discrete_interval"} or \code{"discrete_both"} (the \verb{discrete_*}
+options are appropriate for models with discrete - binary, integer or ordinal
+etc. - outcomes).}
+
 \item{verbose}{Toggle off warnings.}
 }
 \value{
 The data frame that is used for plotting.
 }
 \description{
-Visual check of model various assumptions (normality of residuals, normality
+Visual check of various model assumptions (normality of residuals, normality
 of random effects, linear relationship, homogeneity of variance,
 multicollinearity).
 }
@@ -77,10 +90,12 @@ models will be "converted" to their frequentist counterpart, using
 \href{https://easystats.github.io/bayestestR/reference/convert_bayesian_as_frequentist.html}{\code{bayestestR::bayesian_as_frequentist}}.
 A more advanced model-check for Bayesian models will be implemented at a
 later stage.
+
+See also the related \href{https://easystats.github.io/performance/articles/check_model.html}{vignette}.
 }
 \note{
 This function just prepares the data for plotting. To create the plots,
-\CRANpkg{see} needs to be installed. Furthermore, this function suppresses
+\strong{see} needs to be installed. Furthermore, this function suppresses
 all possible warnings. In case you observe suspicious plots, please refer
 to the dedicated functions (like \code{check_collinearity()},
 \code{check_normality()} etc.) to get informative messages and warnings.
@@ -146,7 +161,7 @@ some deviation (mostly at the tails), this indicates that the model doesn't
 predict the outcome well for that range that shows larger deviations from
 the line. For generalized linear models, a half-normal Q-Q plot of the
 absolute value of the standardized deviance residuals is shown, however, the
-intrepretation of the plot remains the same. See \code{\link[=check_normality]{check_normality()}} for
+interpretation of the plot remains the same. See \code{\link[=check_normality]{check_normality()}} for
 further details.
 }
 

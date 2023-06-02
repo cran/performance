@@ -63,7 +63,7 @@
 #' the standard error is due to the association with other predictors
 #' conditional on the remaining variables in the model. Note that these
 #' thresholds, although commonly used, are also criticized for being too high.
-#' _Zuur et al. (2019)_ suggest using lower values, e.g. a VIF of 3 or larger
+#' _Zuur et al. (2010)_ suggest using lower values, e.g. a VIF of 3 or larger
 #' may already no longer be considered as "low".
 #'
 #' @section Multicollinearity and Interaction Terms:
@@ -190,7 +190,12 @@ plot.check_collinearity <- function(x, ...) {
 
   # format table for each "ViF" group - this ensures that CIs are properly formatted
   x <- insight::format_table(x)
-  colnames(x)[4] <- "Increased SE"
+  x <- datawizard::data_rename(
+    x,
+    pattern = "SE_factor",
+    replacement = "Increased SE",
+    verbose = FALSE
+  )
 
   if (length(low_vif)) {
     cat("\n")

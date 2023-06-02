@@ -3,7 +3,7 @@
 #'
 #' @description
 #'
-#' Visual check of model various assumptions (normality of residuals, normality
+#' Visual check of various model assumptions (normality of residuals, normality
 #' of random effects, linear relationship, homogeneity of variance,
 #' multicollinearity).
 #'
@@ -35,20 +35,23 @@
 #'   and thus automatically shows or hides dots.
 #' @param verbose Toggle off warnings.
 #' @param ... Currently not used.
+#' @inheritParams check_predictions
 #'
 #' @return The data frame that is used for plotting.
 #'
 #' @note This function just prepares the data for plotting. To create the plots,
-#'   \CRANpkg{see} needs to be installed. Furthermore, this function suppresses
+#'   **see** needs to be installed. Furthermore, this function suppresses
 #'   all possible warnings. In case you observe suspicious plots, please refer
 #'   to the dedicated functions (like `check_collinearity()`,
 #'   `check_normality()` etc.) to get informative messages and warnings.
 #'
 #' @details For Bayesian models from packages **rstanarm** or **brms**,
-#'   models will be "converted" to their frequentist counterpart, using
-#'   [`bayestestR::bayesian_as_frequentist`](https://easystats.github.io/bayestestR/reference/convert_bayesian_as_frequentist.html).
-#'   A more advanced model-check for Bayesian models will be implemented at a
-#'   later stage.
+#' models will be "converted" to their frequentist counterpart, using
+#' [`bayestestR::bayesian_as_frequentist`](https://easystats.github.io/bayestestR/reference/convert_bayesian_as_frequentist.html).
+#' A more advanced model-check for Bayesian models will be implemented at a
+#' later stage.
+#'
+#' See also the related [vignette](https://easystats.github.io/performance/articles/check_model.html).
 #'
 #' @section Posterior Predictive Checks:
 #' Posterior predictive checks can be used to look for systematic discrepancies
@@ -173,6 +176,8 @@ check_model.default <- function(x,
                                 theme = "see::theme_lucid",
                                 detrend = FALSE,
                                 show_dots = NULL,
+                                bandwidth = "nrd",
+                                type = "density",
                                 verbose = TRUE,
                                 ...) {
   # check model formula
@@ -201,6 +206,12 @@ check_model.default <- function(x,
     insight::format_error(paste0("`check_model()` not implemented for models of class `", class(x)[1], "` yet."))
   }
 
+  # try to find sensible default for "type" argument
+  suggest_dots <- (minfo$is_bernoulli || minfo$is_count || minfo$is_ordinal || minfo$is_categorical || minfo$is_multinomial)
+  if (missing(type) && suggest_dots) {
+    type <- "discrete_interval"
+  }
+
   # set default for show_dots, based on "model size"
   if (is.null(show_dots)) {
     n <- .safe(insight::n_obs(x))
@@ -219,6 +230,8 @@ check_model.default <- function(x,
   attr(ca, "theme") <- theme
   attr(ca, "model_info") <- minfo
   attr(ca, "overdisp_type") <- list(...)$plot_type
+  attr(ca, "bandwidth") <- bandwidth
+  attr(ca, "type") <- type
   ca
 }
 
@@ -256,6 +269,8 @@ check_model.stanreg <- function(x,
                                 theme = "see::theme_lucid",
                                 detrend = FALSE,
                                 show_dots = NULL,
+                                bandwidth = "nrd",
+                                type = "density",
                                 verbose = TRUE,
                                 ...) {
   check_model(bayestestR::bayesian_as_frequentist(x),
@@ -269,6 +284,8 @@ check_model.stanreg <- function(x,
     theme = theme,
     detrend = detrend,
     show_dots = show_dots,
+    bandwidth = bandwidth,
+    type = type,
     verbose = verbose,
     ...
   )
@@ -291,6 +308,8 @@ check_model.model_fit <- function(x,
                                   theme = "see::theme_lucid",
                                   detrend = FALSE,
                                   show_dots = NULL,
+                                  bandwidth = "nrd",
+                                  type = "density",
                                   verbose = TRUE,
                                   ...) {
   check_model(
@@ -305,6 +324,8 @@ check_model.model_fit <- function(x,
     theme = theme,
     detrend = detrend,
     show_dots = show_dots,
+    bandwidth = bandwidth,
+    type = type,
     verbose = verbose,
     ...
   )
