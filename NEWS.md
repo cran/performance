@@ -1,3 +1,22 @@
+# performance 0.10.5
+
+## Changes to functions
+
+* More informative message for `test_*()` functions that "nesting" only refers
+  to fixed effects parameters and currently ignores random effects when detecting
+  nested models.
+
+* `check_outliers()` for `"ICS"` method is now more stable and less likely to
+  fail.
+
+* `check_convergence()` now works for *parsnip* `_glm` models.
+
+## Bug fixes
+
+* `check_collinearity()` did not work for hurdle- or zero-inflated models of
+  package *pscl* when model had no explicitly defined formula for the
+  zero-inflation model.
+
 # performance 0.10.4
 
 ## Changes to functions
