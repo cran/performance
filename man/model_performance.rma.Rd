@@ -34,13 +34,13 @@ A data frame (with one row) and one column per "index" (see
 }
 \description{
 Compute indices of model performance for meta-analysis model from the
-\pkg{metafor} package.
+\strong{metafor} package.
 }
 \details{
 \subsection{Indices of fit}{
 \itemize{
 \item \strong{AIC} Akaike's Information Criterion, see \code{?stats::AIC}
-\item \strong{BIC} {Bayesian Information Criterion, see \code{?stats::BIC}}
+\item \strong{BIC} Bayesian Information Criterion, see \code{?stats::BIC}
 \item \strong{I2}: For a random effects model, \code{I2} estimates (in
 percent) how much of the total variability in the effect size estimates
 can be attributed to heterogeneity among the true effects. For a
@@ -65,10 +65,17 @@ See the documentation for \code{?metafor::fitstats}.
 }
 }
 \examples{
-if (require("metafor")) {
-  data(dat.bcg)
-  dat <- escalc(measure = "RR", ai = tpos, bi = tneg, ci = cpos, di = cneg, data = dat.bcg)
-  model <- rma(yi, vi, data = dat, method = "REML")
-  model_performance(model)
-}
+\dontshow{if (require("metafor") && require("metadat")) (if (getRversion() >= "3.4") withAutoprint else force)(\{ # examplesIf}
+data(dat.bcg, package = "metadat")
+dat <- metafor::escalc(
+  measure = "RR",
+  ai = tpos,
+  bi = tneg,
+  ci = cpos,
+  di = cneg,
+  data = dat.bcg
+)
+model <- metafor::rma(yi, vi, data = dat, method = "REML")
+model_performance(model)
+\dontshow{\}) # examplesIf}
 }

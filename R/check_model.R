@@ -27,7 +27,7 @@
 #'   for dots, and third color for outliers or extreme values.
 #' @param theme String, indicating the name of the plot-theme. Must be in the
 #'   format `"package::theme_name"` (e.g. `"ggplot2::theme_minimal"`).
-#' @param detrend Logical. Should Q-Q/P-P plots be de-trended? Defaults to
+#' @param detrend Logical. Should Q-Q/P-P plots be detrended? Defaults to
 #'   `TRUE`.
 #' @param show_dots Logical, if `TRUE`, will show data points in the plot. Set
 #'   to `FALSE` for models with many observations, if generating the plot is too
@@ -35,7 +35,8 @@
 #'   tries to guess whether performance will be poor due to a very large model
 #'   and thus automatically shows or hides dots.
 #' @param verbose If `FALSE` (default), suppress most warning messages.
-#' @param ... Currently not used.
+#' @param ... Arguments passed down to the individual check functions, especially
+#'   to `check_predictions()` and `binned_residuals()`.
 #' @inheritParams check_predictions
 #'
 #' @return The data frame that is used for plotting.
@@ -140,20 +141,14 @@
 #'
 #' @family functions to check model assumptions and and assess model quality
 #'
-#' @examples
-#' \dontrun{
+#' @examplesIf require("lme4")
+#' \donttest{
 #' m <- lm(mpg ~ wt + cyl + gear + disp, data = mtcars)
 #' check_model(m)
 #'
-#' if (require("lme4")) {
-#'   m <- lmer(Reaction ~ Days + (Days | Subject), sleepstudy)
-#'   check_model(m, panel = FALSE)
-#' }
-#'
-#' if (require("rstanarm")) {
-#'   m <- stan_glm(mpg ~ wt + gear, data = mtcars, chains = 2, iter = 200)
-#'   check_model(m)
-#' }
+#' data(sleepstudy, package = "lme4")
+#' m <- lme4::lmer(Reaction ~ Days + (Days | Subject), sleepstudy)
+#' check_model(m, panel = FALSE)
 #' }
 #' @export
 check_model <- function(x, ...) {
@@ -191,11 +186,11 @@ check_model.default <- function(x,
   ca <- tryCatch(
     {
       if (minfo$is_bayesian) {
-        suppressWarnings(.check_assumptions_stan(x))
+        suppressWarnings(.check_assumptions_stan(x, ...))
       } else if (minfo$is_linear) {
-        suppressWarnings(.check_assumptions_linear(x, minfo, verbose))
+        suppressWarnings(.check_assumptions_linear(x, minfo, verbose, ...))
       } else {
-        suppressWarnings(.check_assumptions_glm(x, minfo, verbose))
+        suppressWarnings(.check_assumptions_glm(x, minfo, verbose, ...))
       }
     },
     error = function(e) {
@@ -208,7 +203,7 @@ check_model.default <- function(x,
   }
 
   # try to find sensible default for "type" argument
-  suggest_dots <- (minfo$is_bernoulli || minfo$is_count || minfo$is_ordinal || minfo$is_categorical || minfo$is_multinomial)
+  suggest_dots <- (minfo$is_bernoulli || minfo$is_count || minfo$is_ordinal || minfo$is_categorical || minfo$is_multinomial) # nolint
   if (missing(type) && suggest_dots) {
     type <- "discrete_interval"
   }
@@ -336,7 +331,7 @@ check_model.model_fit <- function(x,
 
 # compile plots for checks of linear models  ------------------------
 
-.check_assumptions_linear <- function(model, model_info, verbose = TRUE) {
+.check_assumptions_linear <- function(model, model_info, verbose = TRUE, ...) {
   dat <- list()
 
   dat$VIF <- .diag_vif(model, verbose = verbose)
@@ -346,13 +341,13 @@ check_model.model_fit <- function(x,
   dat$NCV <- .diag_ncv(model, verbose = verbose)
   dat$HOMOGENEITY <- .diag_homogeneity(model, verbose = verbose)
   dat$OUTLIERS <- check_outliers(model, method = "cook")
-  if (!is.null(dat$OUTLIERS)) {
-    threshold <- attributes(dat$OUTLIERS)$threshold$cook
-  } else {
+  if (is.null(dat$OUTLIERS)) {
     threshold <- NULL
+  } else {
+    threshold <- attributes(dat$OUTLIERS)$threshold$cook
   }
   dat$INFLUENTIAL <- .influential_obs(model, threshold = threshold)
-  dat$PP_CHECK <- .safe(check_predictions(model))
+  dat$PP_CHECK <- .safe(check_predictions(model, ...))
 
   dat <- insight::compact_list(dat)
   class(dat) <- c("check_model", "see_check_model")
@@ -363,7 +358,7 @@ check_model.model_fit <- function(x,
 
 # compile plots for checks of generalized linear models  ------------------------
 
-.check_assumptions_glm <- function(model, model_info, verbose = TRUE) {
+.check_assumptions_glm <- function(model, model_info, verbose = TRUE, ...) {
   dat <- list()
 
   dat$VIF <- .diag_vif(model, verbose = verbose)
@@ -371,15 +366,15 @@ check_model.model_fit <- function(x,
   dat$HOMOGENEITY <- .diag_homogeneity(model, verbose = verbose)
   dat$REQQ <- .diag_reqq(model, level = 0.95, model_info = model_info, verbose = verbose)
   dat$OUTLIERS <- check_outliers(model, method = "cook")
-  if (!is.null(dat$OUTLIERS)) {
-    threshold <- attributes(dat$OUTLIERS)$threshold$cook
-  } else {
+  if (is.null(dat$OUTLIERS)) {
     threshold <- NULL
+  } else {
+    threshold <- attributes(dat$OUTLIERS)$threshold$cook
   }
   dat$INFLUENTIAL <- .influential_obs(model, threshold = threshold)
-  dat$PP_CHECK <- .safe(check_predictions(model))
+  dat$PP_CHECK <- .safe(check_predictions(model, ...))
   if (isTRUE(model_info$is_binomial)) {
-    dat$BINNED_RESID <- binned_residuals(model)
+    dat$BINNED_RESID <- binned_residuals(model, ...)
   }
   if (isTRUE(model_info$is_count)) {
     dat$OVERDISPERSION <- .diag_overdispersion(model)
@@ -394,7 +389,7 @@ check_model.model_fit <- function(x,
 
 # compile plots for checks of Bayesian models  ------------------------
 
-.check_assumptions_stan <- function(model) {
+.check_assumptions_stan <- function(model, ...) {
   if (inherits(model, "brmsfit")) {
     # check if brms can be loaded
 

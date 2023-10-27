@@ -1,7 +1,7 @@
 Type: Package
 Package: performance
 Title: Assessment of Regression Models Performance
-Version: 0.10.5
+Version: 0.10.7
 Authors@R: 
     c(person(given = "Daniel",
              family = "Lüdecke",
@@ -67,18 +67,19 @@ License: GPL-3
 URL: https://easystats.github.io/performance/
 BugReports: https://github.com/easystats/performance/issues
 Depends: R (>= 3.6)
-Imports: bayestestR (>= 0.13.0), insight (>= 0.19.4), datawizard (>=
-        0.7.0), methods, stats, utils
+Imports: bayestestR (>= 0.13.1), insight (>= 0.19.5), datawizard (>=
+        0.9.0), methods, stats, utils
 Suggests: AER, afex, BayesFactor, bayesplot, betareg, bigutilsr,
-        blavaan, boot, brms, car, CompQuadForm, correlation, cplm,
-        dbscan, estimatr, fixest, forecast, gamm4, ggplot2, glmmTMB,
-        graphics, Hmisc, httr, ICS, ICSOutlier, ISLR, ivreg, lavaan,
-        lme4, lmtest, loo, MASS, Matrix, mclogit, mclust, metadat,
-        metafor, mgcv, mlogit, multimode, nlme, nonnest2, ordinal,
-        parallel, parameters (>= 0.20.3), patchwork, pscl, psych,
-        qqplotr (>= 0.0.6), randomForest, rmarkdown, rstanarm,
-        rstantools, sandwich, see (>= 0.7.5), survey, survival,
-        testthat, tweedie, VGAM, withr
+        blavaan, boot, brms, car, carData, CompQuadForm, correlation,
+        cplm, dbscan, estimatr, fixest, flextable, forecast, ftExtra,
+        gamm4, ggplot2, glmmTMB, graphics, Hmisc, httr, ICS,
+        ICSOutlier, ISLR, ivreg, lavaan, lme4, lmtest, loo, MASS,
+        Matrix, mclogit, mclust, metadat, metafor, mgcv, mlogit,
+        multimode, nestedLogit, nlme, nonnest2, ordinal, parallel,
+        parameters (>= 0.20.3), patchwork, pscl, psych, qqplotr (>=
+        0.0.6), randomForest, rempsyc, rmarkdown, rstanarm, rstantools,
+        sandwich, see (>= 0.7.5), survey, survival, testthat, tweedie,
+        VGAM, withr
 Encoding: UTF-8
 Language: en-US
 RoxygenNote: 7.2.3.9000
@@ -88,7 +89,7 @@ Config/Needs/website: rstudio/bslib, r-lib/pkgdown,
         easystats/easystatstemplate
 Config/rcmdcheck/ignore-inconsequential-notes: true
 NeedsCompilation: no
-Packaged: 2023-09-11 21:16:07 UTC; Daniel
+Packaged: 2023-10-27 11:27:40 UTC; mail
 Author: Daniel Lüdecke [aut, cre] (<https://orcid.org/0000-0002-8895-3206>,
     @strengejacke),
   Dominique Makowski [aut, ctb] (<https://orcid.org/0000-0001-5375-9967>,
@@ -107,4 +108,4 @@ Author: Daniel Lüdecke [aut, cre] (<https://orcid.org/0000-0002-8895-3206>,
   gjo11 [rev],
   Etienne Bacher [ctb] (<https://orcid.org/0000-0002-9271-5075>)
 Repository: CRAN
-Date/Publication: 2023-09-12 08:50:02 UTC
+Date/Publication: 2023-10-27 22:40:07 UTC

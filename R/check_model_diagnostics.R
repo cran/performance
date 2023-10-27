@@ -67,7 +67,7 @@
     fitted_ <- stats::fitted(model)
   }
 
-  # sanity check, sometimes either residuals or fitted can contain NA, see #488
+  # validation check, sometimes either residuals or fitted can contain NA, see #488
   if (anyNA(res_) || anyNA(fitted_)) {
     # drop NA and make sure both fitted and residuals match
     non_na <- !is.na(fitted_) & !is.na(res_)
@@ -85,9 +85,9 @@
 
 # prepare data for random effects QQ plot ----------------------------------
 
-.diag_reqq <- function(model, level = 0.95, model_info, verbose = TRUE) {
+.diag_reqq <- function(model, level = 0.95, model_info = NULL, verbose = TRUE) {
   # check if we have mixed model
-  if (!model_info$is_mixed) {
+  if (is.null(model_info) || !model_info$is_mixed) {
     return(NULL)
   }
 
@@ -153,10 +153,13 @@
 # prepare data for normality of residuals plot ----------------------------------
 
 .diag_norm <- function(model, verbose = TRUE) {
-  r <- try(stats::residuals(model), silent = TRUE)
+  r <- try(as.numeric(stats::residuals(model)), silent = TRUE)
 
   if (inherits(r, "try-error")) {
-    insight::format_alert(sprintf("Non-normality of residuals could not be computed. Cannot extract residuals from objects of class '%s'.", class(model)[1]))
+    insight::format_alert(sprintf(
+      "Non-normality of residuals could not be computed. Cannot extract residuals from objects of class '%s'.",
+      class(model)[1]
+    ))
     return(NULL)
   }
 
@@ -174,16 +177,16 @@
 
   if (inherits(model, "lm", which = TRUE) == 1) {
     cook_levels <- round(stats::qf(0.5, s$fstatistic[2], s$fstatistic[3]), 2)
-  } else if (!is.null(threshold)) {
-    cook_levels <- threshold
-  } else {
+  } else if (is.null(threshold)) {
     cook_levels <- c(0.5, 1)
+  } else {
+    cook_levels <- threshold
   }
 
   n_params <- tryCatch(model$rank, error = function(e) insight::n_parameters(model))
 
   infl <- stats::influence(model, do.coef = FALSE)
-  resid <- insight::get_residuals(model)
+  resid <- as.numeric(insight::get_residuals(model))
 
   std_resid <- tryCatch(stats::rstandard(model, infl), error = function(e) resid)
 
@@ -212,8 +215,8 @@
   ncv <- tryCatch(
     {
       data.frame(
-        x = stats::fitted(model),
-        y = stats::residuals(model)
+        x = as.numeric(stats::fitted(model)),
+        y = as.numeric(stats::residuals(model))
       )
     },
     error = function(e) {
@@ -223,7 +226,10 @@
 
   if (is.null(ncv)) {
     if (verbose) {
-      insight::format_alert(sprintf("Non-constant error variance could not be computed. Cannot extract residuals from objects of class '%s'.", class(model)[1]))
+      insight::format_alert(sprintf(
+        "Non-constant error variance could not be computed. Cannot extract residuals from objects of class '%s'.",
+        class(model)[1]
+      ))
     }
     return(NULL)
   }
@@ -264,7 +270,10 @@
 
   if (is.null(r)) {
     if (verbose) {
-      insight::format_alert(sprintf("Homogeneity of variance could not be computed. Cannot extract residual variance from objects of class '%s'.", class(model)[1]))
+      insight::format_alert(sprintf(
+        "Homogeneity of variance could not be computed. Cannot extract residual variance from objects of class '%s'.",
+        class(model)[1]
+      ))
     }
     return(NULL)
   }
@@ -327,7 +336,7 @@
     }
     d$Prob <- stats::predict(model, type = ptype)
     d$Disp <- insight::get_sigma(model)
-    d$V <- d$Predicted * (1 + d$Predicted / d$Disp) * (1 - d$Prob) * (1 + d$Predicted * (1 + d$Predicted / d$Disp) * d$Prob)
+    d$V <- d$Predicted * (1 + d$Predicted / d$Disp) * (1 - d$Prob) * (1 + d$Predicted * (1 + d$Predicted / d$Disp) * d$Prob) # nolint
     d$StdRes <- insight::get_residuals(model, type = "pearson")
   }
 
@@ -343,7 +352,7 @@
     }
     d$Prob <- stats::predict(model, type = ptype)
     d$Disp <- stats::predict(model, type = "disp")
-    d$V <- d$Predicted * (1 + d$Predicted / d$Disp) * (1 - d$Prob) * (1 + d$Predicted * (1 + d$Predicted / d$Disp) * d$Prob)
+    d$V <- d$Predicted * (1 + d$Predicted / d$Disp) * (1 - d$Prob) * (1 + d$Predicted * (1 + d$Predicted / d$Disp) * d$Prob) # nolint
     d$StdRes <- insight::get_residuals(model, type = "pearson")
   }
 

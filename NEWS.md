@@ -1,3 +1,40 @@
+# performance 0.10.7
+
+## Breaking changes
+
+* `binned_residuals()` gains a few new arguments to control the residuals used
+  for the test, as well as different options to calculate confidence intervals
+  (namely, `ci_type`, `residuals`, `ci` and `iterations`). The default values
+  to compute binned residuals have changed. Default residuals are now "deviance"
+  residuals (and no longer "response" residuals). Default confidence intervals
+  are now "exact" intervals (and no longer based on Gaussian approximation).
+  Use `ci_type = "gaussian"` and `residuals = "response"` to get the old defaults.
+
+## Changes to functions
+
+* `binned_residuals()` - like `check_model()` - gains a `show_dots` argument to
+  show or hide data points that lie inside error bounds. This is particular
+  useful for models with many observations, where generating the plot would be
+  very slow.
+
+# performance 0.10.6
+
+## General 
+
+* Support for `nestedLogit` models.
+
+## Changes to functions
+
+* `check_outliers()` for method `"ics"` now detects number of available cores
+  for parallel computing via the `"mc.cores"` option. This is more robust than
+  the previous method, which used `parallel::detectCores()`. Now you should
+  set the number of cores via `options(mc.cores = 4)`.
+
+## Bug fixes
+
+* Fixed issues is `check_model()` for models that used data sets with
+  variables of class `"haven_labelled"`.
+
 # performance 0.10.5
 
 ## Changes to functions

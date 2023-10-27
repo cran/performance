@@ -28,7 +28,8 @@ check_model(x, ...)
 \arguments{
 \item{x}{A model object.}
 
-\item{...}{Currently not used.}
+\item{...}{Arguments passed down to the individual check functions, especially
+to \code{check_predictions()} and \code{binned_residuals()}.}
 
 \item{dot_size, line_size}{Size of line and dot-geoms.}
 
@@ -55,7 +56,7 @@ for dots, and third color for outliers or extreme values.}
 \item{theme}{String, indicating the name of the plot-theme. Must be in the
 format \code{"package::theme_name"} (e.g. \code{"ggplot2::theme_minimal"}).}
 
-\item{detrend}{Logical. Should Q-Q/P-P plots be de-trended? Defaults to
+\item{detrend}{Logical. Should Q-Q/P-P plots be detrended? Defaults to
 \code{TRUE}.}
 
 \item{show_dots}{Logical, if \code{TRUE}, will show data points in the plot. Set
@@ -206,20 +207,16 @@ skipped, which also increases performance.
 }
 
 \examples{
-\dontrun{
+\dontshow{if (require("lme4")) (if (getRversion() >= "3.4") withAutoprint else force)(\{ # examplesIf}
+\donttest{
 m <- lm(mpg ~ wt + cyl + gear + disp, data = mtcars)
 check_model(m)
 
-if (require("lme4")) {
-  m <- lmer(Reaction ~ Days + (Days | Subject), sleepstudy)
-  check_model(m, panel = FALSE)
+data(sleepstudy, package = "lme4")
+m <- lme4::lmer(Reaction ~ Days + (Days | Subject), sleepstudy)
+check_model(m, panel = FALSE)
 }
-
-if (require("rstanarm")) {
-  m <- stan_glm(mpg ~ wt + gear, data = mtcars, chains = 2, iter = 200)
-  check_model(m)
-}
-}
+\dontshow{\}) # examplesIf}
 }
 \seealso{
 Other functions to check model assumptions and and assess model quality: 

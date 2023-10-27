@@ -40,20 +40,17 @@
 #' - Briggs SR, Cheek JM (1986) The role of factor analysis in the development
 #'   and evaluation of personality scales. Journal of Personality, 54(1),
 #'   106-148. doi: 10.1111/j.1467-6494.1986.tb00391.x
-#' - Trochim WMK (2008) Types of Reliability.
-#'   ([web](https://conjointly.com/kb/types-of-reliability/))
 #'
-#' @examples
+#' @examplesIf require("parameters") && require("psych")
 #' # data generation from '?prcomp', slightly modified
 #' C <- chol(S <- toeplitz(0.9^(0:15)))
 #' set.seed(17)
 #' X <- matrix(rnorm(1600), 100, 16)
 #' Z <- X %*% C
-#' if (require("parameters") && require("psych")) {
-#'   pca <- principal_components(as.data.frame(Z), rotation = "varimax", n = 3)
-#'   pca
-#'   check_itemscale(pca)
-#' }
+#'
+#' pca <- principal_components(as.data.frame(Z), rotation = "varimax", n = 3)
+#' pca
+#' check_itemscale(pca)
 #' @export
 check_itemscale <- function(x) {
   if (!inherits(x, "parameters_pca")) {
@@ -83,9 +80,9 @@ check_itemscale <- function(x) {
       Mean = vapply(items, mean, numeric(1), na.rm = TRUE),
       SD = vapply(items, stats::sd, numeric(1), na.rm = TRUE),
       Skewness = vapply(items, function(i) as.numeric(datawizard::skewness(i)), numeric(1)),
-      "Difficulty" = item_difficulty(items)$Difficulty,
-      "Discrimination" = .item_discr,
-      "alpha if deleted" = .item_alpha,
+      Difficulty = item_difficulty(items)$Difficulty,
+      Discrimination = .item_discr,
+      `alpha if deleted` = .item_alpha,
       stringsAsFactors = FALSE,
       check.names = FALSE
     )

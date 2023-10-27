@@ -46,12 +46,10 @@
 #'    generalized linear mixed-effects models revisited and expanded. Journal of
 #'    The Royal Society Interface, 14(134), 20170213.
 #'
-#' @examples
-#' if (require("lme4")) {
-#'   model <- lmer(Sepal.Length ~ Petal.Length + (1 | Species), data = iris)
-#'   r2_nakagawa(model)
-#'   r2_nakagawa(model, by_group = TRUE)
-#' }
+#' @examplesIf require("lme4")
+#' model <- lme4::lmer(Sepal.Length ~ Petal.Length + (1 | Species), data = iris)
+#' r2_nakagawa(model)
+#' r2_nakagawa(model, by_group = TRUE)
 #' @export
 r2_nakagawa <- function(model,
                         by_group = FALSE,
@@ -138,7 +136,7 @@ r2_nakagawa <- function(model,
         # CI for marginal R2
         r2_ci_marginal <- as.vector(result$t[, 1])
         r2_ci_marginal <- r2_ci_marginal[!is.na(r2_ci_marginal)]
-        # sanity check
+        # validation check
         if (length(r2_ci_marginal) > 0) {
           r2_ci_marginal <- bayestestR::eti(r2_ci_marginal, ci = ci)
         } else {
@@ -148,7 +146,7 @@ r2_nakagawa <- function(model,
         # CI for unadjusted R2
         r2_ci_conditional <- as.vector(result$t[, 2])
         r2_ci_conditional <- r2_ci_conditional[!is.na(r2_ci_conditional)]
-        # sanity check
+        # validation check
         if (length(r2_ci_conditional) > 0) {
           r2_ci_conditional <- bayestestR::eti(r2_ci_conditional, ci = ci)
         } else {

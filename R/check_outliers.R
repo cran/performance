@@ -167,7 +167,9 @@
 #'  value for outliers classification. Refer to the help-file of
 #'  [ICSOutlier::ics.outlier()] to get more details about this procedure.
 #'  Note that `method = "ics"` requires both **ICS** and **ICSOutlier**
-#'  to be installed, and that it takes some time to compute the results.
+#'  to be installed, and that it takes some time to compute the results. You
+#'  can speed up computation time using parallel computing. Set the number of
+#'  cores to use with `options(mc.cores = 4)` (for example).
 #'
 #'  - **OPTICS**:
 #'  The Ordering Points To Identify the Clustering Structure (OPTICS) algorithm
@@ -259,6 +261,10 @@
 #' statistical models. Journal of Open Source Software, 6(60), 3139.
 #' \doi{10.21105/joss.03139}
 #'
+#' - Thériault, R., Ben-Shachar, M. S., Patil, I., Lüdecke, D., Wiernik, B. M.,
+#' and Makowski, D. (2023). Check your outliers! An introduction to identifying
+#' statistical outliers in R with easystats. \doi{10.31234/osf.io/bu6nt}
+#'
 #' - Rousseeuw, P. J., and Van Zomeren, B. C. (1990). Unmasking multivariate
 #' outliers and leverage points. Journal of the American Statistical
 #' association, 85(411), 633-639.
@@ -299,7 +305,8 @@
 #' group_iris <- datawizard::data_group(iris, "Species")
 #' check_outliers(group_iris)
 #'
-#' \dontrun{
+#' @examplesIf require("see") && require("bigutilsr") && require("loo") && require("MASS") && require("ICSOutlier") && require("ICS") && require("dbscan")
+#' \donttest{
 #' # You can also run all the methods
 #' check_outliers(data, method = "all")
 #'
@@ -315,10 +322,7 @@
 #' model <- lm(disp ~ mpg + hp, data = mt2)
 #'
 #' outliers_list <- check_outliers(model)
-#'
-#' if (require("see")) {
-#'   plot(outliers_list)
-#' }
+#' plot(outliers_list)
 #'
 #' insight::get_data(model)[outliers_list, ] # Show outliers data
 #' }
@@ -406,16 +410,16 @@ check_outliers.default <- function(x,
   }
 
   # Others
-  if (!all(method %in% c("cook", "pareto"))) {
+  if (all(method %in% c("cook", "pareto"))) {
+    df <- data.frame(Row = seq_len(nrow(as.data.frame(data))))
+    outlier_count <- list()
+    outlier_var <- list()
+  } else {
     out <- check_outliers(data, method, threshold)
     outlier_var <- attributes(out)$outlier_var
     outlier_count <- attributes(out)$outlier_count
     df <- attributes(out)$data
-    df <- df[!names(df) %in% "Outlier"]
-  } else {
-    df <- data.frame(Row = seq_len(nrow(as.data.frame(data))))
-    outlier_count <- list()
-    outlier_var <- list()
+    df <- df[!names(df) == "Outlier"]
   }
 
   # Cook
@@ -445,17 +449,17 @@ check_outliers.default <- function(x,
 
     outlier_count$cook <- count.table
 
-    if (!all(method %in% c("cook", "pareto"))) {
+    if (all(method %in% c("cook", "pareto"))) {
+      outlier_count$all <- count.table
+    } else {
       outlier_count$all <- datawizard::data_merge(
         list(outlier_count$all, count.table),
         join = "full",
         by = "Row"
       )
-    } else {
-      outlier_count$all <- count.table
     }
   } else {
-    method <- method[!(method %in% "cook")]
+    method <- method[!(method == "cook")]
   }
 
   # Pareto
@@ -485,17 +489,17 @@ check_outliers.default <- function(x,
 
     outlier_count$pareto <- count.table
 
-    if (!all(method %in% c("cook", "pareto"))) {
+    if (all(method %in% c("cook", "pareto"))) {
+      outlier_count$all <- count.table
+    } else {
       outlier_count$all <- datawizard::data_merge(
         list(outlier_count$all, count.table),
         join = "full",
         by = "Row"
       )
-    } else {
-      outlier_count$all <- count.table
     }
   } else {
-    method <- method[!(method %in% "pareto")]
+    method <- method[!(method == "pareto")]
   }
 
   outlier_count$all <- datawizard::convert_na_to(outlier_count$all,
@@ -506,7 +510,7 @@ check_outliers.default <- function(x,
 
   num.df <- outlier_count$all[!names(outlier_count$all) %in% c("Row", ID)]
   if (isTRUE(nrow(num.df) > 0)) {
-    num.df <- datawizard::change_code(
+    num.df <- datawizard::recode_values(
       num.df,
       recode = list(`2` = "(Multivariate)")
     )
@@ -1438,21 +1442,21 @@ check_outliers.metabin <- check_outliers.metagen
   lof <- 0.001
 
   list(
-    "zscore" = zscore,
-    "zscore_robust" = zscore_robust,
-    "iqr" = iqr,
-    "ci" = ci,
-    "hdi" = hdi,
-    "eti" = eti,
-    "bci" = bci,
-    "cook" = cook,
-    "pareto" = pareto,
-    "mahalanobis" = mahalanobis,
-    "mahalanobis_robust" = mahalanobis_robust,
-    "mcd" = mcd,
-    "ics" = ics,
-    "optics" = optics,
-    "lof" = lof
+    zscore = zscore,
+    zscore_robust = zscore_robust,
+    iqr = iqr,
+    ci = ci,
+    hdi = hdi,
+    eti = eti,
+    bci = bci,
+    cook = cook,
+    pareto = pareto,
+    mahalanobis = mahalanobis,
+    mahalanobis_robust = mahalanobis_robust,
+    mcd = mcd,
+    ics = ics,
+    optics = optics,
+    lof = lof
   )
 }
 
@@ -1474,15 +1478,15 @@ check_outliers.metabin <- check_outliers.metagen
   x <- as.data.frame(x)
 
   # Standardize
-  if (!robust) {
+  if (robust) {
     d <- abs(as.data.frame(lapply(
       x,
-      function(x) (x - mean(x, na.rm = TRUE)) / stats::sd(x, na.rm = TRUE)
+      function(x) (x - stats::median(x, na.rm = TRUE)) / stats::mad(x, na.rm = TRUE)
     )))
   } else {
     d <- abs(as.data.frame(lapply(
       x,
-      function(x) (x - stats::median(x, na.rm = TRUE)) / stats::mad(x, na.rm = TRUE)
+      function(x) (x - mean(x, na.rm = TRUE)) / stats::sd(x, na.rm = TRUE)
     )))
   }
 
@@ -1500,8 +1504,8 @@ check_outliers.metabin <- check_outliers.metagen
   out$Outlier_Zscore <- as.numeric(out$Distance_Zscore > threshold)
 
   output <- list(
-    "data_zscore" = out,
-    "threshold_zscore" = threshold
+    data_zscore = out,
+    threshold_zscore = threshold
   )
 
   if (isTRUE(robust)) {
@@ -1562,8 +1566,8 @@ check_outliers.metabin <- check_outliers.metagen
   }, numeric(1))
 
   list(
-    "data_iqr" = out,
-    "threshold_iqr" = threshold
+    data_iqr = out,
+    threshold_iqr = threshold
   )
 }
 
@@ -1611,8 +1615,8 @@ check_outliers.metabin <- check_outliers.metagen
   out <- cbind(out.0, out)
 
   output <- list(
-    "data_" = out,
-    "threshold_" = threshold
+    data_ = out,
+    threshold_ = threshold
   )
   names(output) <- paste0(names(output), method)
   output
@@ -1632,8 +1636,8 @@ check_outliers.metabin <- check_outliers.metagen
   out$Outlier_Cook <- as.numeric(out$Distance_Cook > threshold)
 
   list(
-    "data_cook" = out,
-    "threshold_cook" = threshold
+    data_cook = out,
+    threshold_cook = threshold
   )
 }
 
@@ -1652,8 +1656,8 @@ check_outliers.metabin <- check_outliers.metagen
   out$Outlier_Pareto <- as.numeric(out$Distance_Pareto > threshold)
 
   list(
-    "data_pareto" = out,
-    "threshold_pareto" = threshold
+    data_pareto = out,
+    threshold_pareto = threshold
   )
 }
 
@@ -1682,8 +1686,8 @@ check_outliers.metabin <- check_outliers.metagen
   out$Outlier_Mahalanobis <- as.numeric(out$Distance_Mahalanobis > threshold)
 
   list(
-    "data_mahalanobis" = out,
-    "threshold_mahalanobis" = threshold
+    data_mahalanobis = out,
+    threshold_mahalanobis = threshold
   )
 }
 
@@ -1713,8 +1717,8 @@ check_outliers.metabin <- check_outliers.metagen
   )
 
   list(
-    "data_mahalanobis_robust" = out,
-    "threshold_mahalanobis_robust" = threshold
+    data_mahalanobis_robust = out,
+    threshold_mahalanobis_robust = threshold
   )
 }
 
@@ -1740,8 +1744,8 @@ check_outliers.metabin <- check_outliers.metagen
   out$Outlier_MCD <- as.numeric(out$Distance_MCD > threshold)
 
   list(
-    "data_mcd" = out,
-    "threshold_mcd" = threshold
+    data_mcd = out,
+    threshold_mcd = threshold
   )
 }
 
@@ -1761,10 +1765,23 @@ check_outliers.metabin <- check_outliers.metagen
   insight::check_if_installed("ICSOutlier")
 
   # Get n cores
-  n_cores <- if (!requireNamespace("parallel", quietly = TRUE)) {
-    NULL
+  n_cores <- if (requireNamespace("parallel", quietly = TRUE)) {
+    getOption("mc.cores", 1L)
   } else {
-    max(1L, parallel::detectCores() - 2L, na.rm = TRUE)
+    NULL
+  }
+
+  # tell user about n-cores option
+  if (is.null(n_cores)) {
+    insight::format_alert(
+      "Package `parallel` is not installed. `check_outliers()` will run on a single core.",
+      "Install package `parallel` and set, for example, `options(mc.cores = 4)` to run on multiple cores."
+    )
+  } else if (n_cores == 1) {
+    insight::format_alert(
+      "Package `parallel` is installed, but `check_outliers()` will run on a single core.",
+      "To use multiple cores, set `options(mc.cores = 4)` (for example)."
+    )
   }
 
   # Run algorithm
@@ -1795,7 +1812,7 @@ check_outliers.metabin <- check_outliers.metagen
 
   # Get results
   cutoff <- .safe(outliers@ics.dist.cutoff)
-  # sanity check
+  # validation check
   if (is.null(cutoff)) {
     insight::print_color("Could not detect cut-off for outliers.\n", "red")
     return(NULL)
@@ -1805,8 +1822,8 @@ check_outliers.metabin <- check_outliers.metagen
 
   # Out
   list(
-    "data_ics" = out,
-    "threshold_ics" = threshold
+    data_ics = out,
+    threshold_ics = threshold
   )
 }
 
@@ -1837,8 +1854,8 @@ check_outliers.metabin <- check_outliers.metagen
   }
 
   list(
-    "data_optics" = out,
-    "threshold_optics" = threshold
+    data_optics = out,
+    threshold_optics = threshold
   )
 }
 
@@ -1904,8 +1921,8 @@ check_outliers.metabin <- check_outliers.metagen
   out$Outlier_LOF <- as.numeric(out$Distance_LOF > cutoff)
 
   list(
-    "data_lof" = out,
-    "threshold_lof" = threshold
+    data_lof = out,
+    threshold_lof = threshold
   )
 }
 

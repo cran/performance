@@ -143,29 +143,25 @@
 #' very large, the variance ratio in the output makes no sense, e.g. because
 #' it is negative. In such cases, it might help to use `robust = TRUE`.
 #'
-#' @examples
-#' if (require("lme4")) {
-#'   model <- lmer(Sepal.Length ~ Petal.Length + (1 | Species), data = iris)
-#'   icc(model)
-#' }
+#' @examplesIf require("lme4")
+#' model <- lme4::lmer(Sepal.Length ~ Petal.Length + (1 | Species), data = iris)
+#' icc(model)
 #'
 #' # ICC for specific group-levels
-#' if (require("lme4")) {
-#'   data(sleepstudy)
-#'   set.seed(12345)
-#'   sleepstudy$grp <- sample(1:5, size = 180, replace = TRUE)
-#'   sleepstudy$subgrp <- NA
-#'   for (i in 1:5) {
-#'     filter_group <- sleepstudy$grp == i
-#'     sleepstudy$subgrp[filter_group] <-
-#'       sample(1:30, size = sum(filter_group), replace = TRUE)
-#'   }
-#'   model <- lmer(
-#'     Reaction ~ Days + (1 | grp / subgrp) + (1 | Subject),
-#'     data = sleepstudy
-#'   )
-#'   icc(model, by_group = TRUE)
+#' data(sleepstudy, package = "lme4")
+#' set.seed(12345)
+#' sleepstudy$grp <- sample(1:5, size = 180, replace = TRUE)
+#' sleepstudy$subgrp <- NA
+#' for (i in 1:5) {
+#'   filter_group <- sleepstudy$grp == i
+#'   sleepstudy$subgrp[filter_group] <-
+#'     sample(1:30, size = sum(filter_group), replace = TRUE)
 #' }
+#' model <- lme4::lmer(
+#'   Reaction ~ Days + (1 | grp / subgrp) + (1 | Subject),
+#'   data = sleepstudy
+#' )
+#' icc(model, by_group = TRUE)
 #' @export
 icc <- function(model,
                 by_group = FALSE,
@@ -271,7 +267,7 @@ icc <- function(model,
         # CI for adjusted ICC
         icc_ci_adjusted <- as.vector(result$t[, 1])
         icc_ci_adjusted <- icc_ci_adjusted[!is.na(icc_ci_adjusted)]
-        # sanity check
+        # validation check
         if (length(icc_ci_adjusted) > 0) {
           icc_ci_adjusted <- bayestestR::eti(icc_ci_adjusted, ci = ci)
         } else {
@@ -280,7 +276,7 @@ icc <- function(model,
         # CI for unadjusted ICC
         icc_ci_unadjusted <- as.vector(result$t[, 2])
         icc_ci_unadjusted <- icc_ci_unadjusted[!is.na(icc_ci_unadjusted)]
-        # sanity check
+        # validation check
         if (length(icc_ci_unadjusted) > 0) {
           icc_ci_unadjusted <- bayestestR::eti(icc_ci_unadjusted, ci = ci)
         } else {
@@ -357,8 +353,8 @@ variance_decomposition <- function(model,
   result <- structure(
     class = "icc_decomposed",
     list(
-      "ICC_decomposed" = 1 - fun(var_icc),
-      "ICC_CI" = ci_icc
+      ICC_decomposed = 1 - fun(var_icc),
+      ICC_CI = ci_icc
     )
   )
 
