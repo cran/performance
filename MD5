@@ -1,7 +1,7 @@
-379b6123b1146b91b0e70c29190aaca1 *DESCRIPTION
+7443b338b42090b850669ec126ebe0b5 *DESCRIPTION
 d426118d4a109fa49f341254b7f27460 *NAMESPACE
-4edcc25fb9f819175105633ad6ce8ea5 *NEWS.md
-07c1aa6988b4055959128187fc5c8f3a *R/binned_residuals.R
+0356c09e79103401b924d35b18f0a683 *NEWS.md
+0675ede34cfd497125665bc61309c372 *R/binned_residuals.R
 44500ed0715c2df2c4d51556e2bf3873 *R/check_autocorrelation.R
 6aae85426b928d09ab250439ada1ca5b *R/check_clusterstructure.R
 f58d411137d9efee12af227465409d79 *R/check_collinearity.R
@@ -14,13 +14,13 @@ cb5da88a843284a9227fcf47f061e29f *R/check_heteroscedasticity.R
 36ea3694d0faaf968cd1e57b669ae799 *R/check_homogeneity.R
 9a8a9392f6d9559edb603fff72c07c7d *R/check_htest.R
 1c2133ca9e5de71aa344ec7e9d610bdb *R/check_itemscale.R
-447cf73d53c51c3cee31c24b0e26777d *R/check_model.R
+f971824ea81f5fd1e255dfa540137d02 *R/check_model.R
 f7ab914558efdaba292e772272ff7843 *R/check_model_diagnostics.R
 aa159b9a89b497a86b83459c8042af44 *R/check_multimodal.R
 fc98445632e8a00e11123b49231ce84c *R/check_normality.R
 2499801add396369627781c87a1053cd *R/check_outliers.R
 a609b71484bdba5d47ed2349666e8050 *R/check_overdispersion.R
-ff45263c1ac6e31b7e69cb9ff08c2d9f *R/check_predictions.R
+a1e9c443e74099171f98d636975578d5 *R/check_predictions.R
 69076aa029b6ace30293f0056f1e0a5c *R/check_singularity.R
 e270dc3b851159d9a475f27f3ed6f33a *R/check_sphericity.R
 3714afa9a6503032e296bdd1098ae1b0 *R/check_symmetry.R
@@ -38,7 +38,7 @@ f7fe4c594d25facd0b3dbbc3fcf5671f *R/item_intercor.R
 94e50e184d9325b5805a0f3b372ef610 *R/item_reliability.R
 9d2f9f180fdb5b5761390ab007ed7e81 *R/item_split_half.R
 d75df9a97d67629029e78ad66942a2f3 *R/logLik.R
-986db86cd959a747639f2f2812ee2bd8 *R/looic.R
+ebb85fd0aa312d0e9be1c00f29703ee6 *R/looic.R
 917d86b7aad5244d8e236e36b034a7ed *R/model_performance.R
 71323e2f4f3530285bdb4e03908e92d7 *R/model_performance.bayesian.R
 39170b9247ce8056d0b857a81a1a2998 *R/model_performance.bife.R
@@ -65,7 +65,7 @@ a954bd965169a50d842dbb0aed072fbe *R/performance_score.R
 885060af8ceac3007b17d8aff3aad3a1 *R/print-methods.R
 173c813b7a74a2cd7c1bd67fbb189d43 *R/print_md.R
 f9c2a24296935e0e0599203690b1906f *R/r2.R
-46f1873e7c0e2fb9df2dbd2718eaec19 *R/r2_bayes.R
+778043e446ed0a9f78d6755372dd5098 *R/r2_bayes.R
 1ff01a0a70b50d0eeec318f411c1152d *R/r2_ci.R
 ec0c2b5bee2dfbc18661e2eee9706b8e *R/r2_coxsnell.R
 328c2bc1fed0f6f9eb8af1510e8f59cc *R/r2_efron.R
@@ -91,7 +91,7 @@ bd9b090ff20235cc853a20edf47bf873 *README.md
 2836b2c5db38c9819380bd093383d89d *build/partial.rdb
 b3f9f88d249c4b33a27a9567252871b1 *inst/CITATION
 e10b060019e696cd3bb5a22bb64a157a *inst/WORDLIST
-39b44b3b04e865393290d88e32d99a49 *man/binned_residuals.Rd
+0b60d7ac86bae74b686686c61bfcc7d2 *man/binned_residuals.Rd
 3e94293df7678e054618d18abf9c2442 *man/check_autocorrelation.Rd
 7258429db6fd09d078942adc47fbaab2 *man/check_clusterstructure.Rd
 948fba25aa6bc867a0eb16ae2f833f36 *man/check_collinearity.Rd
@@ -130,7 +130,7 @@ fd141fd10ad3012e06bdb9e56de1bb67 *man/item_discrimination.Rd
 9199c63650610d7712a14bbfce22f1ff *man/item_intercor.Rd
 731bb41be7ebe4898c7c47bb31985a42 *man/item_reliability.Rd
 cd02bfeced4129437acb197389afa68a *man/item_split_half.Rd
-b93012201db4ba5ac9541d035b1f9dfb *man/looic.Rd
+8aedd82a320ccce57af5da40579138ea *man/looic.Rd
 0f9178c4670e947ecfe620efcf04fe3e *man/model_performance.Rd
 0f8154803ea449ec73677f74ac58df52 *man/model_performance.ivreg.Rd
 22a996e9543ade69ed83021baf4fc64f *man/model_performance.kmeans.Rd
@@ -153,7 +153,7 @@ dbf8f55a6a8576573dc6759b5ce6bf92 *man/performance_pcp.Rd
 c286a0eb42a42e8f6120fa9f2069f67a *man/performance_rse.Rd
 cd85a42bdc370a4932414581c705b1e4 *man/performance_score.Rd
 1d06344f9513012ffcc9d20035ca2362 *man/r2.Rd
-8c4dd3e56fa072ac57c9bd2b68485f88 *man/r2_bayes.Rd
+9dac9a89e33ed8cb835eb32ea6b90b40 *man/r2_bayes.Rd
 5558126a43c3d12cbd5e73f0555639eb *man/r2_coxsnell.Rd
 c8a9a8e0d67ec7a482a5a8188da92bb3 *man/r2_efron.Rd
 94a566d84512af3dae4cd847dab7409d *man/r2_kullback.Rd
@@ -177,7 +177,7 @@ b4ad974eb8a31371747749a7553fb6c9 *tests/testthat/_snaps/model_performance.rma.md
 5ea3535b333a95e35e1adbb74e25a966 *tests/testthat/_snaps/nestedLogit.md
 09036d0d2a86fc548a0c8d724d4f9240 *tests/testthat/_snaps/pkg-ivreg.md
 09d81b66ba81dd6f52bec56c7533b59a *tests/testthat/test-backticks.R
-f2375bafe549cfbe77bfb8cb13c4bae4 *tests/testthat/test-binned_residuals.R
+15d092a1b64caf78d41515db58f0e766 *tests/testthat/test-binned_residuals.R
 afb2dbaa7a0fcc3a643fb4ed37786787 *tests/testthat/test-bootstrapped_icc_ci.R
 7bb8f65c452cae6077fcc6a7044a3bbe *tests/testthat/test-check_autocorrelation.R
 02a932f6c352d8ea07d19ccc0a24bfe9 *tests/testthat/test-check_collinearity.R
@@ -190,7 +190,7 @@ b149ffd97c2a931dc75c1b9a48aba0e0 *tests/testthat/test-check_model.R
 310364d94d2624fdb84978f552bc24c7 *tests/testthat/test-check_normality.R
 5f24e4182b28097ee82ce8bd136c388c *tests/testthat/test-check_outliers.R
 6117da0e1061d9a83314e2ca82d8e1ab *tests/testthat/test-check_overdispersion.R
-4725b3c3ef5586321382609bbb2f9dea *tests/testthat/test-check_predictions.R
+8f6157bdfb408e9bc426707e9c109f83 *tests/testthat/test-check_predictions.R
 5d0588443d9dad7766e9460513478e64 *tests/testthat/test-check_singularity.R
 f5a4c9c082cb07dd37b16deeadf095c9 *tests/testthat/test-check_sphericity.R
 4adf8c26271b067a7c13836cc5d55d51 *tests/testthat/test-check_zeroinflation.R
@@ -204,7 +204,7 @@ b91557b7fdacd470feb5fa426c09f930 *tests/testthat/test-cronbachs_alpha.R
 a946e64120f2668e03d3b5ef9a1b5c8a *tests/testthat/test-item_intercor.R
 005ac9d2bb4e70a2673aa3dd5efe2954 *tests/testthat/test-item_reliability.R
 a00a601bde42cbbf059ddf8cd1a45400 *tests/testthat/test-item_splithalf.R
-59491091dbbcfecc1a6929b4f5793444 *tests/testthat/test-logLik.R
+dec4c4bd0aaefa3c700f9b54d3c5bcc9 *tests/testthat/test-logLik.R
 e5040b6fb32d7b2ff4b662bd6fc7bf55 *tests/testthat/test-mclogit.R
 6f7954b701ca5d0eba73be10d909ae66 *tests/testthat/test-model_performance-various.R
 32b4cc4ba046b9e635cd93f1f9b74f46 *tests/testthat/test-model_performance.bayesian.R

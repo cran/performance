@@ -1,7 +1,7 @@
 Type: Package
 Package: performance
 Title: Assessment of Regression Models Performance
-Version: 0.10.7
+Version: 0.10.8
 Authors@R: 
     c(person(given = "Daniel",
              family = "Lüdecke",
@@ -89,7 +89,7 @@ Config/Needs/website: rstudio/bslib, r-lib/pkgdown,
         easystats/easystatstemplate
 Config/rcmdcheck/ignore-inconsequential-notes: true
 NeedsCompilation: no
-Packaged: 2023-10-27 11:27:40 UTC; mail
+Packaged: 2023-10-29 16:13:28 UTC; Daniel
 Author: Daniel Lüdecke [aut, cre] (<https://orcid.org/0000-0002-8895-3206>,
     @strengejacke),
   Dominique Makowski [aut, ctb] (<https://orcid.org/0000-0001-5375-9967>,
@@ -108,4 +108,4 @@ Author: Daniel Lüdecke [aut, cre] (<https://orcid.org/0000-0002-8895-3206>,
   gjo11 [rev],
   Etienne Bacher [ctb] (<https://orcid.org/0000-0002-9271-5075>)
 Repository: CRAN
-Date/Publication: 2023-10-27 22:40:07 UTC
+Date/Publication: 2023-10-30 08:40:02 UTC
