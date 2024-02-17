@@ -1,3 +1,51 @@
+# performance 0.10.9
+
+## Changes
+
+* `r2()` for models of class `glmmTMB` without random effects now returns the
+  correct r-squared value for non-mixed models.
+
+* `check_itemscale()` now also accepts data frames as input. In this case,
+  `factor_index` must be specified, which must be a numeric vector of same
+  length as number of columns in `x`, where each element is the index of the
+  factor to which the respective column in `x`.
+
+* `check_itemscale()` gets a `print_html()` method.
+
+* Clarification in the documentation of the `estimator` argument for
+  `performance_aic()`.
+
+* Improved plots for overdispersion-checks for negative-binomial models from
+  package *glmmTMB* (affects `check_overdispersion()` and `check_mnodel()`).
+
+* Improved detection rates for singularity in `check_singularity()` for models
+  from package *glmmTMB*.
+
+* For model of class `glmmTMB`, deviance residuals are now used in the
+  `check_model()` plot.
+
+* Improved (better to understand) error messages for `check_model()`,
+  `check_collinearity()` and `check_outliers()` for models with non-numeric
+  response variables.
+
+* `r2_kullback()` now gives an informative error for non-supported models.
+
+## Bug fixes
+
+* Fixed issue in `binned_residuals()` for models with binary outcome, where
+  in rare occasions empty bins could occur.
+
+* `performance_score()` should no longer fail for models where scoring rules
+  can't be calculated. Instead, an informative message is returned.
+
+* `check_outliers()` now properly accept the `percentage_central` argument when
+  using the `"mcd"` method.
+
+* Fixed edge cases in `check_collinearity()` and `check_outliers()` for models
+  with response variables of classes `Date`, `POSIXct`, `POSIXlt` or `difftime`.
+
+* Fixed issue with `check_model()` for models of package *quantreg*.
+
 # performance 0.10.8
 
 ## Changes
