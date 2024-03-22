@@ -51,3 +51,33 @@ test_that("`check_model()` works for quantreg", {
   x <- check_model(qm, verbose = FALSE)
   expect_s3_class(x, "check_model")
 })
+
+test_that("`check_model()` warnings for tweedie", {
+  skip_if(getRversion() > "4.3.3")
+  skip_if_not_installed("glmmTMB")
+  skip_if_not_installed("lme4")
+  data(sleepstudy, package = "lme4")
+  set.seed(123)
+  d <- sleepstudy[sample.int(50), ]
+  m <- suppressWarnings(glmmTMB::glmmTMB(Reaction ~ Days,
+    data = d,
+    family = glmmTMB::tweedie
+  ))
+  expect_message(
+    expect_message(
+      check_model(m, iterations = 2, verbose = TRUE),
+      regex = "Not enough model terms"
+    )
+  )
+})
+
+
+test_that("`check_model()` warnings for zero-infl", {
+  skip_if_not_installed("pscl")
+  data(bioChemists, package = "pscl")
+  model <- pscl::zeroinfl(
+    art ~ fem + mar + kid5 + ment | kid5 + phd,
+    data = bioChemists
+  )
+  expect_message(expect_warning(check_model(model, verbose = TRUE), regex = "Cannot simulate"), regex = "Homogeneity")
+})

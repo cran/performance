@@ -51,12 +51,23 @@
     }
   }
 
-  if (is.null(res_)) {
+  if (is.null(res_) || all(is.na(res_))) {
     if (verbose) {
+      if (is.null(model_info$family)) {
+        fam <- "model"
+      } else {
+        fam <- paste0("`", model_info$family, "`")
+      }
       insight::format_alert(
-        sprintf(
-          "QQ plot could not be created. Cannot extract residuals from objects of class `%s`.",
-          class(model)[1]
+        paste(
+          sprintf(
+            "QQ plot could not be created. Cannot extract residuals from objects of class `%s`.",
+            class(model)[1]
+          ),
+          sprintf(
+            "Maybe the model class or the %s family does not support the computation of (deviance) residuals?",
+            fam
+          )
         )
       )
     }
@@ -282,7 +293,81 @@
 
 # prepare data for homogeneity of variance plot ----------------------------------
 
-.diag_overdispersion <- function(model) {
+.new_diag_overdispersion <- function(model, ...) {
+  faminfo <- insight::model_info(model)
+
+  simres <- simulate_residuals(model, ...)
+  predicted <- simres$fittedPredictedResponse
+  d <- data.frame(Predicted = predicted)
+
+  # residuals based on simulated residuals - but we want normally distributed residuals
+  d$Residuals <- stats::residuals(simres, quantile_function = stats::qnorm, ...)
+  d$Res2 <- d$Residuals^2
+  d$StdRes <- insight::get_residuals(model, type = "pearson")
+
+  # data for poisson models
+  if (faminfo$is_poisson && !faminfo$is_zero_inflated) {
+    d$V <- predicted
+  }
+
+  # data for negative binomial models
+  if (faminfo$is_negbin && !faminfo$is_zero_inflated) {
+    if (inherits(model, "glmmTMB")) {
+      if (faminfo$family == "nbinom1") {
+        # for nbinom1, we can use "sigma()"
+        d$V <- insight::get_sigma(model)^2 * stats::family(model)$variance(predicted)
+      } else {
+        # for nbinom2, "sigma()" has "inverse meaning" (see #654)
+        d$V <- (1 / insight::get_sigma(model)^2) * stats::family(model)$variance(predicted)
+      }
+    } else {
+      ## FIXME: this is not correct for glm.nb models?
+      d$V <- predicted * (1 + predicted / insight::get_sigma(model))
+    }
+  }
+
+  # data for zero-inflated poisson models
+  if (faminfo$is_poisson && faminfo$is_zero_inflated) {
+    if (inherits(model, "glmmTMB")) {
+      ptype <- "zprob"
+    } else {
+      ptype <- "zero"
+    }
+    d$Prob <- stats::predict(model, type = ptype)
+    d$V <- predicted * (1 - d$Prob) * (1 + predicted * d$Prob)
+  }
+
+  # data for zero-inflated negative binomial models
+  if (faminfo$is_negbin && faminfo$is_zero_inflated && !faminfo$is_dispersion) {
+    if (inherits(model, "glmmTMB")) {
+      ptype <- "zprob"
+    } else {
+      ptype <- "zero"
+    }
+    d$Prob <- stats::predict(model, type = ptype)
+    d$Disp <- insight::get_sigma(model)
+    d$V <- predicted * (1 + predicted / d$Disp) * (1 - d$Prob) * (1 + predicted * (1 + predicted / d$Disp) * d$Prob) # nolint
+  }
+
+  # data for zero-inflated negative binomial models with dispersion
+  if (faminfo$is_negbin && faminfo$is_zero_inflated && faminfo$is_dispersion) {
+    d <- data.frame(Predicted = stats::predict(model, type = "response"))
+    if (inherits(model, "glmmTMB")) {
+      ptype <- "zprob"
+    } else {
+      ptype <- "zero"
+    }
+    d$Prob <- stats::predict(model, type = ptype)
+    d$Disp <- stats::predict(model, type = "disp")
+    d$V <- predicted * (1 + predicted / d$Disp) * (1 - d$Prob) * (1 + predicted * (1 + predicted / d$Disp) * d$Prob) # nolint
+  }
+
+  d
+}
+
+
+
+.diag_overdispersion <- function(model, ...) {
   faminfo <- insight::model_info(model)
 
   # data for poisson models
@@ -367,7 +452,6 @@
 
   d
 }
-
 
 
 # helpers ----------------------------------

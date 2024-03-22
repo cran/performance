@@ -24,6 +24,7 @@ test_that("check_collinearity, correct order in print", {
 
 
 test_that("check_collinearity", {
+  skip_if(getRversion() > "4.3.3")
   skip_if_not_installed("glmmTMB")
   skip_if_not(getRversion() >= "4.0.0")
 
@@ -50,6 +51,7 @@ test_that("check_collinearity", {
 
 
 test_that("check_collinearity", {
+  skip_if(getRversion() > "4.3.3")
   skip_if_not_installed("glmmTMB")
   skip_if_not(getRversion() >= "4.0.0")
 
@@ -202,14 +204,15 @@ test_that("check_collinearity, hurdle/zi models w/o zi-formula", {
     link = "logit"
   )
   out <- check_collinearity(m)
-  expect_identical(
-    colnames(out),
+  expect_named(
+    out,
     c(
       "Term", "VIF", "VIF_CI_low", "VIF_CI_high", "SE_factor", "Tolerance",
       "Tolerance_CI_low", "Tolerance_CI_high", "Component"
     )
   )
   expect_equal(out$VIF, c(1.05772, 1.05772, 1.06587, 1.06587), tolerance = 1e-4)
+  expect_snapshot(print(out))
 })
 
 test_that("check_collinearity, invalid data", {

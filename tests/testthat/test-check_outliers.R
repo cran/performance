@@ -6,6 +6,7 @@ test_that("zscore negative threshold", {
 })
 
 test_that("lof illegal threshold", {
+  skip_if_not_installed("dbscan")
   expect_error(
     check_outliers(mtcars$mpg, method = "lof", threshold = -1),
     "The `threshold` argument"
@@ -84,6 +85,7 @@ test_that("mahalanobis_robust which", {
 })
 
 test_that("mcd which", {
+  skip_if_not_installed("MASS")
   # (not clear why method mcd needs a seed)
   set.seed(42)
   expect_identical(
@@ -199,6 +201,12 @@ test_that("multiple methods which", {
 # We exclude method ics because it is too slow
 test_that("all methods which", {
   skip_if_not_installed("bigutilsr")
+  skip_if_not_installed("MASS")
+  skip_if_not_installed("dbscan")
+  skip_if_not_installed("ICS")
+  skip_if_not_installed("ICSOutlier")
+  skip_if_not_installed("loo")
+
   expect_identical(
     which(check_outliers(mtcars,
       method = c(
@@ -222,6 +230,12 @@ test_that("all methods which", {
 
 test_that("multiple methods with ID", {
   skip_if_not_installed("bigutilsr")
+  skip_if_not_installed("MASS")
+  skip_if_not_installed("dbscan")
+  skip_if_not_installed("ICS")
+  skip_if_not_installed("ICSOutlier")
+  skip_if_not_installed("loo")
+
   data <- datawizard::rownames_as_column(mtcars, var = "car")
   x <- attributes(check_outliers(data,
     method = c(
@@ -280,6 +294,7 @@ test_that("cook multiple methods which", {
 
 test_that("pareto which", {
   skip_if_not_installed("dbscan")
+  skip_if_not_installed("loo")
   skip_if_not_installed("rstanarm")
   set.seed(123)
   model <- rstanarm::stan_glm(mpg ~ qsec + wt, data = mtcars, refresh = 0)
@@ -293,6 +308,7 @@ test_that("pareto which", {
 
 test_that("pareto multiple methods which", {
   skip_if_not_installed("dbscan")
+  skip_if_not_installed("loo")
   skip_if_not_installed("rstanarm")
   set.seed(123)
   model <- rstanarm::stan_glm(mpg ~ qsec + wt, data = mtcars, refresh = 0)
@@ -340,5 +356,42 @@ test_that("check_outliers with invald data", {
       regex = "Date variables are not supported"
     ),
     regex = "No numeric variables found"
+  )
+})
+
+
+test_that("check_outliers with DHARMa", {
+  skip_if_not_installed("DHARMa")
+  mt1 <- mtcars[, c(1, 3, 4)]
+  # create some fake outliers and attach outliers to main df
+  mt2 <- rbind(mt1, data.frame(
+    mpg = c(37, 40), disp = c(300, 400),
+    hp = c(110, 120)
+  ))
+  # fit model with outliers
+  model <- lm(disp ~ mpg + hp, data = mt2)
+  set.seed(123)
+  res <- simulate_residuals(model)
+  out <- check_outliers(res)
+  expect_equal(
+    out,
+    structure(
+      list(
+        Coefficient = 0.0294117647058824, Expected = 0.00796812749003984,
+        CI_low = 0.000744364234690261, CI_high = 0.153267669560318,
+        p_value = 0.238146844116552
+      ),
+      class = c("check_outliers_simres", "list")
+    ),
+    ignore_attr = TRUE,
+    tolerance = 1e-4
+  )
+  expect_identical(
+    capture.output(print(out)),
+    c(
+      "# Outliers detection", "", "  Proportion of observed outliers: 2.94%",
+      "  Proportion of expected outliers: 0.80%, 95% CI [0.07, 15.33]",
+      ""
+    )
   )
 })
