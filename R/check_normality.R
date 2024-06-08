@@ -17,6 +17,8 @@
 #' [`plot()`-method](https://easystats.github.io/see/articles/performance.html)
 #'  implemented in the [**see**-package](https://easystats.github.io/see/).
 #'
+#' @seealso [`see::plot.see_check_normality()`] for options to customize the plot.
+#'
 #' @details `check_normality()` calls `stats::shapiro.test` and checks the
 #' standardized residuals (or studentized residuals for mixed models) for
 #' normal distribution. Note that this formal test almost always yields
@@ -53,7 +55,6 @@ check_normality <- function(x, ...) {
 
 #' @export
 check_normality.default <- function(x, ...) {
-  # check for valid input
   .is_model_valid(x)
 
   if (!insight::model_info(x)$is_linear) {

@@ -1,7 +1,7 @@
 Type: Package
 Package: performance
 Title: Assessment of Regression Models Performance
-Version: 0.11.0
+Version: 0.12.0
 Authors@R: 
     c(person(given = "Daniel",
              family = "Lüdecke",
@@ -67,8 +67,8 @@ License: GPL-3
 URL: https://easystats.github.io/performance/
 BugReports: https://github.com/easystats/performance/issues
 Depends: R (>= 3.6)
-Imports: bayestestR (>= 0.13.2), insight (>= 0.19.9), datawizard (>=
-        0.9.1), stats, utils
+Imports: bayestestR (>= 0.13.2), insight (>= 0.20.0), datawizard (>=
+        0.11.0), stats, utils
 Suggests: AER, afex, BayesFactor, bayesplot, betareg, bigutilsr,
         blavaan, boot, brms, car, carData, CompQuadForm, correlation,
         cplm, dbscan, DHARMa, estimatr, fixest, flextable, forecast,
@@ -76,7 +76,7 @@ Suggests: AER, afex, BayesFactor, bayesplot, betareg, bigutilsr,
         ICSOutlier, ISLR, ivreg, lavaan, lme4, lmtest, loo, MASS,
         Matrix, mclogit, mclust, metadat, metafor, mgcv, mlogit,
         multimode, nestedLogit, nlme, nonnest2, ordinal, parallel,
-        parameters (>= 0.21.4), patchwork, pscl, psych, quantreg,
+        parameters (>= 0.21.6), patchwork, pscl, psych, quantreg,
         qqplotr (>= 0.0.6), randomForest, rempsyc, rmarkdown, rstanarm,
         rstantools, sandwich, see (>= 0.8.2), survey, survival,
         testthat (>= 3.2.1), tweedie, VGAM, withr (>= 3.0.0)
@@ -89,7 +89,7 @@ Config/Needs/website: rstudio/bslib, r-lib/pkgdown,
         easystats/easystatstemplate
 Config/rcmdcheck/ignore-inconsequential-notes: true
 NeedsCompilation: no
-Packaged: 2024-03-22 21:30:42 UTC; DL
+Packaged: 2024-06-07 17:11:31 UTC; Daniel
 Author: Daniel Lüdecke [aut, cre] (<https://orcid.org/0000-0002-8895-3206>,
     @strengejacke),
   Dominique Makowski [aut, ctb] (<https://orcid.org/0000-0001-5375-9967>,
@@ -108,4 +108,4 @@ Author: Daniel Lüdecke [aut, cre] (<https://orcid.org/0000-0002-8895-3206>,
   gjo11 [rev],
   Etienne Bacher [ctb] (<https://orcid.org/0000-0002-9271-5075>)
 Repository: CRAN
-Date/Publication: 2024-03-22 22:20:02 UTC
+Date/Publication: 2024-06-08 22:00:02 UTC

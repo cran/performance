@@ -37,7 +37,8 @@
 #'
 #' @return A data frame of simulated responses and the original response vector.
 #'
-#' @seealso [`simulate_residuals()`] and [`check_residuals()`].
+#' @seealso [`simulate_residuals()`] and [`check_residuals()`]. See also
+#' [`see::print.see_performance_pp_check()`] for options to customize the plot.
 #'
 #' @details An example how posterior predictive checks can also be used for model
 #'   comparison is Figure 6 from _Gabry et al. 2019, Figure 6_.
@@ -99,7 +100,6 @@ check_predictions.default <- function(object,
                                       type = "density",
                                       verbose = TRUE,
                                       ...) {
-  # check for valid input
   .is_model_valid(object)
 
   # retrieve model information
@@ -114,26 +114,98 @@ check_predictions.default <- function(object,
   # args
   type <- match.arg(type, choices = c("density", "discrete_dots", "discrete_interval", "discrete_both"))
 
-  if (isTRUE(minfo$is_bayesian) && isFALSE(inherits(object, "BFBayesFactor"))) {
-    insight::check_if_installed(
-      "bayesplot",
-      "to create posterior prediction plots for Stan models"
-    )
-    bayesplot::pp_check(object)
+  pp_check.lm(
+    object,
+    iterations = iterations,
+    check_range = check_range,
+    re_formula = re_formula,
+    bandwidth = bandwidth,
+    type = type,
+    verbose = verbose,
+    model_info = minfo,
+    ...
+  )
+}
+
+
+#' @export
+check_predictions.stanreg <- function(object,
+                                      iterations = 50,
+                                      check_range = FALSE,
+                                      re_formula = NULL,
+                                      bandwidth = "nrd",
+                                      type = "density",
+                                      verbose = TRUE,
+                                      ...) {
+  # retrieve model information
+  minfo <- insight::model_info(object, verbose = FALSE)
+
+  # try to find sensible default for "type" argument
+  suggest_dots <- (minfo$is_bernoulli || minfo$is_count || minfo$is_ordinal || minfo$is_categorical || minfo$is_multinomial) # nolint
+  if (missing(type) && suggest_dots) {
+    type <- "discrete_interval"
+  }
+
+  # args
+  type <- match.arg(type, choices = c("density", "discrete_dots", "discrete_interval", "discrete_both"))
+
+  # convert to type-argument for pp_check
+  pp_type <- switch(type,
+    density = "dens",
+    "bars"
+  )
+
+  insight::check_if_installed(
+    "bayesplot",
+    "to create posterior prediction plots for Stan models"
+  )
+
+  # for plotting
+  resp_string <- insight::find_terms(object)$response
+
+  if (inherits(object, "brmsfit")) {
+    out <- as.data.frame(bayesplot::pp_check(object, type = pp_type, ndraws = iterations, ...)$data)
   } else {
-    pp_check.lm(
-      object,
-      iterations = iterations,
-      check_range = check_range,
-      re_formula = re_formula,
-      bandwidth = bandwidth,
-      type = type,
-      verbose = verbose,
-      model_info = minfo,
-      ...
+    out <- as.data.frame(bayesplot::pp_check(object, type = pp_type, nreps = iterations, ...)$data)
+  }
+
+  # bring data into shape, like we have for other models with `check_predictions()`
+  if (pp_type == "dens") {
+    d_filter <- out[!out$is_y, ]
+    d_filter <- datawizard::data_to_wide(
+      d_filter,
+      id_cols = "y_id",
+      values_from = "value",
+      names_from = "rep_id"
+    )
+    d_filter$y_id <- NULL
+    colnames(d_filter) <- paste0("sim_", colnames(d_filter))
+    d_filter$y <- out$value[out$is_y]
+    out <- d_filter
+  } else {
+    colnames(out) <- c("x", "y", "CI_low", "Mean", "CI_high")
+    # to long, for plotting
+    out <- datawizard::data_to_long(
+      out,
+      select = c("y", "Mean"),
+      names_to = "Group",
+      values_to = "Count"
     )
   }
+
+  attr(out, "is_stan") <- TRUE
+  attr(out, "check_range") <- check_range
+  attr(out, "response_name") <- resp_string
+  attr(out, "bandwidth") <- bandwidth
+  attr(out, "model_info") <- minfo
+  attr(out, "type") <- type
+  class(out) <- c("performance_pp_check", "see_performance_pp_check", class(out))
+  out
 }
+
+#' @export
+check_predictions.brmsfit <- check_predictions.stanreg
+
 
 #' @export
 check_predictions.BFBayesFactor <- function(object,
@@ -150,7 +222,9 @@ check_predictions.BFBayesFactor <- function(object,
   if (isTRUE(is.na(re_formula))) {
     yy <- everything_we_need[["y_pred_marginal"]]
   } else {
-    if (!is.null(re_formula)) warning("re_formula can only be NULL or NA", call. = FALSE)
+    if (!is.null(re_formula)) {
+      insight::format_warning("`re_formula` can only be `NULL` or `NA`.")
+    }
     yy <- everything_we_need[["y_pred"]]
   }
 
@@ -346,11 +420,17 @@ pp_check.glmmTMB   <-
 
 #' @rdname check_predictions
 #' @export
-posterior_predictive_check <- check_predictions
+posterior_predictive_check <- function(object, ...) {
+  .Deprecated("check_predictions()")
+  check_predictions(object, ...)
+}
 
 #' @rdname check_predictions
 #' @export
-check_posterior_predictions <- check_predictions
+check_posterior_predictions <- function(object, ...) {
+  .Deprecated("check_predictions()")
+  check_predictions(object, ...)
+}
 
 
 
@@ -457,7 +537,7 @@ plot.performance_pp_check <- function(x, ...) {
   # validation check, for mixed models, where re.form = NULL (default) might fail
   if (is.null(out) && insight::is_mixed_model(object) && !isTRUE(is.na(re_formula))) {
     if (verbose) {
-      insight::format_warning(
+      insight::format_alert(
         paste0(
           "Failed to compute posterior predictive checks with `re_formula=",
           deparse(re_formula),

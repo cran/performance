@@ -38,7 +38,6 @@ test_that("`check_outliers()` works if convergence issues", {
 })
 
 test_that("`check_model()` for invalid models", {
-  skip_if(packageVersion("insight") < "0.19.8.2")
   dd <- data.frame(y = as.difftime(0:5, units = "days"))
   m1 <- lm(y ~ 1, data = dd)
   expect_error(check_model(m1))
@@ -79,5 +78,33 @@ test_that("`check_model()` warnings for zero-infl", {
     art ~ fem + mar + kid5 + ment | kid5 + phd,
     data = bioChemists
   )
-  expect_message(expect_warning(check_model(model, verbose = TRUE), regex = "Cannot simulate"), regex = "Homogeneity")
+  expect_message(expect_message(check_model(model, verbose = TRUE), regex = "Cannot simulate"), regex = "Homogeneity")
+})
+
+
+test_that("`check_model()` no warnings for quasipoisson", {
+  skip_if_not_installed("datawizard")
+  set.seed(250419)
+  # Generate random x values
+  x <- rnorm(
+    n = 500,
+    mean = 5,
+    sd = 2
+  )
+  # Generate y values y = 5x + e
+  y <- 5 * x + rnorm(
+    n = 500,
+    mean = 5,
+    sd = 2
+  )
+  # Generate z as offset
+  z <- runif(500, min = 0, max = 6719)
+  mock_data <- data.frame(x, y, z) |>
+    # both should be whole numbers since they're counts
+    datawizard::data_modify(y = round(y), z = round(z)) |>
+    datawizard::data_filter(x >= 0, y >= 0)
+  # Run model
+  model1 <- glm(y ~ x + offset(log(z)), family = "quasipoisson", data = mock_data)
+  expect_message(check_model(model1, verbose = TRUE), regex = "Not enough")
+  expect_silent(check_model(model1))
 })

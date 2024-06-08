@@ -1,3 +1,32 @@
+# performance 0.12.0
+
+## Breaking
+
+* Aliases `posterior_predictive_check()` and `check_posterior_predictions()` for
+  `check_predictions()` are deprecated.
+
+* Arguments named `group` or `group_by` will be deprecated in a future release.
+  Please use `by` instead. This affects `check_heterogeneity_bias()` in
+  *performance*.
+
+## General
+
+* Improved documentation and new vignettes added.
+
+* `check_model()` gets a `base_size` argument, to set the base font size for plots. 
+
+* `check_predictions()` for `stanreg` and `brmsfit` models now returns plots in
+  the usual style as for other models and no longer returns plots from
+  `bayesplot::pp_check()`.
+
+* Updated the trained model that is used to prediction distributions in
+  `check_distribution()`.
+
+## Bug fixes
+
+* `check_model()` now falls back on normal Q-Q plots when a model is not supported
+  by the DHARMa package and simulated residuals cannot be calculated.
+
 # performance 0.11.0
 
 ## New supported models
@@ -58,7 +87,7 @@
   `performance_aic()`.
 
 * Improved plots for overdispersion-checks for negative-binomial models from
-  package *glmmTMB* (affects `check_overdispersion()` and `check_mnodel()`).
+  package *glmmTMB* (affects `check_overdispersion()` and `check_model()`).
 
 * Improved detection rates for singularity in `check_singularity()` for models
   from package *glmmTMB*.
