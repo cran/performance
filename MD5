@@ -1,6 +1,6 @@
-dd4e675baef4cef7ebfaf2668c9e313c *DESCRIPTION
+860a3575c170cccc1e9cb4d78d51030f *DESCRIPTION
 9329ba49723a4cd9e8df23a3ccbdf688 *NAMESPACE
-ff479390d78bccdd55ac54d1df4543de *NEWS.md
+52b059c139ff31d78082a03cf0a7071c *NEWS.md
 748de06b7adf630d152859e1c565c11b *R/binned_residuals.R
 3886235c54b427d394a88bb0532d5aba *R/check_autocorrelation.R
 8b253fcd856db2005dd64fad54b79ae1 *R/check_clusterstructure.R
@@ -9,7 +9,7 @@ b1d22ddf4cb980ba18385c06eef944f7 *R/check_concurvity.R
 6ad2a75f2fcb669cf6b19f6f062728c9 *R/check_convergence.R
 6ca41ed38a95ef5937037834348d02cd *R/check_distribution.R
 6b2b0fd891cc9d8c8e61f7ef185c8f0b *R/check_factorstructure.R
-6954a39f7622cf33219e661ba19f2528 *R/check_heterogeneity_bias.R
+d5763893151684cd6f3947a25d5b4146 *R/check_heterogeneity_bias.R
 097a90fde129087b90e9e5b6715e31f1 *R/check_heteroscedasticity.R
 5d61e73d22e161b4a330ea0e8d0be98e *R/check_homogeneity.R
 41c7892f9f36167a2a31c12351483be9 *R/check_htest.R
@@ -102,7 +102,7 @@ f9b5078a1a8f88495d20cb9535a525b7 *man/check_clusterstructure.Rd
 35d938bb14962f9bfe74013f1c9d4875 *man/check_convergence.Rd
 09d1663eebac4095e49492a7e2902a0d *man/check_distribution.Rd
 4b6776d5031ee7544f4ae1e9e83b7388 *man/check_factorstructure.Rd
-cefb171c8a5773d8574b5c2e870c3ab7 *man/check_heterogeneity_bias.Rd
+257ce9284f88f14a2638c97a646bf7b6 *man/check_heterogeneity_bias.Rd
 0b32ac39a0910f6228a976b826fc52f9 *man/check_heteroscedasticity.Rd
 d8c2d4ec5a57fbfdbc111c8ddafe66c7 *man/check_homogeneity.Rd
 15ac3508ef0e537142dd5b3d62b3bbe3 *man/check_itemscale.Rd
@@ -176,14 +176,14 @@ ae2fddd61049fa35769ba30880943dad *man/reexports.Rd
 df69927a308e89345ccf03b5e315c657 *man/simulate_residuals.Rd
 7f9c11cad940c3fc6d980ced46576aec *man/test_performance.Rd
 cb60cbf3577412c0bc6256424ce45d55 *tests/testthat.R
-c06eed005d9dc7b9cd6cba0bb1530356 *tests/testthat/_snaps/bootstrapped_icc_ci.md
-e710428ba2136d29454da0bc8e00265b *tests/testthat/_snaps/check_collinearity.md
+eb23858593482bb3ec269530d3a493f4 *tests/testthat/_snaps/bootstrapped_icc_ci.md
+2c423cf23e7ba1862c2aea7eee5b8b45 *tests/testthat/_snaps/check_collinearity.md
 15e75c08c01e0784d631fd041d093873 *tests/testthat/_snaps/check_distribution.md
-380e85797f95ed441e0a6e5268f5fdf1 *tests/testthat/_snaps/mclogit.md
-b4ad974eb8a31371747749a7553fb6c9 *tests/testthat/_snaps/model_performance.rma.md
-5ea3535b333a95e35e1adbb74e25a966 *tests/testthat/_snaps/nestedLogit.md
-09036d0d2a86fc548a0c8d724d4f9240 *tests/testthat/_snaps/pkg-ivreg.md
-88afe65ca9747a513100cec8a2a047c8 *tests/testthat/_snaps/windows/check_itemscale.md
+c4ae00825b97c70b93234010e0fac2c8 *tests/testthat/_snaps/mclogit.md
+382434f2e20c5964ddc597a23e12d8f4 *tests/testthat/_snaps/model_performance.rma.md
+b5acf23c3abe1819b596b40611aa2cfd *tests/testthat/_snaps/nestedLogit.md
+ac0823e55501817bb35e334239f283d9 *tests/testthat/_snaps/pkg-ivreg.md
+4cc40537cdaa895ef370f6914f86597a *tests/testthat/_snaps/windows/check_itemscale.md
 09d81b66ba81dd6f52bec56c7533b59a *tests/testthat/test-backticks.R
 1a57a8d1ef255bf57b8f1b4c288e6884 *tests/testthat/test-binned_residuals.R
 afb2dbaa7a0fcc3a643fb4ed37786787 *tests/testthat/test-bootstrapped_icc_ci.R
@@ -191,7 +191,7 @@ afb2dbaa7a0fcc3a643fb4ed37786787 *tests/testthat/test-bootstrapped_icc_ci.R
 a5bbd0f926fc08acec2cc8b10e90bf45 *tests/testthat/test-check_collinearity.R
 db5d3dc3baa3d537885e8f447d5e2737 *tests/testthat/test-check_convergence.R
 2da2ce2c43031dfe937bd5ba3cee9360 *tests/testthat/test-check_distribution.R
-0c94475761d2e627b114eb1c82234277 *tests/testthat/test-check_heterogeneity_bias.R
+78dc9dd6c7b687843396344ff24671e5 *tests/testthat/test-check_heterogeneity_bias.R
 091d51068e4329bc400b60f55822ae9e *tests/testthat/test-check_heteroskedasticity.R
 8fb39b5282281f7b56f24a937a23bfa1 *tests/testthat/test-check_homogeneity.R
 7246d7a3a67b106bceea74b414eb96cd *tests/testthat/test-check_itemscale.R
