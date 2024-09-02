@@ -1,7 +1,7 @@
 Type: Package
 Package: performance
 Title: Assessment of Regression Models Performance
-Version: 0.12.2
+Version: 0.12.3
 Authors@R: 
     c(person(given = "Daniel",
              family = "Lüdecke",
@@ -52,7 +52,11 @@ Authors@R:
              "Bacher", ,
              "etienne.bacher@protonmail.com",
              role = "ctb",
-             comment = c(ORCID = "0000-0002-9271-5075")))
+             comment = c(ORCID = "0000-0002-9271-5075")),
+      person(given = "Joseph",
+             family = "Luchman",
+             role = "ctb",
+             comment = c(ORCID = "0000-0002-8886-9717")))
 Maintainer: Daniel Lüdecke <d.luedecke@uke.de>
 Description: Utilities for computing measures to assess model quality,
     which are not directly provided by R's 'base' or 'stats' packages.
@@ -71,10 +75,10 @@ Imports: bayestestR (>= 0.13.2), insight (>= 0.20.2), datawizard (>=
         0.10.0), stats, utils
 Suggests: AER, afex, BayesFactor, bayesplot, betareg, bigutilsr,
         blavaan, boot, brms, car, carData, CompQuadForm, correlation,
-        cplm, dbscan, DHARMa, estimatr, fixest, flextable, forecast,
-        ftExtra, gamm4, ggplot2, glmmTMB, graphics, Hmisc, httr2, ICS,
-        ICSOutlier, ISLR, ivreg, lavaan, lme4, lmtest, loo, MASS,
-        Matrix, mclogit, mclust, metadat, metafor, mgcv, mlogit,
+        cplm, dagitty, dbscan, DHARMa, estimatr, fixest, flextable,
+        forecast, ftExtra, gamm4, ggdag, glmmTMB, graphics, Hmisc,
+        httr2, ICS, ICSOutlier, ISLR, ivreg, lavaan, lme4, lmtest, loo,
+        MASS, Matrix, mclogit, mclust, metadat, metafor, mgcv, mlogit,
         multimode, nestedLogit, nlme, nonnest2, ordinal, parallel,
         parameters (>= 0.21.6), patchwork, pscl, psych, quantreg,
         qqplotr (>= 0.0.6), randomForest, RcppEigen, rempsyc,
@@ -90,7 +94,7 @@ Config/Needs/website: rstudio/bslib, r-lib/pkgdown,
         easystats/easystatstemplate
 Config/rcmdcheck/ignore-inconsequential-notes: true
 NeedsCompilation: no
-Packaged: 2024-07-17 21:02:31 UTC; Daniel
+Packaged: 2024-09-02 16:10:41 UTC; Daniel
 Author: Daniel Lüdecke [aut, cre] (<https://orcid.org/0000-0002-8895-3206>,
     @strengejacke),
   Dominique Makowski [aut, ctb] (<https://orcid.org/0000-0001-5375-9967>,
@@ -107,6 +111,7 @@ Author: Daniel Lüdecke [aut, cre] (<https://orcid.org/0000-0002-8895-3206>,
   Vincent Arel-Bundock [ctb] (<https://orcid.org/0000-0003-2042-7063>),
   Martin Jullum [rev],
   gjo11 [rev],
-  Etienne Bacher [ctb] (<https://orcid.org/0000-0002-9271-5075>)
+  Etienne Bacher [ctb] (<https://orcid.org/0000-0002-9271-5075>),
+  Joseph Luchman [ctb] (<https://orcid.org/0000-0002-8886-9717>)
 Repository: CRAN
-Date/Publication: 2024-07-18 11:00:01 UTC
+Date/Publication: 2024-09-02 17:50:08 UTC
