@@ -41,8 +41,7 @@
       Identification of direct and total effects
       
       Incorrectly adjusted!
-      To estimate the direct and total effect, at least adjust for `b`.
-      Currently, the model does not adjust for any variables.
+      To estimate the direct and total effect, at least adjust for `b`. Currently, the model does not adjust for any variables.
       
 
 ---
@@ -58,8 +57,7 @@
       Identification of direct and total effects
       
       Incorrectly adjusted!
-      To estimate the direct and total effect, at least adjust for `b` and `c`.
-      Currently, the model only adjusts for `c`.
+      To estimate the direct and total effect, at least adjust for `b` and `c`. Currently, the model only adjusts for `c`. You possibly also need to adjust for `b` to block biasing paths.
       
 
 ---
@@ -75,8 +73,7 @@
       Identification of direct and total effects
       
       Incorrectly adjusted!
-      To estimate the direct and total effect, at least adjust for `b` and `c`.
-      Currently, the model only adjusts for `c`.
+      To estimate the direct and total effect, at least adjust for `b` and `c`. Currently, the model only adjusts for `c`. You possibly also need to adjust for `b` to block biasing paths.
       
 
 ---
@@ -131,6 +128,25 @@
       All minimal sufficient adjustments to estimate the direct and total effect were done.
       
 
+---
+
+    Code
+      print(dag)
+    Output
+      # Check for correct adjustment sets
+      - Outcome: exam
+      - Exposure: podcast
+      - Adjustment: alertness
+      
+      Identification of direct and total effects
+      
+      Incorrectly adjusted!
+      To estimate the direct and total effect, at least adjust for one of the following sets:
+      - alertness, prepared
+      - alertness, skills_course.
+      Currently, the model only adjusts for `alertness`. You possibly also need to adjust for `prepared` and `skills_course` to block biasing paths.
+      
+
 # check_dag, different adjustements for total and direct
 
     Code
@@ -143,14 +159,12 @@
       Identification of direct effects
       
       Incorrectly adjusted!
-      To estimate the direct effect, at least adjust for `x1` and `x2`.
-      Currently, the model does not adjust for any variables.
+      To estimate the direct effect, at least adjust for `x1` and `x2`. Currently, the model does not adjust for any variables.
       
       Identification of total effects
       
       Incorrectly adjusted!
-      To estimate the total effect, at least adjust for `x1`.
-      Currently, the model does not adjust for any variables.
+      To estimate the total effect, at least adjust for `x1`. Currently, the model does not adjust for any variables.
       
 
 ---
@@ -166,8 +180,7 @@
       Identification of direct effects
       
       Incorrectly adjusted!
-      To estimate the direct effect, at least adjust for `x1` and `x2`.
-      Currently, the model only adjusts for `x1`.
+      To estimate the direct effect, at least adjust for `x1` and `x2`. Currently, the model only adjusts for `x1`. You possibly also need to adjust for `x2` to block biasing paths.
       
       Identification of total effects
       
@@ -188,8 +201,7 @@
       Identification of direct effects
       
       Incorrectly adjusted!
-      To estimate the direct effect, at least adjust for `x1` and `x2`.
-      Currently, the model only adjusts for `x2`.
+      To estimate the direct effect, at least adjust for `x1` and `x2`. Currently, the model only adjusts for `x2`. You possibly also need to adjust for `x1` to block biasing paths.
       
       Identification of total effects
       
@@ -215,6 +227,49 @@
       Identification of total effects
       
       Incorrectly adjusted!
-      To estimate the total effect, do not adjust for `x1` and `x2`.
+      To estimate the total effect, do not adjust for some or all of `x1` and `x2`.
+      
+
+# check_dag, collider bias
+
+    Code
+      print(dag)
+    Output
+      # Check for correct adjustment sets
+      - Outcome: SMD_ICD11
+      - Exposure: agegroup
+      - Adjustments: edgroup3, gender_kid, pss4_kid_sum_2sd and residence
+      
+      Identification of direct effects
+      
+      Incorrectly adjusted!
+      To estimate the direct effect, at least adjust for `edgroup3`, `gender_kid`, `pss4_kid_sum_2sd`, `residence` and `sm_h_total_kid`. Currently, the model only adjusts for `edgroup3`, `gender_kid`, `pss4_kid_sum_2sd` and `residence`. You possibly also need to adjust for `sm_h_total_kid` to block biasing paths.
+      
+      Identification of total effects
+      
+      Model is correctly specified.
+      All minimal sufficient adjustments to estimate the total effect were done.
+      
+
+---
+
+    Code
+      print(dag)
+    Output
+      # Check for correct adjustment sets
+      - Outcome: SMD_ICD11
+      - Exposure: agegroup
+      - Adjustments: edgroup3, gender_kid, pss4_kid_sum_2sd, residence and sm_h_total_kid
+      - Collider: sm_h_total_kid
+      
+      Identification of direct effects
+      
+      Incorrectly adjusted!
+      Your model adjusts for a potential collider. To estimate the direct effect, do not adjust for `sm_h_total_kid` to avoid collider-bias. It is recommended to double-check for the collider-bias on the dagitty-website.
+      
+      Identification of total effects
+      
+      Incorrectly adjusted!
+      Your model adjusts for a potential collider. To estimate the total effect, do not adjust for `sm_h_total_kid` to avoid collider-bias. It is recommended to double-check for the collider-bias on the dagitty-website.
       
 

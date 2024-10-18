@@ -23,17 +23,18 @@ First element may also be model object. If a model objects is provided, its
 formula is used as first formula, and all independent variables will be used
 for the \code{adjusted} argument. See 'Details' and 'Examples'.}
 
-\item{outcome}{Name of the dependent variable (outcome), as character string.
-Must be a valid name from the formulas. If not set, the first dependent
-variable from the formulas is used.}
+\item{outcome}{Name of the dependent variable (outcome), as character string
+or as formula. Must be a valid name from the formulas provided in \code{...}. If
+not set, the first dependent variable from the formulas is used.}
 
-\item{exposure}{Name of the exposure variable (as character string), for
-which the direct and total causal effect on the \code{outcome} should be checked.
-Must be a valid name from the formulas. If not set, the first independent
-variable from the formulas is used.}
+\item{exposure}{Name of the exposure variable (as character string or
+formula), for which the direct and total causal effect on the \code{outcome}
+should be checked. Must be a valid name from the formulas provided in \code{...}.
+If not set, the first independent variable from the formulas is used.}
 
-\item{adjusted}{A character vector with names of variables that are adjusted
-for in the model. If a model object is provided in \code{...}, any values in
+\item{adjusted}{A character vector or formula with names of variables that
+are adjusted for in the model, e.g. \code{adjusted = c("x1", "x2")} or
+\code{adjusted = ~ x1 + x2}. If a model object is provided in \code{...}, any values in
 \code{adjusted} will be overwritten by the model's independent variables.}
 
 \item{latent}{A character vector with names of latent variables in the model.}
@@ -41,9 +42,18 @@ for in the model. If a model object is provided in \code{...}, any values in
 \item{effect}{Character string, indicating which effect to check. Can be
 \code{"all"} (default), \code{"total"}, or \code{"direct"}.}
 
-\item{coords}{A list with two elements, \code{x} and \code{y}, which both are named
-vectors of numerics. The names correspond to the variable names in the DAG,
-and the values for \code{x} and \code{y} indicate the x/y coordinates in the plot.
+\item{coords}{Coordinates of the variables when plotting the DAG. The
+coordinates can be provided in three different ways:
+\itemize{
+\item a list with two elements, \code{x} and \code{y}, which both are named vectors of
+numerics. The names correspond to the variable names in the DAG, and the
+values for \code{x} and \code{y} indicate the x/y coordinates in the plot.
+\item a list with elements that correspond to the variables in the DAG. Each
+element is a numeric vector of length two with x- and y-coordinate.
+\item a data frame with three columns: \code{x}, \code{y} and \code{name} (which contains the
+variable names).
+}
+
 See 'Examples'.}
 
 \item{x}{An object of class \code{check_dag}, as returned by \code{check_dag()}.}
@@ -100,6 +110,13 @@ required variables that should be adjusted for. The function distinguishes
 between direct and total effects, and checks if the model is correctly
 adjusted for both. If the model is cyclic, the function stops and suggests
 to remove cycles from the model.
+
+Note that it sometimes could be necessary to try out different combinations
+of suggested adjustments, because \code{check_dag()} can not always detect whether
+\emph{at least} one of several variables is required, or whether adjustments should
+be done for \emph{all} listed variables. It can be useful to copy the dagitty-code
+(using \code{as.dag()}, which prints the dagitty-string into the console) into
+the dagitty-website and play around with different adjustments.
 }
 
 \section{Direct and total effects}{
@@ -129,7 +146,7 @@ adjustments or over-adjustment.
 }
 
 \examples{
-\dontshow{if (require("ggdag", quietly = TRUE) && require("dagitty", quietly = TRUE) && require("see", quietly = TRUE) && packageVersion("see") > "0.8.5") (if (getRversion() >= "3.4") withAutoprint else force)(\{ # examplesIf}
+\dontshow{if (require("ggdag", quietly = TRUE) && require("dagitty", quietly = TRUE) && require("see", quietly = TRUE)) (if (getRversion() >= "3.4") withAutoprint else force)(\{ # examplesIf}
 # no adjustment needed
 check_dag(
   y ~ x + b,
@@ -157,6 +174,23 @@ dag <- check_dag(
 )
 dag
 
+# using formula interface for arguments "outcome", "exposure" and "adjusted"
+check_dag(
+  y ~ x + b + c,
+  x ~ b,
+  outcome = ~y,
+  exposure = ~x,
+  adjusted = ~ b + c
+)
+
+# if not provided, "outcome" is taken from first formula, same for "exposure"
+# thus, we can simplify the above expression to
+check_dag(
+  y ~ x + b + c,
+  x ~ b,
+  adjusted = ~ b + c
+)
+
 # use specific layout for the DAG
 dag <- check_dag(
   score ~ exp + b + c,
@@ -168,6 +202,22 @@ dag <- check_dag(
     x = c(score = 5, exp = 4, b = 3, c = 3),
     # y-coordinates for all nodes
     y = c(score = 3, exp = 3, b = 2, c = 4)
+  )
+)
+plot(dag)
+
+# alternative way of providing the coordinates
+dag <- check_dag(
+  score ~ exp + b + c,
+  exp ~ b,
+  outcome = "score",
+  exposure = "exp",
+  coords = list(
+    # x/y coordinates for each node
+    score = c(5, 3),
+    exp = c(4, 3),
+    b = c(3, 2),
+    c = c(3, 4)
   )
 )
 plot(dag)

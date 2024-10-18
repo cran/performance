@@ -1,3 +1,16 @@
+# performance 0.12.4
+
+## Changes
+
+* `check_dag()` now also checks for colliders, and suggests removing it in the
+  printed output.
+
+* Minor revisions to the printed output of `check_dag()`.
+
+## Bug fixes
+
+* Fixed failing tests that broke due to changes in latest *glmmTMB* update.
+
 # performance 0.12.3
 
 ## New functions

@@ -90,6 +90,18 @@ test_that("check_dag, multiple adjustment sets", {
     coords = ggdag::time_ordered_coords()
   )
   expect_snapshot(print(dag))
+  dag <- check_dag(
+    podcast ~ mood + humor + skills_course,
+    alertness ~ mood,
+    mood ~ humor,
+    prepared ~ skills_course,
+    exam ~ alertness + prepared,
+    coords = ggdag::time_ordered_coords(),
+    adjusted = "alertness",
+    exposure = "podcast",
+    outcome = "exam"
+  )
+  expect_snapshot(print(dag))
 })
 
 
@@ -132,4 +144,51 @@ test_that("check_dag, different adjustements for total and direct", {
     exposure = "exposure"
   )
   expect_snapshot(print(dag))
+})
+
+
+test_that("check_dag, collider bias", {
+  dag <- check_dag(
+    SMD_ICD11 ~ agegroup + gender_kid + edgroup3 + residence + pss4_kid_sum_2sd + sm_h_total_kid,
+    pss4_kid_sum_2sd ~ gender_kid,
+    sm_h_total_kid ~ gender_kid + agegroup,
+    adjusted = c(
+      "agegroup", "gender_kid", "edgroup3", "residence",
+      "pss4_kid_sum_2sd"
+    ),
+    outcome = "SMD_ICD11",
+    exposure = "agegroup"
+  )
+  expect_snapshot(print(dag))
+
+  dag <- check_dag(
+    SMD_ICD11 ~ agegroup + gender_kid + edgroup3 + residence + pss4_kid_sum_2sd + sm_h_total_kid,
+    pss4_kid_sum_2sd ~ gender_kid,
+    sm_h_total_kid ~ gender_kid + agegroup,
+    adjusted = c(
+      "agegroup", "gender_kid", "edgroup3", "residence",
+      "pss4_kid_sum_2sd", "sm_h_total_kid"
+    ),
+    outcome = "SMD_ICD11",
+    exposure = "agegroup"
+  )
+  expect_snapshot(print(dag))
+})
+
+
+test_that("check_dag, formula-interface", {
+  dag <- check_dag(
+    y ~ x + b + c,
+    x ~ b,
+    outcome = ~y,
+    exposure = ~x,
+    adjusted = ~ b + c
+  )
+  expect_identical(attributes(dag)$adjusted, c("b", "c"))
+  dag2 <- check_dag(
+    y ~ x + b + c,
+    x ~ b,
+    adjusted = ~ b + c
+  )
+  expect_identical(dag, dag2)
 })
