@@ -236,7 +236,8 @@ detect several outliers (as these are usually defined as a percentage of
 extreme values), this algorithm functions in a different manner and won't
 always detect outliers. Note that \code{method = "optics"} requires the
 \strong{dbscan} package to be installed, and that it takes some time to compute
-the results.
+the results. Additionally, the \code{optics_xi} (default to 0.05) is passed to
+the \code{\link[dbscan:optics]{dbscan::extractXi()}} function to further refine the cluster selection.
 \item \strong{Local Outlier Factor}:
 Based on a K nearest neighbors algorithm, LOF compares the local density of
 a point to the local densities of its neighbors instead of computing a
@@ -283,6 +284,7 @@ Default thresholds are currently specified as follows:
   mcd = stats::qchisq(p = 1 - 0.001, df = ncol(x)),
   ics = 0.001,
   optics = 2 * ncol(x),
+  optics_xi = 0.05,
   lof = 0.001
 )
 }\if{html}{\out{</div>}}
@@ -332,7 +334,7 @@ filtered_data <- data[outliers_info$Outlier < 0.1, ]
 group_iris <- datawizard::data_group(iris, "Species")
 check_outliers(group_iris)
 # nolint start
-\dontshow{if (require("see") && require("bigutilsr") && require("loo") && require("MASS") && require("ICSOutlier") && require("ICS") && require("dbscan")) (if (getRversion() >= "3.4") withAutoprint else force)(\{ # examplesIf}
+\dontshow{if (all(insight::check_if_installed(c("bigutilsr", "MASS", "ICSOutlier", "ICS", "dbscan", "loo", "see"), quietly = TRUE))) (if (getRversion() >= "3.4") withAutoprint else force)(\{ # examplesIf}
 # nolint end
 \donttest{
 # You can also run all the methods

@@ -11,6 +11,9 @@
 #'   of frequentist models (e.g., `lm`, `merMod`, `glmmTMB`, ...). For Bayesian
 #'   models, the model is passed to [`bayesplot::pp_check()`].
 #'
+#'   If `check_predictions()` doesn't work as expected, try setting
+#'   `verbose = TRUE` to get hints about possible problems.
+#'
 #' @param object A statistical model.
 #' @param iterations The number of draws to simulate/bootstrap.
 #' @param check_range Logical, if `TRUE`, includes a plot with the minimum
@@ -53,6 +56,9 @@
 #' package that imports **bayesplot** such as **rstanarm** or **brms**)
 #' is loaded, `pp_check()` is also available as an alias for `check_predictions()`.
 #'
+#' If `check_predictions()` doesn't work as expected, try setting `verbose = TRUE`
+#' to get hints about possible problems.
+#'
 #' @family functions to check model assumptions and and assess model quality
 #'
 #' @references
@@ -69,7 +75,7 @@
 #' - Gelman, A., Hill, J., and Vehtari, A. (2020). Regression and Other Stories.
 #'   Cambridge University Press.
 #'
-#' @examplesIf require("see")
+#' @examplesIf insight::check_if_installed("see", minimum_version = "0.9.1", quietly = TRUE)
 #' # linear model
 #' model <- lm(mpg ~ disp, data = mtcars)
 #' check_predictions(model)
@@ -101,6 +107,14 @@ check_predictions.default <- function(object,
                                       verbose = TRUE,
                                       ...) {
   .is_model_valid(object)
+  # check_predictions() can't handle exotic formula notation
+  if (verbose) {
+    insight::formula_ok(
+      object,
+      action = "error",
+      prefix_msg = "Posterior predictive checks failed due to an incompatible model formula." # nolint
+    )
+  }
 
   # retrieve model information
   minfo <- insight::model_info(object, verbose = FALSE)
@@ -247,7 +261,6 @@ pp_check.BFBayesFactor <- check_predictions.BFBayesFactor
 check_predictions.lme <- function(object, ...) {
   insight::format_error("`check_predictions()` does currently not work for models of class `lme`.")
 }
-
 
 
 # pp-check functions -------------------------------------
@@ -406,7 +419,6 @@ pp_check.glmmTMB   <-
 # styler: on
 
 
-
 #' @rawNamespace
 #' S3method(bayesplot::pp_check, lm)
 #' S3method(bayesplot::pp_check, glm)
@@ -421,26 +433,6 @@ pp_check.glmmTMB   <-
 #' S3method(bayesplot::pp_check, vlm)
 #' S3method(bayesplot::pp_check, wbm)
 #' S3method(bayesplot::pp_check, BFBayesFactor)
-
-
-
-# aliases --------------------------
-
-#' @rdname check_predictions
-#' @export
-posterior_predictive_check <- function(object, ...) {
-  .Deprecated("check_predictions()")
-  check_predictions(object, ...)
-}
-
-#' @rdname check_predictions
-#' @export
-check_posterior_predictions <- function(object, ...) {
-  .Deprecated("check_predictions()")
-  check_predictions(object, ...)
-}
-
-
 
 
 # methods -----------------------

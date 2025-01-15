@@ -29,7 +29,7 @@
 #' standardized deviance residuals is shown (in line with changes in
 #' `plot.lm()` for R 4.3+).
 #'
-#' @examplesIf require("see")
+#' @examplesIf insight::check_if_installed("see", minimum_version = "0.9.1", quietly = TRUE)
 #' m <<- lm(mpg ~ wt + cyl + gear + disp, data = mtcars)
 #' check_normality(m)
 #'
@@ -48,7 +48,6 @@
 check_normality <- function(x, ...) {
   UseMethod("check_normality")
 }
-
 
 
 # default -------------------------
@@ -184,7 +183,6 @@ print.check_normality <- function(x, ...) {
 }
 
 
-
 # other classes --------------------
 
 # mixed models ---------------------
@@ -231,7 +229,7 @@ check_normality.merMod <- function(x, effects = c("fixed", "random"), ...) {
           p.val <- c(p.val, .check_normality(re[[i]][[j]], x, "random effects"))
         }
       }
-      attr(p.val, "re_qq") <- .diag_reqq(x, level = 0.95, model_info = info)
+      attr(p.val, "re_qq") <- .model_diagnostic_ranef_qq(x, level = 0.95, model_info = info)
       attr(p.val, "type") <- "random effects"
       attr(p.val, "re_groups") <- re_groups
     }
@@ -274,7 +272,6 @@ check_normality.afex_aov <- function(x, ...) {
 
 #' @export
 check_normality.BFBayesFactor <- check_normality.afex_aov
-
 
 
 # helper ---------------------
