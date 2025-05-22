@@ -49,6 +49,7 @@ Crujeiras
 Csaki
 DAGs
 DBSCAN
+DeBolt
 DOI
 Datenerhebung
 De
@@ -148,10 +149,12 @@ Mattan
 Matuschek
 McElreath
 McKelvey
+Mehrvarz
 Merkle
 Methoden
 Michalos
 Moosbrugger
+Monette
 Mora
 Multicollinearity
 MuMIn
@@ -167,6 +170,7 @@ Nondegenerate
 Nordhausen
 Normed
 Nicewander
+Oakes
 ORCID
 OSF
 OSX
@@ -179,6 +183,7 @@ Pre
 Psychol
 Psychometrika
 QE
+Rast
 RFI
 RL
 RMR
@@ -191,6 +196,8 @@ Rodríguez
 Rohrer
 Rousseeuw
 Routledge
+Rouder
+Rouder's
 SEM
 SRMR
 Scheepers
@@ -222,6 +229,7 @@ Tweedie
 VIF
 VIFs
 VPC
+Vandekerckhove
 Vanhove
 Vasishth
 Vehtari
@@ -261,6 +269,7 @@ brms
 brmsfit
 cauchy
 clusterable
+codecov
 confounder
 confounders
 concurvity
@@ -357,6 +366,7 @@ und
 underfitted
 underfitting
 underdispersion
+vour
 visualisation
 winsorization
 winsorize
