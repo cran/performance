@@ -53,28 +53,6 @@ print_html.compare_performance <- function(x,
 }
 
 
-#' @export
-print_md.check_itemscale <- function(x, digits = 2, ...) {
-  insight::export_table(
-    lapply(seq_along(x), function(i) {
-      out <- x[[i]]
-      attr(out, "caption") <- sprintf("Component %i", i)
-      attr(out, "footer") <- sprintf(
-        "Mean inter-item-correlation = %.3f  Cronbach's alpha = %.3f",
-        attributes(out)$item_intercorrelation,
-        attributes(out)$cronbachs_alpha
-      )
-      out
-    }),
-    digits = digits,
-    format = "markdown",
-    missing = "<NA>",
-    align = "firstleft",
-    zap_small = TRUE
-  )
-}
-
-
 # helper ------------------------------------
 
 .print_md_compare_performance <- function(x,

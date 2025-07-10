@@ -65,6 +65,7 @@ Dunson
 Durbin
 Dxy
 Döring
+EFA
 ELPD
 EQS
 Econometrica
@@ -78,6 +79,7 @@ Fragebogenkonstruktion
 Francoeur
 GFI
 GL
+glb
 GLMM
 GLMMadaptive
 GLMMadpative
@@ -178,6 +180,7 @@ Olkin
 PNFI
 Pek
 Petrov
+polychoric
 Postestimation
 Pre
 Psychol
@@ -192,6 +195,7 @@ Rabe
 Raudenbush
 Raykov
 Revelle
+Revelle's
 Rodríguez
 Rohrer
 Rousseeuw
@@ -207,6 +211,7 @@ Schumacker
 Sensivity
 Shachar
 Shinichi
+Sijtsma
 Skrondal
 Smyth
 Solomons
@@ -244,10 +249,12 @@ Windmeijer
 Winsorization
 Witten
 Xu
+Yovel
 YL
 Zavoina
 Zavoinas
 Zhou
+Zinbarg
 Zomeren
 Zuur
 acyclic
@@ -317,6 +324,7 @@ mhurdle
 mis
 misspecification
 misspecified
+miskeyed
 mlm
 mlogit
 modelfit

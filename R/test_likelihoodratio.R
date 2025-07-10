@@ -67,6 +67,13 @@ plot.test_likelihoodratio <- function(x, ...) {
 
 #' @export
 print.test_likelihoodratio <- function(x, digits = 2, ...) {
+  cat(insight::export_table(format(x, digits = digits, ...), digits = digits, ...))
+  invisible(x)
+}
+
+
+#' @export
+format.test_likelihoodratio <- function(x, digits = 2, p_digits = 3, format = "text", ...) {
   # Footer
   if ("LogLik" %in% names(x)) {
     best <- which.max(x$LogLik)
@@ -76,7 +83,7 @@ print.test_likelihoodratio <- function(x, digits = 2, ...) {
   }
 
   # value formatting
-  x$p <- insight::format_p(x$p, name = NULL)
+  x$p <- insight::format_p(x$p, digits = p_digits, name = NULL, ...)
 
   if (is.null(attributes(x)$estimator)) {
     estimator_string <- ""
@@ -84,14 +91,38 @@ print.test_likelihoodratio <- function(x, digits = 2, ...) {
     estimator_string <- sprintf(" (%s-estimator)", toupper(attributes(x)$estimator))
   }
 
-  cat(insight::export_table(
-    x,
-    digits = digits,
-    caption = c(paste0("# Likelihood-Ratio-Test (LRT) for Model Comparison", estimator_string), "blue"),
-    footer = footer
-  ))
+  if (format == "text") {
+    caption <- c(paste0("# Likelihood-Ratio-Test (LRT) for Model Comparison", estimator_string), "blue")
+  } else {
+    caption <- paste0("Likelihood-Ratio-Test (LRT) for Model Comparison", estimator_string)
+  }
 
-  invisible(x)
+  attr(x, "table_footer") <- footer
+  attr(x, "table_caption") <- caption
+  x
+}
+
+
+#' @export
+print_md.test_likelihoodratio <- function(x, digits = 2, ...) {
+  insight::export_table(format(x, digits = digits, format = "markdown", ...), format = "markdown", ...)
+}
+
+
+#' @export
+print_html.test_likelihoodratio <- function(x, digits = 2, ...) {
+  insight::export_table(format(x, digits = digits, format = "html", ...), format = "html", ...)
+}
+
+
+#' @export
+display.test_likelihoodratio <- function(object, format = "markdown", digits = 2, ...) {
+  format <- insight::validate_argument(format, c("markdown", "md", "html"))
+  if (format == "html") {
+    print_html(x = object, digits = digits, ...)
+  } else {
+    print_md(x = object, digits = digits, ...)
+  }
 }
 
 

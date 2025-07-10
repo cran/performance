@@ -30,6 +30,7 @@
 #' display(mp)
 #' @export
 display.performance_model <- function(object, format = "markdown", digits = 2, caption = NULL, ...) {
+  format <- insight::validate_argument(format, c("markdown", "md", "html"))
   if (identical(format, "html")) {
     print_html(x = object, digits = digits, caption = caption, ...)
   } else {
@@ -37,10 +38,20 @@ display.performance_model <- function(object, format = "markdown", digits = 2, c
   }
 }
 
-
 #' @export
 display.compare_performance <- display.performance_model
 
-
 #' @export
 display.check_itemscale <- display.performance_model
+
+#' @export
+display.item_discrimination <- display.performance_model
+
+#' @export
+display.item_reliability <- display.performance_model
+
+#' @export
+display.item_omega <- display.performance_model
+
+#' @export
+display.item_difficulty <- display.performance_model
