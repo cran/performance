@@ -1,6 +1,6 @@
-c4d21b3887192573424841d6c7fbd3d8 *DESCRIPTION
+f5a168b4ae9bd789805c71cfe8e58e30 *DESCRIPTION
 e2ebd06a9deec90bb755d3af692788fd *NAMESPACE
-8a9513addd1deaa9b4fa0a04aa161238 *NEWS.md
+8b58e00c218afb01ccfd3b5df9b08ba6 *NEWS.md
 b7511602a328a4f3ff89eb7186cbee5c *R/binned_residuals.R
 e42a79e0aa77061c0993df153f869470 *R/check_autocorrelation.R
 5676d70c18143056c870be6a35ce04f7 *R/check_clusterstructure.R
@@ -202,7 +202,7 @@ d5ed1d726eb0a126b49358c793d2a6be *tests/testthat/test-check_dag.R
 f18ae188c88180294bf47eefe4183fc3 *tests/testthat/test-check_itemscale.R
 0f0192db35b13b75dc3f81fec1746556 *tests/testthat/test-check_model.R
 3c4ebcb5735b7f5f064ff076146ced78 *tests/testthat/test-check_normality.R
-062ab5ed703cb44b7acf6cc0d15ae713 *tests/testthat/test-check_outliers.R
+818d3cc238bba82096bebf37c66c525b *tests/testthat/test-check_outliers.R
 a15371c4982e4f2397511e4336eccaa6 *tests/testthat/test-check_overdispersion.R
 cb6d021c26149977a3e1ca0e32d5b429 *tests/testthat/test-check_predictions.R
 1392d042b832596182fb02491404b566 *tests/testthat/test-check_residuals.R
@@ -224,7 +224,7 @@ a946e64120f2668e03d3b5ef9a1b5c8a *tests/testthat/test-item_intercor.R
 a00a601bde42cbbf059ddf8cd1a45400 *tests/testthat/test-item_splithalf.R
 e5040b6fb32d7b2ff4b662bd6fc7bf55 *tests/testthat/test-mclogit.R
 6f7954b701ca5d0eba73be10d909ae66 *tests/testthat/test-model_performance-various.R
-f699c703cc80ae6377accdf85d38b0a2 *tests/testthat/test-model_performance.bayesian.R
+35a1cfb7782f9ed0be2d403993c25d15 *tests/testthat/test-model_performance.bayesian.R
 9d0600c522298797d4c23fa43d89346d *tests/testthat/test-model_performance.gam.R
 e08cd027c79d379966973b2de26e5d05 *tests/testthat/test-model_performance.kmeans.R
 38f565bc0fcbdab74b4fd5c45e7ceb80 *tests/testthat/test-model_performance.lavaan.R
