@@ -1,7 +1,7 @@
 Type: Package
 Package: performance
 Title: Assessment of Regression Models Performance
-Version: 0.15.2
+Version: 0.15.3
 Authors@R: 
     c(person(given = "Daniel",
              family = "Lüdecke",
@@ -49,7 +49,7 @@ Authors@R:
       person(given = "gjo11",
              role = "rev"),
       person(given = "Etienne",
-             family = "Bacher", ,
+             family = "Bacher",
              email = "etienne.bacher@protonmail.com",
              role = "ctb",
              comment = c(ORCID = "0000-0002-9271-5075")),
@@ -72,7 +72,7 @@ URL: https://easystats.github.io/performance/
 BugReports: https://github.com/easystats/performance/issues
 Depends: R (>= 4.0)
 Imports: bayestestR (>= 0.17.0), insight (>= 1.4.2), datawizard (>=
-        1.2.0), stats, methods, utils
+        1.3.0), stats, methods, utils
 Suggests: AER, afex, BayesFactor, bayesplot, betareg, bigutilsr,
         blavaan, boot, brms, car, carData, CompQuadForm, correlation
         (>= 0.8.8), cplm, curl, dagitty, dbscan, DHARMa (>= 0.4.7),
@@ -88,14 +88,14 @@ Suggests: AER, afex, BayesFactor, bayesplot, betareg, bigutilsr,
         survival, testthat (>= 3.2.1), tweedie, VGAM, withr (>= 3.0.0)
 Encoding: UTF-8
 Language: en-US
-RoxygenNote: 7.3.2
+RoxygenNote: 7.3.3
 Config/testthat/edition: 3
 Config/testthat/parallel: true
 Config/Needs/website: rstudio/bslib, r-lib/pkgdown,
         easystats/easystatstemplate
 Config/rcmdcheck/ignore-inconsequential-notes: true
 NeedsCompilation: no
-Packaged: 2025-10-06 06:59:30 UTC; DL
+Packaged: 2025-12-01 11:05:02 UTC; mail
 Author: Daniel Lüdecke [aut, cre] (ORCID:
     <https://orcid.org/0000-0002-8895-3206>),
   Dominique Makowski [aut, ctb] (ORCID:
@@ -117,4 +117,4 @@ Author: Daniel Lüdecke [aut, cre] (ORCID:
   Etienne Bacher [ctb] (ORCID: <https://orcid.org/0000-0002-9271-5075>),
   Joseph Luchman [ctb] (ORCID: <https://orcid.org/0000-0002-8886-9717>)
 Repository: CRAN
-Date/Publication: 2025-10-06 08:20:08 UTC
+Date/Publication: 2025-12-01 11:50:02 UTC

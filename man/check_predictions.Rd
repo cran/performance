@@ -71,7 +71,7 @@ If \code{check_predictions()} doesn't work as expected, try setting
 An example how posterior predictive checks can also be used for model
 comparison is Figure 6 from \emph{Gabry et al. 2019, Figure 6}.
 
-\if{html}{\cr \figure{pp_check.png}{options: width="90\%" alt="Posterior Predictive Check"} \cr}
+\if{html}{\cr \figure{pp_check.png}{options: style="width: 25\%;" alt="Posterior Predictive Check"} \cr}
 The model shown in the right panel (b) can simulate new data that are more
 similar to the observed outcome than the model in the left panel (a). Thus,
 model (b) is likely to be preferred over model (a).
@@ -86,7 +86,7 @@ If \code{check_predictions()} doesn't work as expected, try setting \code{verbos
 to get hints about possible problems.
 }
 \examples{
-\dontshow{if (insight::check_if_installed("see", minimum_version = "0.9.1", quietly = TRUE)) (if (getRversion() >= "3.4") withAutoprint else force)(\{ # examplesIf}
+\dontshow{if (insight::check_if_installed("see", minimum_version = "0.9.1", quietly = TRUE)) withAutoprint(\{ # examplesIf}
 # linear model
 model <- lm(mpg ~ disp, data = mtcars)
 check_predictions(model)
