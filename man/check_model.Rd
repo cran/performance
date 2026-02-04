@@ -5,10 +5,10 @@
 \alias{check_model.default}
 \title{Visual check of model assumptions}
 \usage{
-check_model(x, ...)
+check_model(model = NULL, ...)
 
 \method{check_model}{default}(
-  x,
+  model = NULL,
   panel = TRUE,
   check = "all",
   detrend = TRUE,
@@ -16,6 +16,8 @@ check_model(x, ...)
   type = "density",
   residual_type = NULL,
   show_dots = NULL,
+  show_ci = NULL,
+  maximum_dots = 2000,
   size_dot = 2,
   size_line = 0.8,
   size_title = 12,
@@ -24,13 +26,14 @@ check_model(x, ...)
   alpha = 0.2,
   alpha_dot = 0.8,
   colors = c("#3aaf85", "#1b6ca8", "#cd201f"),
-  theme = "see::theme_lucid",
+  theme = see::theme_lucid(),
   verbose = FALSE,
+  x = NULL,
   ...
 )
 }
 \arguments{
-\item{x}{A model object.}
+\item{model}{A model object.}
 
 \item{...}{Arguments passed down to the individual check functions, especially
 to \code{check_predictions()} and \code{binned_residuals()}.}
@@ -79,6 +82,14 @@ time-consuming. By default, \code{show_dots = NULL}. In this case \code{check_mo
 tries to guess whether performance will be poor due to a very large model
 and thus automatically shows or hides dots.}
 
+\item{show_ci}{Logical, if \code{TRUE}, confidence intervals in plots are shown.
+For models with only categorical predictors, confidence intervals are not shown
+by default, because in this case, these are usually on very large scales.}
+
+\item{maximum_dots}{Limits the number of data points for models with many
+observations, to reduce the time for rendering the plot. Defaults to a
+maximum of 2000 data points to render}
+
 \item{size_dot, size_line}{Size of line and dot-geoms.}
 
 \item{base_size, size_title, size_axis_title}{Base font size for axis and plot titles.}
@@ -90,10 +101,12 @@ Scalar from 0 to 1.}
 length 3. First color is usually used for reference lines, second color
 for dots, and third color for outliers or extreme values.}
 
-\item{theme}{String, indicating the name of the plot-theme. Must be in the
-format \code{"package::theme_name"} (e.g. \code{"ggplot2::theme_minimal"}).}
+\item{theme}{A ggplot2-theme function, e.g. \code{theme = see::theme_lucid()} or
+\code{theme = ggplot2::theme_dark()}.}
 
 \item{verbose}{If \code{FALSE} (default), suppress most warning messages.}
+
+\item{x}{Deprecated, please use \code{model} instead.}
 }
 \value{
 The data frame that is used for plotting.
@@ -250,7 +263,7 @@ get hints about possible problems.
 }
 
 \examples{
-\dontshow{if (require("lme4")) withAutoprint(\{ # examplesIf}
+\dontshow{if (require("lme4") && FALSE) withAutoprint(\{ # examplesIf}
 \donttest{
 m <- lm(mpg ~ wt + cyl + gear + disp, data = mtcars)
 check_model(m)

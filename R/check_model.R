@@ -9,7 +9,7 @@
 #' If `check_model()` doesn't work as expected, try setting `verbose = TRUE` to
 #' get hints about possible problems.
 #'
-#' @param x A model object.
+#' @param model A model object.
 #' @param size_dot,size_line Size of line and dot-geoms.
 #' @param base_size,size_title,size_axis_title Base font size for axis and plot titles.
 #' @param panel Logical, if `TRUE`, plots are arranged as panels; else,
@@ -28,8 +28,8 @@
 #' @param colors Character vector with color codes (hex-format). Must be of
 #' length 3. First color is usually used for reference lines, second color
 #' for dots, and third color for outliers or extreme values.
-#' @param theme String, indicating the name of the plot-theme. Must be in the
-#' format `"package::theme_name"` (e.g. `"ggplot2::theme_minimal"`).
+#' @param theme A ggplot2-theme function, e.g. `theme = see::theme_lucid()` or
+#' `theme = ggplot2::theme_dark()`.
 #' @param detrend Logical. Should Q-Q/P-P plots be detrended? Defaults to
 #' `TRUE` for linear models or when `residual_type = "normal"`. Defaults to
 #' `FALSE` for QQ plots based on simulated residuals (i.e. when
@@ -47,9 +47,17 @@
 #' time-consuming. By default, `show_dots = NULL`. In this case `check_model()`
 #' tries to guess whether performance will be poor due to a very large model
 #' and thus automatically shows or hides dots.
+#' @param show_ci Logical, if `TRUE`, confidence intervals in plots are shown.
+#' For models with only categorical predictors, confidence intervals are not shown
+#' by default, because in this case, these are usually on very large scales.
+#' @param maximum_dots Limits the number of data points for models with many
+#' observations, to reduce the time for rendering the plot. Defaults to a
+#' maximum of 2000 data points to render
 #' @param verbose If `FALSE` (default), suppress most warning messages.
 #' @param ... Arguments passed down to the individual check functions, especially
 #' to `check_predictions()` and `binned_residuals()`.
+#' @param x Deprecated, please use `model` instead.
+#'
 #' @inheritParams check_predictions
 #'
 #' @return The data frame that is used for plotting.
@@ -175,7 +183,7 @@
 #'
 #' @family functions to check model assumptions and and assess model quality
 #'
-#' @examplesIf require("lme4")
+#' @examplesIf require("lme4") && FALSE
 #' \donttest{
 #' m <- lm(mpg ~ wt + cyl + gear + disp, data = mtcars)
 #' check_model(m)
@@ -185,7 +193,7 @@
 #' check_model(m, panel = FALSE)
 #' }
 #' @export
-check_model <- function(x, ...) {
+check_model <- function(model = NULL, ...) {
   UseMethod("check_model")
 }
 
@@ -195,7 +203,7 @@ check_model <- function(x, ...) {
 #' @rdname check_model
 #' @export
 check_model.default <- function(
-  x,
+  model = NULL,
   panel = TRUE,
   check = "all",
   detrend = TRUE,
@@ -203,6 +211,8 @@ check_model.default <- function(
   type = "density",
   residual_type = NULL,
   show_dots = NULL,
+  show_ci = NULL,
+  maximum_dots = 2000,
   size_dot = 2,
   size_line = 0.8,
   size_title = 12,
@@ -211,16 +221,25 @@ check_model.default <- function(
   alpha = 0.2,
   alpha_dot = 0.8,
   colors = c("#3aaf85", "#1b6ca8", "#cd201f"),
-  theme = "see::theme_lucid",
+  theme = see::theme_lucid(),
   verbose = FALSE,
+  x = NULL,
   ...
 ) {
-  # check model formula
-  if (verbose) {
-    insight::formula_ok(x)
+  ## TODO remove deprecation warning later
+  if (!is.null(x) && is.null(model)) {
+    insight::format_warning(
+      "Argument `x` is deprecated; please use `model` instead."
+    )
+    model <- x
   }
 
-  minfo <- insight::model_info(x, verbose = FALSE)
+  # check model formula
+  if (verbose) {
+    insight::formula_ok(model)
+  }
+
+  minfo <- insight::model_info(model, verbose = FALSE)
 
   # set default for residual_type
   if (is.null(residual_type)) {
@@ -242,10 +261,10 @@ check_model.default <- function(
 
   assumptions_data <- tryCatch(
     if (minfo$is_bayesian) {
-      suppressWarnings(.check_assumptions_stan(x, ...))
+      suppressWarnings(.check_assumptions_stan(model, ...))
     } else if (minfo$is_linear) {
       suppressWarnings(.check_assumptions_linear(
-        x,
+        model,
         minfo,
         check,
         residual_type,
@@ -254,7 +273,7 @@ check_model.default <- function(
       ))
     } else {
       suppressWarnings(.check_assumptions_glm(
-        x,
+        model,
         minfo,
         check,
         residual_type,
@@ -275,7 +294,7 @@ check_model.default <- function(
       paste("`check_model()` returned following error:", cleaned_string),
       paste0(
         "\nIf the error message does not help identifying your problem, another reason why `check_model()` failed might be that models of class `",
-        class(x)[1],
+        class(model)[1],
         "` are not yet supported."
       ) # nolint
     )
@@ -285,7 +304,7 @@ check_model.default <- function(
   if (is.null(assumptions_data$QQ) && residual_type == "simulated") {
     insight::format_alert(paste0(
       "Cannot simulate residuals for models of class `",
-      class(x)[1],
+      class(model)[1],
       "`. Please try `check_model(..., residual_type = \"normal\")` instead."
     ))
   }
@@ -301,9 +320,26 @@ check_model.default <- function(
   }
 
   # set default for show_dots, based on "model size"
+  n <- .safe(insight::n_obs(model))
   if (is.null(show_dots)) {
-    n <- .safe(insight::n_obs(x))
     show_dots <- is.null(n) || n <= 1e5
+  }
+
+  # tell user about limited dots
+  if (!is.null(maximum_dots) && !is.null(n) && n > maximum_dots && verbose) {
+    insight::format_alert(
+      "The model contains a large number of observations. To ensure efficient rendering, the plot is limited to 2,000 data points. You can use the `maximum_dots` argument to adjust this limit."
+    )
+  }
+
+  # if we have only categorical predictors, we don't show CI by default
+  parameter_types <- .safe(parameters::parameters_type(model))
+  if (
+    !is.null(parameter_types) && all(parameter_types$Type %in% c("intercept", "factor"))
+  ) {
+    show_ci = FALSE
+  } else {
+    show_ci = TRUE
   }
 
   attr(assumptions_data, "panel") <- panel
@@ -316,6 +352,7 @@ check_model.default <- function(
   attr(assumptions_data, "alpha") <- alpha
   attr(assumptions_data, "dot_alpha") <- alpha_dot
   attr(assumptions_data, "show_dots") <- isTRUE(show_dots)
+  attr(assumptions_data, "show_ci") <- isTRUE(show_ci)
   attr(assumptions_data, "detrend") <- detrend
   attr(assumptions_data, "colors") <- colors
   attr(assumptions_data, "theme") <- theme
@@ -323,7 +360,8 @@ check_model.default <- function(
   attr(assumptions_data, "overdisp_type") <- list(...)$plot_type
   attr(assumptions_data, "bandwidth") <- bandwidth
   attr(assumptions_data, "type") <- type
-  attr(assumptions_data, "model_class") <- class(x)[1]
+  attr(assumptions_data, "maximum_dots") <- maximum_dots
+  attr(assumptions_data, "model_class") <- class(model)[1]
   assumptions_data
 }
 
@@ -350,7 +388,7 @@ plot.check_model <- function(x, ...) {
 
 #' @export
 check_model.stanreg <- function(
-  x,
+  model = NULL,
   panel = TRUE,
   check = "all",
   detrend = TRUE,
@@ -358,6 +396,8 @@ check_model.stanreg <- function(
   type = "density",
   residual_type = NULL,
   show_dots = NULL,
+  show_ci = NULL,
+  maximum_dots = 2000,
   size_dot = 2,
   size_line = 0.8,
   size_title = 12,
@@ -366,12 +406,21 @@ check_model.stanreg <- function(
   alpha = 0.2,
   alpha_dot = 0.8,
   colors = c("#3aaf85", "#1b6ca8", "#cd201f"),
-  theme = "see::theme_lucid",
+  theme = see::theme_lucid(),
   verbose = FALSE,
+  x = NULL,
   ...
 ) {
+  ## TODO remove deprecation warning later
+  if (!is.null(x) && is.null(model)) {
+    insight::format_warning(
+      "Argument `x` is deprecated; please use `model` instead."
+    )
+    model <- x
+  }
+
   check_model(
-    bayestestR::bayesian_as_frequentist(x),
+    model = .safe(bayestestR::bayesian_as_frequentist(model)),
     size_dot = size_dot,
     size_line = size_line,
     panel = panel,
@@ -384,9 +433,11 @@ check_model.stanreg <- function(
     size_axis_title = size_axis_title,
     detrend = detrend,
     show_dots = show_dots,
+    show_ci = show_ci,
     bandwidth = bandwidth,
     type = type,
     residual_type = residual_type,
+    maximum_dots = maximum_dots,
     verbose = verbose,
     ...
   )
@@ -399,7 +450,7 @@ check_model.brmsfit <- check_model.stanreg
 
 #' @export
 check_model.model_fit <- function(
-  x,
+  model = NULL,
   panel = TRUE,
   check = "all",
   detrend = TRUE,
@@ -407,6 +458,8 @@ check_model.model_fit <- function(
   type = "density",
   residual_type = NULL,
   show_dots = NULL,
+  show_ci = NULL,
+  maximum_dots = 2000,
   size_dot = 2,
   size_line = 0.8,
   size_title = 12,
@@ -415,12 +468,21 @@ check_model.model_fit <- function(
   alpha = 0.2,
   alpha_dot = 0.8,
   colors = c("#3aaf85", "#1b6ca8", "#cd201f"),
-  theme = "see::theme_lucid",
+  theme = see::theme_lucid(),
   verbose = FALSE,
+  x = NULL,
   ...
 ) {
+  ## TODO remove deprecation warning later
+  if (!is.null(x) && is.null(model)) {
+    insight::format_warning(
+      "Argument `x` is deprecated; please use `model` instead."
+    )
+    model <- x
+  }
+
   check_model(
-    x$fit,
+    model$fit,
     size_dot = size_dot,
     size_line = size_line,
     panel = panel,
@@ -433,6 +495,8 @@ check_model.model_fit <- function(
     base_size = base_size,
     detrend = detrend,
     show_dots = show_dots,
+    show_ci = show_ci,
+    maximum_dots = maximum_dots,
     bandwidth = bandwidth,
     type = type,
     residual_type = residual_type,
@@ -444,7 +508,7 @@ check_model.model_fit <- function(
 
 #' @export
 check_model.performance_simres <- function(
-  x,
+  model = NULL,
   panel = TRUE,
   check = "all",
   detrend = TRUE,
@@ -452,6 +516,8 @@ check_model.performance_simres <- function(
   type = "density",
   residual_type = NULL,
   show_dots = NULL,
+  show_ci = NULL,
+  maximum_dots = 2000,
   size_dot = 2,
   size_line = 0.8,
   size_title = 12,
@@ -460,12 +526,21 @@ check_model.performance_simres <- function(
   alpha = 0.2,
   alpha_dot = 0.8,
   colors = c("#3aaf85", "#1b6ca8", "#cd201f"),
-  theme = "see::theme_lucid",
+  theme = see::theme_lucid(),
   verbose = FALSE,
+  x = NULL,
   ...
 ) {
+  ## TODO remove deprecation warning later
+  if (!is.null(x) && is.null(model)) {
+    insight::format_warning(
+      "Argument `x` is deprecated; please use `model` instead."
+    )
+    model <- x
+  }
+
   check_model(
-    x$fittedModel,
+    model$fittedModel,
     size_dot = size_dot,
     size_line = size_line,
     panel = panel,
@@ -478,6 +553,8 @@ check_model.performance_simres <- function(
     base_size = base_size,
     detrend = detrend,
     show_dots = show_dots,
+    show_ci = show_ci,
+    maximum_dots = maximum_dots,
     bandwidth = bandwidth,
     type = type,
     residual_type = "simulated",
