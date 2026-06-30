@@ -25,6 +25,7 @@ check_model(model = NULL, ...)
   base_size = 10,
   alpha = 0.2,
   alpha_dot = 0.8,
+  ppc_range = NULL,
   colors = c("#3aaf85", "#1b6ca8", "#cd201f"),
   theme = see::theme_lucid(),
   verbose = FALSE,
@@ -67,14 +68,14 @@ to a different value.}
 options are appropriate for models with discrete - binary, integer or ordinal
 etc. - outcomes).}
 
-\item{residual_type}{Character, indicating the type of residuals to be used.
-For non-Gaussian models, the default is \code{"simulated"}, which uses simulated
-residuals. These are based on \code{\link[=simulate_residuals]{simulate_residuals()}} and thus uses the
-\strong{DHARMa} package to return randomized quantile residuals. For Gaussian
-models, the default is \code{"normal"}, which uses the default residuals from
-the model. Setting \code{residual_type = "normal"} for non-Gaussian models will
-use a half-normal Q-Q plot of the absolute value of the standardized deviance
-residuals.}
+\item{residual_type}{Character, indicating the type of residuals to be used
+for QQ-plots and overdispersion tests. For non-Gaussian models, the default
+is \code{"simulated"}, which uses simulated residuals. These are based on
+\code{\link[=simulate_residuals]{simulate_residuals()}} and thus uses the \strong{DHARMa} package to return
+randomized quantile residuals. For Gaussian models, the default is
+\code{"normal"}, which uses the default residuals from the model. Setting
+\code{residual_type = "normal"} for non-Gaussian models will use a half-normal Q-Q
+plot of the absolute value of the standardized deviance residuals.}
 
 \item{show_dots}{Logical, if \code{TRUE}, will show data points in the plot. Set
 to \code{FALSE} for models with many observations, if generating the plot is too
@@ -96,6 +97,10 @@ maximum of 2000 data points to render}
 
 \item{alpha, alpha_dot}{The alpha level of the confidence bands and dot-geoms.
 Scalar from 0 to 1.}
+
+\item{ppc_range}{An integer vector of length two specifying the x-axis limits
+for the posterior predictive checks plot. Use this to zoom in on a specific
+region of interest, especially if the response variable has a large range.}
 
 \item{colors}{Character vector with color codes (hex-format). Must be of
 length 3. First color is usually used for reference lines, second color
@@ -280,11 +285,12 @@ the \code{"Scale and layout"} section. Try reducing the scaling percentage (e.g.
 to 100\%) and restart your IDE.
 \item \emph{Decrease the base font size:} As a code-level workaround, you can reduce the
 base font size of your plots to help them fit into smaller viewports. If
-you are using \code{{ggplot2}}, load the library and adjust your theme before
+you are using \strong{ggplot2}, load the library and adjust your theme before
 plotting. For example: \code{theme_set(theme_classic(base_size = 6))}.
 \item \emph{Update relevant packages:} Ensure your graphics and layout packages are up
 to date. You can update your packages (paying special attention to
-\code{{ggplot2}} and \code{{patchwork}}) by running \code{update.packages(ask = FALSE)}.
+\strong{ggplot2}, \strong{patchwork} and \strong{qqplotr}) by running
+\code{update.packages(ask = FALSE)}.
 \item \emph{Update relevant software:} Finally, ensure your R version, and the IDE
 you use, are up to date. Running the most recent versions of R and, e.g.,
 RStudio or Positron can resolve any remaining issues.
@@ -304,6 +310,9 @@ check_model(m, panel = FALSE)
 \dontshow{\}) # examplesIf}
 }
 \seealso{
+See documentation of \code{\link[see:plot.see_check_model]{see::plot.see_check_model()}} for available
+arguments to change the plot appearance.
+
 Other functions to check model assumptions and and assess model quality:
 \code{\link[=check_autocorrelation]{check_autocorrelation()}},
 \code{\link[=check_collinearity]{check_collinearity()}},

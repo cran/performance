@@ -37,6 +37,9 @@
 #' `"discrete_dots"`, `"discrete_interval"` or `"discrete_both"` (the `discrete_*`
 #' options are appropriate for models with discrete - binary, integer or ordinal
 #' etc. - outcomes).
+#' @param x_limits An integer vector of length two specifying the x-axis limits
+#' for the plot. Use this to zoom in on a specific region of interest,
+#' especially if the response variable has a large range.
 #' @param verbose Toggle warnings.
 #' @param ... Additional arguments passed on to downstream functions. For
 #' frequentist models, these are forwarded to `simulate()`; for Bayesian models
@@ -111,6 +114,7 @@ check_predictions.default <- function(
   re_formula = NULL,
   bandwidth = "nrd",
   type = "density",
+  x_limits = NULL,
   verbose = TRUE,
   object = NULL,
   ...
@@ -162,6 +166,7 @@ check_predictions.default <- function(
     type = type,
     verbose = verbose,
     model_info = minfo,
+    x_limits = x_limits,
     ...
   )
 }
@@ -231,12 +236,11 @@ check_predictions.stanreg <- function(
   colnames(out) <- sub("^iter_", "sim_", colnames(out))
 
   resp_string <- insight::find_terms(model)$response
-  pattern <- "^(scale|exp|expm1|log|log1p|log10|log2|sqrt)"
 
   if (
     !is.null(resp_string) &&
       length(resp_string) == 1 &&
-      grepl(paste0(pattern, "\\("), resp_string)
+      !is.null(insight::find_transformation(resp_string))
   ) {
     out <- .backtransform_sims(out, resp_string)
   }
@@ -329,6 +333,7 @@ pp_check.lm <- function(
   type = "density",
   verbose = TRUE,
   model_info = NULL,
+  x_limits = NULL,
   ...
 ) {
   # we need the formula and the response values to check for matrix responses
@@ -347,12 +352,28 @@ pp_check.lm <- function(
       type,
       verbose,
       model_info,
+      x_limits,
       ...
     ))
   }
 
   # else, proceed as usual
   out <- .safe(stats::simulate(object, nsim = iterations, re.form = re_formula, ...))
+
+  # if it fails, try insight methods
+  if (is.null(out)) {
+    out <- .safe({
+      sims <- insight::get_simulated(
+        object,
+        iterations = iterations,
+        re.form = re_formula,
+        ...
+      )
+      # get_simulated returns "iter_" columms, so we rename here
+      colnames(sims) <- gsub("^iter_(\\d+)", "sim_\\1", colnames(sims))
+      sims
+    })
+  }
 
   # validation check, for mixed models, where re.form = NULL (default) might fail
   out <- .check_re_formula(out, object, iterations, re_formula, verbose, ...)
@@ -399,13 +420,12 @@ pp_check.lm <- function(
   # get response data, and response term, to check for transformations
   response <- insight::get_response(object)
   resp_string <- insight::find_terms(object)$response
-  pattern <- "^(scale|exp|expm1|log|log1p|log10|log2|sqrt)"
 
   # check for transformed response, and backtransform simulations
   if (
     !is.null(resp_string) &&
       length(resp_string) == 1 &&
-      grepl(paste0(pattern, "\\("), resp_string)
+      !is.null(insight::find_transformation(resp_string))
   ) {
     out <- .backtransform_sims(out, resp_string)
   }
@@ -426,6 +446,8 @@ pp_check.lm <- function(
   attr(out, "bandwidth") <- bandwidth
   attr(out, "model_info") <- minfo
   attr(out, "type") <- type
+  attr(out, "x_limits") <- x_limits
+
   class(out) <- c("performance_pp_check", "see_performance_pp_check", class(out))
   out
 }
@@ -440,6 +462,7 @@ pp_check.glm <- function(
   type = "density",
   verbose = TRUE,
   model_info = NULL,
+  x_limits = NULL,
   ...
 ) {
   # we need the formula and the response values to check for matrix responses
@@ -458,6 +481,7 @@ pp_check.glm <- function(
       type,
       verbose,
       model_info,
+      x_limits,
       ...
     ))
   }
@@ -527,6 +551,8 @@ pp_check.glm <- function(
   attr(out, "bandwidth") <- bandwidth
   attr(out, "model_info") <- minfo
   attr(out, "type") <- type
+  attr(out, "x_limits") <- x_limits
+
   class(out) <- c(
     "performance_pp_check",
     "see_performance_pp_check",
@@ -631,39 +657,10 @@ plot.performance_pp_check <- function(x, ...) {
 # helper --------------------
 
 .backtransform_sims <- function(sims, resp_string) {
-  if (grepl("log(log(", resp_string, fixed = TRUE)) {
-    sims[] <- lapply(sims, function(i) exp(exp(i)))
-  } else if (grepl("log(", resp_string, fixed = TRUE)) {
-    # exceptions: log(x+1) or log(1+x)
-    # 1. try: log(x + number)
-    plus_minus <- .safe(eval(parse(
-      text = gsub("log\\(([^,\\+)]*)(.*)\\)", "\\2", resp_string)
-    )))
-    # 2. try: log(number + x)
-    if (is.null(plus_minus)) {
-      plus_minus <- .safe(eval(parse(
-        text = gsub("log\\(([^,\\+)]*)(.*)\\)", "\\1", resp_string)
-      )))
-    }
-    if (is.null(plus_minus) || !is.numeric(plus_minus)) {
-      sims[] <- lapply(sims, exp)
-    } else {
-      sims[] <- lapply(sims, function(i) exp(i) - plus_minus)
-    }
-  } else if (grepl("log1p(", resp_string, fixed = TRUE)) {
-    sims[] <- lapply(sims, expm1)
-  } else if (grepl("log10(", resp_string, fixed = TRUE)) {
-    sims[] <- lapply(sims, function(i) 10^i)
-  } else if (grepl("log2(", resp_string, fixed = TRUE)) {
-    sims[] <- lapply(sims, function(i) 2^i)
-  } else if (grepl("sqrt(", resp_string, fixed = TRUE)) {
-    sims[] <- lapply(sims, function(i) i^2)
-  } else if (grepl("exp(", resp_string, fixed = TRUE)) {
-    sims[] <- lapply(sims, log)
-  } else if (grepl("expm1(", resp_string, fixed = TRUE)) {
-    sims[] <- lapply(sims, log1p)
+  trans <- insight::get_transformation(resp_string)
+  if (!is.null(trans)) {
+    sims[] <- lapply(sims, trans$inverse)
   }
-
   sims
 }
 

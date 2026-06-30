@@ -34,14 +34,14 @@
 #' `TRUE` for linear models or when `residual_type = "normal"`. Defaults to
 #' `FALSE` for QQ plots based on simulated residuals (i.e. when
 #' `residual_type = "simulated"`).
-#' @param residual_type Character, indicating the type of residuals to be used.
-#' For non-Gaussian models, the default is `"simulated"`, which uses simulated
-#' residuals. These are based on [`simulate_residuals()`] and thus uses the
-#' **DHARMa** package to return randomized quantile residuals. For Gaussian
-#' models, the default is `"normal"`, which uses the default residuals from
-#' the model. Setting `residual_type = "normal"` for non-Gaussian models will
-#' use a half-normal Q-Q plot of the absolute value of the standardized deviance
-#' residuals.
+#' @param residual_type Character, indicating the type of residuals to be used
+#' for QQ-plots and overdispersion tests. For non-Gaussian models, the default
+#' is `"simulated"`, which uses simulated residuals. These are based on
+#' [`simulate_residuals()`] and thus uses the **DHARMa** package to return
+#' randomized quantile residuals. For Gaussian models, the default is
+#' `"normal"`, which uses the default residuals from the model. Setting
+#' `residual_type = "normal"` for non-Gaussian models will use a half-normal Q-Q
+#' plot of the absolute value of the standardized deviance residuals.
 #' @param show_dots Logical, if `TRUE`, will show data points in the plot. Set
 #' to `FALSE` for models with many observations, if generating the plot is too
 #' time-consuming. By default, `show_dots = NULL`. In this case `check_model()`
@@ -53,12 +53,18 @@
 #' @param maximum_dots Limits the number of data points for models with many
 #' observations, to reduce the time for rendering the plot. Defaults to a
 #' maximum of 2000 data points to render
+#' @param ppc_range An integer vector of length two specifying the x-axis limits
+#' for the posterior predictive checks plot. Use this to zoom in on a specific
+#' region of interest, especially if the response variable has a large range.
 #' @param verbose If `FALSE` (default), suppress most warning messages.
 #' @param ... Arguments passed down to the individual check functions, especially
 #' to `check_predictions()` and `binned_residuals()`.
 #' @param x Deprecated, please use `model` instead.
 #'
 #' @inheritParams check_predictions
+#'
+#' @seealso See documentation of [`see::plot.see_check_model()`] for available
+#' arguments to change the plot appearance.
 #'
 #' @return The data frame that is used for plotting.
 #'
@@ -200,11 +206,12 @@
 #'   to 100%) and restart your IDE.
 #' - *Decrease the base font size:* As a code-level workaround, you can reduce the
 #'   base font size of your plots to help them fit into smaller viewports. If
-#'   you are using `{ggplot2}`, load the library and adjust your theme before
+#'   you are using **ggplot2**, load the library and adjust your theme before
 #'   plotting. For example: `theme_set(theme_classic(base_size = 6))`.
 #' - *Update relevant packages:* Ensure your graphics and layout packages are up
 #'   to date. You can update your packages (paying special attention to
-#'   `{ggplot2}` and `{patchwork}`) by running `update.packages(ask = FALSE)`.
+#'   **ggplot2**, **patchwork** and **qqplotr**) by running
+#'   `update.packages(ask = FALSE)`.
 #' - *Update relevant software:* Finally, ensure your R version, and the IDE
 #'   you use, are up to date. Running the most recent versions of R and, e.g.,
 #'   RStudio or Positron can resolve any remaining issues.
@@ -248,6 +255,7 @@ check_model.default <- function(
   base_size = 10,
   alpha = 0.2,
   alpha_dot = 0.8,
+  ppc_range = NULL,
   colors = c("#3aaf85", "#1b6ca8", "#cd201f"),
   theme = see::theme_lucid(),
   verbose = FALSE,
@@ -269,6 +277,11 @@ check_model.default <- function(
 
   minfo <- insight::model_info(model, verbose = FALSE)
 
+  # validate argument
+  if (!is.null(residual_type)) {
+    insight::validate_argument(residual_type, c("normal", "simulated"))
+  }
+
   # set default for residual_type
   if (is.null(residual_type)) {
     residual_type <- ifelse(minfo$is_linear && !minfo$is_gam, "normal", "simulated")
@@ -278,7 +291,11 @@ check_model.default <- function(
   # exceptions here as they appear, but for now, `check_model()` also
   # automatically falls back to normal Q-Q plot for all models not supported
   # by DHARMa
-  if (minfo$family %in% c("quasipoisson", "quasibinomial")) {
+  if (
+    minfo$family %in%
+      c("quasipoisson", "quasibinomial") ||
+      !requireNamespace("DHARMa", quietly = TRUE)
+  ) {
     residual_type <- "normal"
   }
 
@@ -388,6 +405,7 @@ check_model.default <- function(
   attr(assumptions_data, "overdisp_type") <- list(...)$plot_type
   attr(assumptions_data, "bandwidth") <- bandwidth
   attr(assumptions_data, "type") <- type
+  attr(assumptions_data, "ppc_range") <- ppc_range
   attr(assumptions_data, "maximum_dots") <- maximum_dots
   attr(assumptions_data, "model_class") <- class(model)[1]
   assumptions_data
@@ -433,6 +451,7 @@ check_model.stanreg <- function(
   base_size = 10,
   alpha = 0.2,
   alpha_dot = 0.8,
+  ppc_range = NULL,
   colors = c("#3aaf85", "#1b6ca8", "#cd201f"),
   theme = see::theme_lucid(),
   verbose = FALSE,
@@ -466,6 +485,7 @@ check_model.stanreg <- function(
     type = type,
     residual_type = residual_type,
     maximum_dots = maximum_dots,
+    ppc_range = ppc_range,
     verbose = verbose,
     ...
   )
@@ -495,6 +515,7 @@ check_model.model_fit <- function(
   base_size = 10,
   alpha = 0.2,
   alpha_dot = 0.8,
+  ppc_range = NULL,
   colors = c("#3aaf85", "#1b6ca8", "#cd201f"),
   theme = see::theme_lucid(),
   verbose = FALSE,
@@ -528,6 +549,7 @@ check_model.model_fit <- function(
     bandwidth = bandwidth,
     type = type,
     residual_type = residual_type,
+    ppc_range = ppc_range,
     verbose = verbose,
     ...
   )
@@ -553,6 +575,7 @@ check_model.performance_simres <- function(
   base_size = 10,
   alpha = 0.2,
   alpha_dot = 0.8,
+  ppc_range = NULL,
   colors = c("#3aaf85", "#1b6ca8", "#cd201f"),
   theme = see::theme_lucid(),
   verbose = FALSE,
@@ -586,6 +609,7 @@ check_model.performance_simres <- function(
     bandwidth = bandwidth,
     type = type,
     residual_type = "simulated",
+    ppc_range = ppc_range,
     verbose = verbose,
     ...
   )
@@ -732,7 +756,11 @@ check_model.DHARMa <- check_model.performance_simres
 
   # misspecified dispersion and zero-inflation --------------
   if (isTRUE(model_info$is_count) && any(c("all", "overdispersion") %in% check)) {
-    dat$OVERDISPERSION <- .model_diagnostic_overdispersion(model)
+    dat$OVERDISPERSION <- .model_diagnostic_overdispersion(
+      model,
+      residual_type = residual_type,
+      ...
+    )
   }
 
   dat <- insight::compact_list(dat)
