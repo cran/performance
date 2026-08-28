@@ -207,3 +207,59 @@ test_that("compare_performance, REML fit", {
   expect_silent(compare_performance(m1, m2))
   expect_message(compare_performance(m1, m2, estimator = "REML"))
 })
+
+
+test_that("compare_performance, lavaan", {
+  skip_on_cran()
+  skip_if_not_installed("lavaan")
+
+  data(HolzingerSwineford1939, package = "lavaan")
+  structure <- " visual  =~ x1 + x2 + x3
+                 textual =~ x4 + x5 + x6
+                 speed   =~ x7 + x8 + x9 "
+  model1 <- lavaan::cfa(structure, data = HolzingerSwineford1939)
+  model2 <- lavaan::cfa(structure, data = HolzingerSwineford1939)
+
+  out <- performance::compare_performance(model1, model2)
+  expect_identical(
+    capture.output(print(out, ci_digits = 2, table_width = Inf)),
+    c(
+      "# Comparison of Model Performance Indices",
+      "",
+      "Name   |  Model | Chi2(24) | p (Chi2) | Baseline(36) | p (Baseline) |   GFI |  AGFI |   NFI |  NNFI |   CFI | RMSEA |    RMSEA  CI | p (RMSEA) |   RMR |  SRMR |   RFI |  PNFI |   IFI |   RNI | Loglikelihood |  AIC (weights) |  BIC (weights) | BIC_adjusted",
+      "---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------",
+      "model1 | lavaan |   85.306 |   < .001 |      918.852 |       < .001 | 0.959 | 0.894 | 0.907 | 0.896 | 0.931 | 0.092 | [0.07, 0.11] |    < .001 | 0.082 | 0.065 | 0.861 | 0.605 | 0.931 | 0.931 |     -3737.745 | 7517.5 (0.500) | 7595.3 (0.500) |     7528.739",
+      "model2 | lavaan |   85.306 |   < .001 |      918.852 |       < .001 | 0.959 | 0.894 | 0.907 | 0.896 | 0.931 | 0.092 | [0.07, 0.11] |    < .001 | 0.082 | 0.065 | 0.861 | 0.605 | 0.931 | 0.931 |     -3737.745 | 7517.5 (0.500) | 7595.3 (0.500) |     7528.739"
+    )
+  )
+})
+
+
+test_that("compare_performance, Log_loss ranks in the right direction", {
+  data(mtcars)
+  m_best <- glm(am ~ mpg + hp + wt, data = mtcars, family = binomial())
+  m_mid <- glm(am ~ mpg, data = mtcars, family = binomial())
+  m_worst <- glm(am ~ 1, data = mtcars, family = binomial())
+
+  out <- compare_performance(m_best, m_mid, m_worst, metrics = "LOGLOSS", rank = TRUE)
+
+  # log-loss is an error measure, so the smallest value is the best model and
+  # must come first once the table is ranked (#917)
+  expect_identical(out$Name, c("m_best", "m_mid", "m_worst"))
+  expect_true(all(diff(out$Log_loss) > 0))
+  expect_true(all(diff(out$Performance_Score) < 0))
+})
+
+
+test_that("compare_performance, RMSE and Sigma still rank in the right direction", {
+  data(mtcars)
+  l_best <- lm(mpg ~ wt + cyl + hp, data = mtcars)
+  l_worst <- lm(mpg ~ 1, data = mtcars)
+
+  out <- compare_performance(l_best, l_worst, metrics = c("RMSE", "SIGMA"), rank = TRUE)
+
+  expect_identical(out$Name, c("l_best", "l_worst"))
+  expect_true(all(diff(out$RMSE) > 0))
+  expect_true(all(diff(out$Sigma) > 0))
+  expect_true(all(diff(out$Performance_Score) < 0))
+})

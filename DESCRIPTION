@@ -1,7 +1,7 @@
 Type: Package
 Package: performance
 Title: Assessment of Regression Models Performance
-Version: 0.17.1
+Version: 0.18.0
 Authors@R: 
     c(person(given = "Daniel",
              family = "Lüdecke",
@@ -56,7 +56,11 @@ Authors@R:
       person(given = "Joseph",
              family = "Luchman",
              role = "ctb",
-             comment = c(ORCID = "0000-0002-8886-9717")))
+             comment = c(ORCID = "0000-0002-8886-9717")),
+      person(given = "Julius",
+             family = "Bogomolovas",
+             role = "ctb",
+             comment = c(ORCID = "0000-0001-8344-1909")))
 Maintainer: Daniel Lüdecke <officialeasystats@gmail.com>
 Description: Utilities for computing measures to assess model quality,
     which are not directly provided by R's 'base' or 'stats' packages.
@@ -71,21 +75,22 @@ License: GPL-3
 URL: https://easystats.github.io/performance/
 BugReports: https://github.com/easystats/performance/issues
 Depends: R (>= 4.0)
-Imports: bayestestR (>= 0.18.1), insight (>= 1.5.1), datawizard (>=
+Imports: bayestestR (>= 0.18.1), insight (>= 1.5.2), datawizard (>=
         1.3.1), stats, methods, utils
 Suggests: AER, afex, BayesFactor, bayesplot, betareg, bigutilsr,
         blavaan, boot, brms, car, carData, CompQuadForm, correlation
         (>= 0.8.8), cplm, curl, dagitty, dbscan, DHARMa (>= 0.4.7),
-        discovr, estimatr, fixest, flextable, forecast, ftExtra, gamm4,
-        ggdag, glmmTMB (>= 1.1.12), GPArotation, graphics, Hmisc,
-        httr2, ICS, ICSOutlier, ISLR, ivreg, lavaan, lme4, lmtest, loo,
-        MASS, Matrix, mclogit, mclust, metadat, metafor, mgcv, mlogit,
-        modelbased (>= 0.12.0), multimode, nestedLogit, nlme, nnet,
-        nonnest2, ordinal, parallel, parameters (>= 0.28.0), patchwork,
-        pscl, psych, psychTools, quantreg, qqplotr (>= 0.0.6),
-        randomForest, RcppEigen, reformulas, rempsyc, rmarkdown,
-        rstanarm, rstantools, sandwich, see (>= 0.13.0), survey,
-        survival, testthat (>= 3.2.1), tweedie, VGAM, withr (>= 3.0.0)
+        discovr, effectsize, estimatr, fixest, flextable, forecast,
+        ftExtra, gamm4, ggdag, glmmTMB (>= 1.1.12), GPArotation,
+        graphics, Hmisc, httr2, ICS, ICSOutlier, ISLR, ivreg, lavaan,
+        lme4, lmtest, loo, MASS, Matrix, mclogit, mclust, metadat,
+        metafor, mgcv, mlogit, modelbased (>= 0.12.0), multimode,
+        nestedLogit, nlme, nnet, nonnest2, ordinal, parallel,
+        parameters (>= 0.28.0), patchwork, pscl, psych, psychTools,
+        quantreg, qqplotr (>= 0.0.6), randomForest, RcppEigen,
+        reformulas, rempsyc, rmarkdown, rstanarm, rstantools, sandwich,
+        see (>= 0.13.0), survey, survival, testthat (>= 3.2.1),
+        tweedie, VGAM, withr (>= 3.0.0)
 Encoding: UTF-8
 Language: en-US
 Config/testthat/edition: 3
@@ -93,9 +98,9 @@ Config/testthat/parallel: false
 Config/Needs/website: rstudio/bslib, r-lib/pkgdown,
         easystats/easystatstemplate
 Config/rcmdcheck/ignore-inconsequential-notes: true
-Config/roxygen2/version: 8.0.0
+Config/roxygen2/version: 8.1.0
 NeedsCompilation: no
-Packaged: 2026-06-30 10:50:23 UTC; mail
+Packaged: 2026-08-28 10:23:09 UTC; mail
 Author: Daniel Lüdecke [aut, cre] (ORCID:
     <https://orcid.org/0000-0002-8895-3206>),
   Dominique Makowski [aut, ctb] (ORCID:
@@ -115,6 +120,8 @@ Author: Daniel Lüdecke [aut, cre] (ORCID:
   Martin Jullum [rev],
   gjo11 [rev],
   Etienne Bacher [ctb] (ORCID: <https://orcid.org/0000-0002-9271-5075>),
-  Joseph Luchman [ctb] (ORCID: <https://orcid.org/0000-0002-8886-9717>)
+  Joseph Luchman [ctb] (ORCID: <https://orcid.org/0000-0002-8886-9717>),
+  Julius Bogomolovas [ctb] (ORCID:
+    <https://orcid.org/0000-0001-8344-1909>)
 Repository: CRAN
-Date/Publication: 2026-06-30 11:50:02 UTC
+Date/Publication: 2026-08-28 11:20:02 UTC

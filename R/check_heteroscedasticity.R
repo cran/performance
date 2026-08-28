@@ -3,7 +3,11 @@
 #'
 #' @description Significance testing for linear regression models assumes that
 #'   the model errors (or residuals) have constant variance. If this assumption
-#'   is violated the p-values from the model are no longer reliable.
+#'   is violated the p-values from the model are no longer reliable. For
+#'   generalized linear models, or models from package *glmmTMB* with other
+#'   families than Gaussian, no formal test is carried out, but a `plot()`
+#'   method is available, i.e. you can run
+#'   `plot(check_heteroscedasticity(model))`.
 #'
 #' @param x A model object.
 #' @param ... Currently not used.
@@ -83,6 +87,41 @@ check_heteroscedasticity.default <- function(x, ...) {
 
   p.val
 }
+
+
+#' @export
+check_heteroscedasticity.glmmTMB <- function(x, ...) {
+  # for linear models, compute p-value
+  info <- insight::model_info(x)
+  if (info$is_linear) {
+    return(check_heteroscedasticity.default(x))
+  }
+
+  # no formal test for p-values for other families, only plots
+  p.val <- NA
+  obj_name <- insight::safe_deparse_symbol(substitute(x))
+
+  attr(p.val, "data") <- x
+  attr(p.val, "object_name") <- obj_name
+  class(p.val) <- unique(c(
+    "check_heteroscedasticity",
+    "see_check_heteroscedasticity",
+    class(p.val)
+  ))
+
+  insight::format_alert(
+    paste0(
+      "There is only a `plot()` method for this model family. Please run `plot(check_heteroscedasticity(",
+      obj_name,
+      "))`."
+    )
+  )
+
+  invisible(p.val)
+}
+
+#' @export
+check_heteroscedasticity.glm <- check_heteroscedasticity.glmmTMB
 
 
 # methods -----------------------
