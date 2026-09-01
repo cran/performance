@@ -19,9 +19,10 @@
 #'   bootstrap method, where confidence intervals are calculated based on the
 #'   quantiles of the bootstrap distribution.
 #' @param residuals Character, the type of residuals to calculate. Can be
-#'   `"response"` (default), `"pearson"` or `"deviance"`. Gelman and Hill (2007)
-#'   propose to use response residuals as default, defined "as observed minus
-#'   expected values" (cf pp. 97-98).
+#'   `"response"`, `"pearson"` or `"deviance"`. For Bernoulli models, response
+#'   residuals are used as default (defined "as observed minus expected values",
+#'   (cf Gelman and Hill 2007, pp. 97-98). For other binomial models, deviance
+#'   residuals are used.
 #' @param iterations Integer, the number of iterations to use for the
 #'   bootstrap method. Only used if `ci_type = "boot"`.
 #' @param show_dots Logical, if `TRUE`, will show data points in the plot. Set
@@ -96,7 +97,7 @@ binned_residuals <- function(
   show_dots = NULL,
   ci = 0.95,
   ci_type = "exact",
-  residuals = "response",
+  residuals = NULL,
   iterations = 1000,
   verbose = TRUE,
   ...
@@ -105,13 +106,12 @@ binned_residuals <- function(
     ci_type,
     c("exact", "gaussian", "boot")
   )
-  residuals <- insight::validate_argument(
-    residuals,
-    c("deviance", "pearson", "response")
-  )
+
+  # extract model information - need this for Bernoulli checks
+  m_info <- insight::model_info(model)
 
   # for non-bernoulli models, `"exact"` doesn't work
-  if (isFALSE(insight::model_info(model)$is_bernoulli)) {
+  if (isFALSE(m_info$is_bernoulli)) {
     ci_type <- "gaussian"
     if (verbose) {
       insight::format_alert(
@@ -119,6 +119,20 @@ binned_residuals <- function(
       )
     }
   }
+
+  # set default, depending on response-type
+  if (is.null(residuals)) {
+    if (isTRUE(m_info$is_bernoulli)) {
+      residuals <- "response"
+    } else {
+      residuals <- "deviance"
+    }
+  }
+
+  residuals <- insight::validate_argument(
+    residuals,
+    c("deviance", "pearson", "response")
+  )
 
   fitted_values <- stats::fitted(model)
   mf <- insight::get_data(model, verbose = FALSE)

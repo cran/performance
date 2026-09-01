@@ -1,7 +1,7 @@
-aa8acb89348b87c8b2b51a4a56ece871 *DESCRIPTION
+7ca69cbb88e5127b5773eb36e8d37bc3 *DESCRIPTION
 f20bc8d5e52a070c562b40224afad278 *NAMESPACE
-93848b672f8d3dd4a2c6de0ba60cb09f *NEWS.md
-1e004bdb083007796c0686170e32cbfb *R/binned_residuals.R
+ad967b8ba7fedd350efec4d324bd6b93 *NEWS.md
+224afb4627f1f979151d79bd7475bef6 *R/binned_residuals.R
 ee6fc14f3ae601523e2b31cb0a354fb2 *R/check_autocorrelation.R
 b084b2f99855d790e9624d12df9ac77e *R/check_clusterstructure.R
 893623c708ce660b560bd36bbaae35e6 *R/check_collinearity.R
@@ -105,7 +105,7 @@ b86e0e56bbb155ecd49beed277fb421b *README.md
 6af8e7644a2c366a25339b1923c9a048 *build/partial.rdb
 b3f9f88d249c4b33a27a9567252871b1 *inst/CITATION
 9be3005ad20feca0c861268537f3f5cf *inst/WORDLIST
-79687fe9a11fbb04c5030315d93d3726 *man/binned_residuals.Rd
+3fed20e54721613c46e480b43030b359 *man/binned_residuals.Rd
 38c5639efe014c7d99551e3c7279e213 *man/check_autocorrelation.Rd
 f9b5078a1a8f88495d20cb9535a525b7 *man/check_clusterstructure.Rd
 4e44a83fb39ed59c18392231659b7a23 *man/check_collinearity.Rd
@@ -197,7 +197,7 @@ ad598b2f0fb04401c635433cf952ea2a *man/simulate_residuals.Rd
 7973457719721cdc82e642c7da76c583 *man/test_performance.Rd
 cb60cbf3577412c0bc6256424ce45d55 *tests/testthat.R
 09d81b66ba81dd6f52bec56c7533b59a *tests/testthat/test-backticks.R
-e23bef6d4c9e6d6ba58247daa5a9f558 *tests/testthat/test-binned_residuals.R
+2535978ca6072f12a8dc8d48bc0d8c51 *tests/testthat/test-binned_residuals.R
 afb2dbaa7a0fcc3a643fb4ed37786787 *tests/testthat/test-bootstrapped_icc_ci.R
 98345bef78f4faf0150dc41c60c7875f *tests/testthat/test-check_autocorrelation.R
 cf1cfdbfa0a2ff207395c6abe5adaf3d *tests/testthat/test-check_autocorrelation_simres.R
@@ -205,7 +205,7 @@ cf1cfdbfa0a2ff207395c6abe5adaf3d *tests/testthat/test-check_autocorrelation_simr
 1d9671aecd381ac031d6c11faca66599 *tests/testthat/test-check_convergence.R
 03fd63adc0a801e8e900d7af1fa4d22a *tests/testthat/test-check_dag.R
 4377641691f1cf9ad3c4e1c2b59273ba *tests/testthat/test-check_distribution.R
-deacde28fb6852073d1e91c30fc32c68 *tests/testthat/test-check_group_variation.R
+0f52539bb9071ee46c69d4b26d85e635 *tests/testthat/test-check_group_variation.R
 f34e605295221cf371dea48605c8d7d5 *tests/testthat/test-check_heteroskedasticity.R
 f5762da0e72b3a872acc5710c7478d0c *tests/testthat/test-check_homogeneity.R
 6d8df55e23e3154a12dae4e35b356ad5 *tests/testthat/test-check_itemscale.R
